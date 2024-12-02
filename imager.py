@@ -104,10 +104,12 @@ def get_image(colors):       # Return a PIL image with colored ROI boxes
     print('cam4_server: image acquired')
     pil_image = add_ROIs(image, colors)  # Add ROIs to image
     buffer = BytesIO()     # create a buffer to hold the JPG image
-    pil_image.save(buffer, format="JPEG")    # Convert image to JPG
+    #pil_image.save(buffer, format="JPEG")    # Convert image to JPG
+    pil_image.save(buffer, format="PNG")    # Convert image to PNG
     jpeg_image = buffer.getvalue()
     jpeg_base64 = base64.b64encode(jpeg_image).decode('utf-8')  # Encode jpg as base64
-    return(f"data:image/jpeg;base64,{jpeg_base64}")
+    #return(f"data:image/jpeg;base64,{jpeg_base64}")
+    return(f"data:image/png;base64,{jpeg_base64}")
 
 def end_imaging():
     # Rename temp data file:
