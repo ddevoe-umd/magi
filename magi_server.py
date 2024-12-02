@@ -77,7 +77,6 @@ class S(BaseHTTPRequestHandler):
             well_config = data[0]             # well configuration
             target_dict = data[1]             # target colors
             colors = [target_dict[t][0] for t in well_config]
-            print(colors)
             results = imager.get_image(colors)
             self.wfile.write(results.encode('utf-8'))
         if action == 'getData':          # Capture & analyze single camera image
