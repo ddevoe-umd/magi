@@ -35,27 +35,23 @@ for i in range(well_rows):
         y = roi_upper_left[1] + roi_spacing*i
         ROIs.append((x,y))
 
-def hex_to_rgb(hex):   # convert "#RRGGBB" to [R,G,B]
-    return [int(hex[i:i+2], 16) for i in (1, 3, 5)]
+def hex_to_rgb(h):   # convert "#RRGGBB" to [R,G,B]
+    print(h)
+    return [int(h[i:i+2], 16) for i in (1, 3, 5)]
 
 def add_ROIs(img, colors):      # Add ROIs to a captured image
-    img_new = Image.new('RGBA', img.size, (255, 255, 255, 0))
-    fill_color = hex_to_rgb(colors)
-    fill_color.append(128)  # Add alpha channel for transparency
-    draw.rectangle([(img.width*.25, img.height*.25), (img.width*.75, img.height*.75)],
-                   fill=tuple(fill_color))
-    out = Image.alpha_composite(img, new)
-    out.show()
-
-
-    draw = ImageDraw.Draw(img_new)
+    img_roi = Image.new('RGBA', img.size, (255, 255, 255, 0))
+    draw = ImageDraw.Draw(img_roi)
     for idx,roi in enumerate(ROIs):
         roi_lower_right = [0,0]
         roi_lower_right[0] = roi[0] + roi_width
         roi_lower_right[1] = roi[1] + roi_height
         roi_lower_right = tuple(roi_lower_right)
         fill_color = hex_to_rgb(colors[idx])
+        fill_color.append(128)  # Add alpha channel for transparency
         draw.rectangle([roi, roi_lower_right], outline=colors[idx], fill=tuple(fill_color))
+            fill_color = hex_to_rgb(colors)
+    img_new = Image.alpha_composite(img, img_roi)  # combine original & ROI images
     return(img_new)
 
 def setup_camera():    # Set up camera
