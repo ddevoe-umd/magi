@@ -50,8 +50,9 @@ def add_ROIs(img, colors):      # Add ROIs to a captured image
         roi_lower_right = tuple(roi_lower_right)
         fill_color = hex_to_rgb(colors[idx])
         fill_color.append(128)  # Add alpha channel for transparency
-        draw.rectangle([roi, roi_lower_right], outline=colors[idx], fill=tuple(fill_color))
-    img_new = Image.alpha_composite(img, img_roi)  # combine original & ROI images
+        #draw.rectangle([roi, roi_lower_right], outline=(), fill=tuple(fill_color))
+        draw.rectangle([roi, roi_lower_right], outline='#fffff', fill=colors[idx])
+    img_new = Image.alpha_composite(img, img_roi)  # composite original & ROI images
     return(img_new)
 
 def setup_camera():    # Set up camera
@@ -103,13 +104,11 @@ def get_image(colors):       # Return a PIL image with colored ROI boxes
     GPIO.output(LED_PIN, GPIO.LOW)
     print('cam4_server: image acquired')
     pil_image = add_ROIs(image, colors)  # Add ROIs to image
-    buffer = BytesIO()     # create a buffer to hold the JPG image
-    #pil_image.save(buffer, format="JPEG")    # Convert image to JPG
-    pil_image.save(buffer, format="PNG")    # Convert image to PNG
-    jpeg_image = buffer.getvalue()
-    jpeg_base64 = base64.b64encode(jpeg_image).decode('utf-8')  # Encode jpg as base64
-    #return(f"data:image/jpeg;base64,{jpeg_base64}")
-    return(f"data:image/png;base64,{jpeg_base64}")
+    buffer = BytesIO()                   # create a buffer to hold the image
+    pil_image.save(buffer, format="PNG") # Convert image to PNG
+    png_image = buffer.getvalue()
+    png_base64 = base64.b64encode(png_image).decode('utf-8')  # Encode as base64
+    return(f"data:image/png;base64,{png_base64}")
 
 def end_imaging():
     # Rename temp data file:
