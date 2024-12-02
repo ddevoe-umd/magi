@@ -1,0 +1,450 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="UTF-8">	
+<link rel="stylesheet" href="css/style.css">
+<script src="js/canvasjs.min.js"></script>
+<title>MAGI</title>
+</head>
+
+<body>
+
+<div class="main-container">
+
+	<div class="button-container">
+		<div class="left-buttons">
+		  <button id="start" class="button-84" role="button" onclick="startAssay()" > Start </button>
+		  <button id="stop" class="button-84" onclick="endAssay()" > End </button>
+		  <button id="analyze" class="button-84" onclick="analyzeData()" > Analyze </button>
+		</div>
+		<div>
+	  	<button id="getImage" class="button-84" role="button" onclick="getImage()" > Get Image </button>
+	  </div>
+	  <div>
+	  	<button id="shutdown" class="button-84" role="button" onclick="shutdown()" > Shutdown </button>
+		</div>
+	</div>
+
+	<div class="chart-container">
+	  <div class="row">
+	    <div class="chart" id="rawDataChart"><b>Fluorescence Data</b></div>
+	    <div class="chart" id="temperatureChart"><b>Chip Temperature</b></div>
+	  </div>
+	  <div class="row">
+	    <div class="chart" id="filteredDataChart"><b>Filtered Data</b></div>
+	    <div class="chart" id="ttpChart"><b>Time to Positive</b></div>
+	  </div>
+	</div>
+
+	<br>
+
+	<div class="log-image-container">
+		<div class="log-image-row">
+		  <div class="image"><img id="image" alt="Chip Image" /></div>
+		  <div class="log" id="log"><b>Server Log</b><br><br></div>
+		</div>
+	</div>
+
+</div>
+
+</body>
+
+<script>
+
+// Globals:
+let assayTimer;              // timer for running an assay
+let sampleInterval = 2500;   // data sampling interval (msec)
+let currentFileName;         // data file from most recent assay
+
+// Custom log function:
+function log(message) {
+	console.log(message);            // display message on Javascript console
+	const log = document.getElementById("log");
+	log.innerHTML += message + "<br />";      // display message in HTML
+	//log.scrollTop = log.scrollHeight;       // pin scroll to bottom
+	log.scroll({ top: log.scrollHeight, behavior: 'smooth' }); // pin scroll to bottom
+}
+
+// Prevent system from sleeping (does not work yet):
+async function getScreenLock() {
+	try {
+		const wakeLock = await navigator.wakeLock.request('screen');
+		log('Wake Lock acquired:', wakeLock);
+	} catch(err) {
+		log('Error acquiring wake lock:', err);
+	}
+	//return wakeLock;
+}
+
+window.onload = function () {
+	// Disable buttons at start-up:
+	document.getElementById("stop").disabled = true;
+	document.getElementById("analyze").disabled = true;
+	// getScreenLock();   // Does not work yet
+};
+
+// Define target list and chart display properties:
+const target_dict = {
+  "MecA": ["#1f009c", "solid"],   // color, linetype
+  "FemB": ["#006aa8", "solid"],
+  "Nuc": ["#338f4c", "solid"],
+  "Ctrl+": ["#363636", "dash"],
+  "Ctrl-": ["#363636", "dot"]
+};
+
+// Define well array configuration (start at upper left):
+const wellConfig = [
+		"MecA", "Nuc", "FemB", "Ctrl+",
+		"MecA", "Nuc", "FemB", "Ctrl+",
+		"MecA",	"Nuc", "FemB", "Ctrl-"
+		];
+
+async function queryServer(message) {
+	let url = "http://raspberrypi.local:8080";
+	let response = await fetch( url, {
+		method: "POST",
+    	headers: { "Content-Type": "application/x-www-form-urlencoded" },
+		body: 'todo=' + message
+		} );
+	return(response)
+}
+
+
+async function startPID() {
+	let message = 'start';
+	let data = '';
+	log("startPID() called");
+	let response = await queryServer(JSON.stringify([message,data]));
+  if (response.ok) {
+		results = await response.text();
+		log(results);
+		let results_array = results.split(",");
+		newData = [];
+		results_array.forEach( ele => newData.push(+ele))   // strings to numbers
+		return(newData);
+	}
+}
+
+async function endAssay() {
+	log("endAssay() called");
+	document.getElementById("stop").disabled = true;
+	if (assayTimer) clearInterval(assayTimer);
+	document.getElementById("start").disabled = false;
+	let message = 'end';
+  let data = '';
+	let response = await queryServer(JSON.stringify([message,data]));
+	if (response.ok) {
+		results = await response.text();
+		log("Server response:")
+		log(results);
+		currentFileName = results;
+		document.getElementById("analyze").disabled = false;
+		document.getElementById('analyze').innerText = "Analyze " + currentFileName;
+		document.getElementById("shutdown").disabled = false;
+	}
+}
+
+async function getData() {
+	log("getData() called");
+	let message = 'getData';
+	let data = '';
+	let response = await queryServer(JSON.stringify([message,data]));
+  if (response.ok) {
+		results = await response.text();
+		log("Server response:")
+		log(results);
+		let results_array = results.split(",");
+		newData = [];
+		results_array.forEach( ele => newData.push(+ele))   // strings to numbers
+		return(newData);
+	}
+}
+
+async function getImage() {
+	log("getImage() called");
+	let message = 'getImage';
+	let data = [wellConfig, target_dict];  // use to color ROIs in image
+	let response = await queryServer(JSON.stringify([message,data]));
+  if (response.ok) {
+		results = await response.text();
+		log("Image data received")
+		const base64Image = results;
+		let results_array = results.split(",");
+		document.getElementById('image').src = base64Image;
+	}
+}
+
+async function analyzeData() {
+	log("analyzeData() called");
+  let message = 'analyze';
+	let data = currentFileName;
+	let response = await queryServer(JSON.stringify([message,data]));
+	if (response.ok) {
+		results = await response.text();
+		log("Server response: ");
+		log(results);
+		let data = JSON.parse(results);
+    let ttp = data[0];
+    let xy = data[1];
+    displayFilteredData(xy);
+		displayTTP(ttp);
+	}
+}
+
+
+async function shutdown() {
+	log("shutdown() called");
+	let response = confirm("Do you want to shut down?");
+	if (response) {
+		log("System is powering off!!!");
+		document.getElementById("stop").disabled = true;
+		document.getElementById("start").disabled = true;
+		document.getElementById("analyze").disabled = true;
+		let message = 'shutdown';
+	  let data = '';
+		let response = await queryServer(JSON.stringify([message,data]));
+		if (response.ok) {} // Pi should shut down, so no response
+	}
+	else {
+		log("shutdown cancelled");
+	}
+}
+
+
+// Function to display/hide grouped data sets in charts:
+function onLegendClick(e) {
+  var groupSelected = e.dataSeries.group;
+  for(var i = 0; i < e.chart.data.length; i++) {
+    if(e.chart.options.data[i].group === groupSelected) {
+      if (typeof (e.chart.options.data[i].visible) === "undefined" || e.chart.options.data[i].visible) {
+        e.chart.options.data[i].visible = false;
+      } else {
+        e.chart.options.data[i].visible = true;
+      }
+    }
+  }
+}
+
+function setupAmplificationChart(targetContainer) {
+	let wellArray = [[],[],[],[],[],[],[],[],[],[],[],[]];
+
+	// Set up plot info:
+	let plotInfo = [];
+
+	let g = 1;   // group number (for grouping target sets in charts)
+	for (const key in target_dict) {
+		let key_found = false;
+		for (let i=0; i<wellConfig.length; i++) {
+      if (wellConfig[i] == key) {
+      	// Set up plot data & shared plot attributes:
+				data_dict = {	
+					name: key,
+					type: "line",
+					group: g,
+					dataPoints: wellArray[i],
+		      color: target_dict[wellConfig[i]][0],
+					lineDashType: target_dict[wellConfig[i]][1]
+				};
+				// Only show each gene target in the legend once:
+				if (!key_found) {
+					data_dict.showInLegend = true;
+					key_found = true;
+				}
+				plotInfo.push(data_dict);
+      }
+    }
+    g += 1;
+  }
+
+	let chart = new CanvasJS.Chart(targetContainer, {
+		zoomEnabled: true,
+		title: {
+			text: "Fluorescence",
+			fontFamily: "tahoma",
+			fontSize: 16
+		},
+		axisX: {
+			title: "Time (min)",
+			titleFontSize: 14
+		},
+		axisY:{
+			includeZero: true
+		}, 
+		toolTip: {
+			shared: true
+		},
+		legend: {
+	    cursor:"pointer",
+	    verticalAlign: "top",
+	    fontSize: 12,
+			fontColor: "dimGrey",
+	    itemclick: function(e) {
+	      onLegendClick(e);
+	      e.chart.render();
+	    }
+	  },
+		data: plotInfo
+	});
+
+	chart.render();
+	return [chart, wellArray]
+}
+
+
+function setupTemperatureChart(targetContainer) {
+
+	// Set up plot info:
+	let plotInfo = [];
+	let temperature = [];
+	plotInfo.push(
+	{ 	
+		type: "line",
+    color: "#BB2222",
+		showInLegend: true,
+		name: "Temperature",
+		dataPoints: temperature
+	}
+	)
+	let chart = new CanvasJS.Chart(targetContainer, {
+		zoomEnabled: true,
+		title: {
+			text: "Temperature",
+			fontFamily: "tahoma",
+			fontSize: 16
+		},
+		axisX: {
+			title: "Time (min)",
+			titleFontSize: 14
+		},
+		axisY:{
+			includeZero: true
+		}, 
+		toolTip: {
+			shared: true
+		},
+		legend: {
+			cursor:"pointer",
+			verticalAlign: "top",
+			fontSize: 12,
+			fontColor: "dimGrey",
+			itemclick : toggleDataSeries
+		},
+		data: plotInfo
+	});
+
+	function toggleDataSeries(e) {
+		if (typeof(e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+			e.dataSeries.visible = false;
+		}
+		else {
+			e.dataSeries.visible = true;
+		}
+		chart.render();
+	}
+
+	chart.render();
+	return [chart, temperature]
+}
+
+
+async function startAssay() {
+	
+	document.getElementById("start").disabled = true;
+	document.getElementById("stop").disabled = false;
+	document.getElementById("analyze").disabled = true;
+	document.getElementById('analyze').innerText = "Analyze";
+	document.getElementById("shutdown").disabled = true;
+
+	let [amplificationChart, wellArray] = setupAmplificationChart('rawDataChart')
+	let [temperatureChart, temperature] = setupTemperatureChart('temperatureChart')
+
+	let time = new Date;
+	let startTime = time.getTime();
+
+  nullData = await startPID();    // Tell Python to start the PID controller
+  
+	async function updateChart() {
+		let now = new Date();
+		minutes = (now - startTime)/1000/60;
+
+		newData = await getData();   		// Get data from Python
+
+		// extend the amplification curve data:
+		for (let j=0; j<wellArray.length; j++) {
+			wellArray[j].push({
+				x: minutes,
+				y: newData[j]
+			});
+		}
+
+		// extend the temperature array:
+		temperature.push({
+			x: minutes,
+			y: newData[wellArray.length]   // T is last element in newData
+			});   
+
+		// Display the real-time amplification & temperature curves:
+		amplificationChart.render();
+		temperatureChart.render();
+	}
+
+	// Start the assay:
+	assayTimer = setInterval(function(){updateChart()}, sampleInterval);
+}
+
+
+function displayFilteredData(data) {
+	let [chart, wellArray] = setupAmplificationChart('filteredDataChart');
+	chart.options.title.text = "Fluorescence (filtered)";
+	for (let i=0; i<wellArray.length; i++) {
+		for (let j=0; j<data[0].length; j++) {
+			wellArray[i].push(data[i][j]);
+		}
+	}
+	chart.render();
+	chart.axisY[0].set('minimum',0);
+	chart.axisY[0].set('maximum',1);
+}
+
+
+function displayTTP(ttpData) {
+  ttpBars = [];
+  for (const key in target_dict) {
+		for (let i=0; i<wellConfig.length; i++) {
+			if (wellConfig[i] == key) {
+				ttpBars.push({
+					y: ttpData[i],
+					label: key,
+					color: target_dict[key][0]
+				});
+			}
+		}
+  }
+	let chart = new CanvasJS.Chart("ttpChart", {
+		title: {
+			text: "Time to Positive",
+			fontFamily: "tahoma",
+			titleFontSize: 16,
+			fontWeight: "normal"
+		},
+		axisY: {
+			title: "TTP (min)",
+			titleFontSize: 14
+		},		
+		animationEnabled: true,
+		theme: "light2",   // "light1", "light2", "dark1", "dark2"
+		axisX:{ interval: 1 },   // show all axis labels
+		data: [{        
+			type: "column",  
+			showInLegend: false, 
+			legendMarkerColor: "grey",
+			legendText: "",
+			dataPoints: ttpBars
+		}]
+	})
+	chart.render();
+	chart.axisY[0].set('minimum',0);   // Only show results with positive TTPs
+}
+
+</script>
+</html>
