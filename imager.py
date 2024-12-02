@@ -50,7 +50,6 @@ def add_ROIs(img, colors):      # Add ROIs to a captured image
         fill_color = hex_to_rgb(colors[idx])
         fill_color.append(128)  # Add alpha channel for transparency
         draw.rectangle([roi, roi_lower_right], outline=colors[idx], fill=tuple(fill_color))
-            fill_color = hex_to_rgb(colors)
     img_new = Image.alpha_composite(img, img_roi)  # combine original & ROI images
     return(img_new)
 
