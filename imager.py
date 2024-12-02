@@ -40,6 +40,7 @@ def hex_to_rgb(h):   # convert "#RRGGBB" to [R,G,B]
     return [int(h[i:i+2], 16) for i in (1, 3, 5)]
 
 def add_ROIs(img, colors):      # Add ROIs to a captured image
+    img = img.convert('RGBA')
     img_roi = Image.new('RGBA', img.size, (255, 255, 255, 0))
     draw = ImageDraw.Draw(img_roi)
     for idx,roi in enumerate(ROIs):
