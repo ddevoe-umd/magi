@@ -35,14 +35,14 @@ for i in range(well_rows):
         y = roi_upper_left[1] + roi_spacing*i
         ROIs.append((x,y))
 
-def image_with_ROIs(image):      # Add ROIs to a captured image
+def add_ROIs(image, colors):      # Add ROIs to a captured image
     draw = ImageDraw.Draw(image)
-    for roi in ROIs:
+    for idx,roi in enumerate(ROIs):
         roi_lower_right = [0,0]
         roi_lower_right[0] = roi[0] + roi_width
         roi_lower_right[1] = roi[1] + roi_height
         roi_lower_right = tuple(roi_lower_right)
-        draw.rectangle([roi, roi_lower_right])
+        draw.rectangle([roi, roi_lower_right], outline=colors[idx])
     return(image)
 
 def setup_camera():    # Set up camera
@@ -85,7 +85,7 @@ def get_image_data():    # Extract fluorescence measurements from ROIs in image
         writer.writerow(timestamp + roi_sums)
     return(roi_sums)
 
-def get_image():       # Return a PIL image with ROI boxes added
+def get_image(colors):       # Return a PIL image with colored ROI boxes
     # Acquire an image:
     cam.start()
     GPIO.output(LED_PIN, GPIO.HIGH)
@@ -93,7 +93,7 @@ def get_image():       # Return a PIL image with ROI boxes added
     cam.stop()
     GPIO.output(LED_PIN, GPIO.LOW)
     print('cam4_server: image acquired')
-    pil_image = image_with_ROIs(image)  # Add ROIs to image
+    pil_image = add_ROIs(image, colors)  # Add ROIs to image
     buffer = BytesIO()     # create a buffer to hold the JPG image
     pil_image.save(buffer, format="JPEG")    # Convert image to JPG
     jpeg_image = buffer.getvalue()
