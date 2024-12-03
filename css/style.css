@@ -24,7 +24,7 @@ body, html {
   /* Nearly full viewport height to leave border: */
   height: 98vh;   
   width: 98vw; 
-  /* Below 4 lines will center content in window: */
+  /* Center content in window: */
   position: fixed;
   top: 50%;
   left: 50%;
@@ -50,12 +50,13 @@ body, html {
   /*height: 270px;*/
   width: 50%;
   outline: 2px solid gray;
-  background-color: #EBEBEB;
+  background-color: #ebebeb;
 }
 
 .log-image-container {
   display: flex;
   gap: 20px;   /* Space between rows */
+  flex-direction: column;
   max-height: 50%;
 }
 
@@ -69,13 +70,14 @@ body, html {
 }
 
 .image {
+  flex: 1;  
   max-width: 640px;
   /*max-height: 480px;*/
   max-height: 30vh;
   height: 100%;
   width: 50%;
   outline: 2px solid gray;
-  background-color: #EBEBEB;
+  background-color: #ebebeb;
 }
 
 .image img {
@@ -86,15 +88,14 @@ body, html {
 
 .log {
   flex: 1;
-  /*min-height: 250px;*/
   flex-shrink: 1;
-  /*max-height: 480px;*/
+  min-height: 20vh;
   max-height: 30vh;
   overflow-wrap: break-word;
   overflow-y: scroll; /* Enable vertical scrollbar */
   overflow-x: hidden; /* Hide horizontal scrollbar */
   outline: 2px solid gray;
-  background-color: #EBEBEB;
+  background-color: #ebebeb;
 }
 
 .button-container {
