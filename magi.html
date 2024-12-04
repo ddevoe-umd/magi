@@ -58,6 +58,7 @@ let currentFileName;         // data file from most recent assay
 
 // Custom log function:
 function log(message) {
+  document.getElementById('log').style.backgroundColor = 'white';
 	console.log(message);            // display message on Javascript console
 	const log = document.getElementById("log");
 	log.innerHTML += message + "<br />";      // display message in HTML
@@ -162,6 +163,7 @@ async function getData() {
 
 async function getImage() {
 	log("getImage() called");
+  document.getElementById('image').style.backgroundColor = 'white';
 	let message = 'getImage';
 	let data = [wellConfig, target_dict];  // use to color ROIs in image
 	let response = await queryServer(JSON.stringify([message,data]));
