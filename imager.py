@@ -79,10 +79,10 @@ def roi_sum(image, roi):   # Return sum of pixel values in ROI
     px,py = roi
     for x in range(int(px),int(px+roi_width)):
         for y in range(int(py),int(py+roi_height)):
-            pt = (x,y)
-            r += image.getpixel(pt)[0]
-            g += image.getpixel(pt)[1]
-            b += image.getpixel(pt)[2]
+            xy = (x,y)
+            r += image.getpixel(xy)[0]
+            g += image.getpixel(xy)[1]
+            b += image.getpixel(xy)[2]
     return((r,b,g))
 
 def get_image_data():    # Extract fluorescence measurements from ROIs in image
@@ -94,7 +94,7 @@ def get_image_data():    # Extract fluorescence measurements from ROIs in image
     # Get sum of pixel values within all ROIs:
     roi_sums = []
     for roi in ROIs: 
-        roi_sums.append(roi_sum(image, roi)[2])  # green channel
+        roi_sums.append(roi_sum(image, roi)[1])  # green channel
     # Add timestamp & new ROI sums to temp data file:
     timestamp = [int(time.time())]        # 1st entry is the time stamp
     with open('data/temp_data.csv', 'a') as f:
