@@ -6,7 +6,7 @@ import os
 from filter_curves import filter
 import RPi.GPIO as GPIO
 
-from PIL import Image, ImageDraw 
+from PIL import Image, ImageDraw, ImageFont
 import base64
 from io import BytesIO
 
@@ -38,18 +38,26 @@ for i in range(well_rows):
 def hex_to_rgb(h):   # convert "#rrggbb" to [R,G,B]
     return [int(h[i:i+2], 16) for i in (1, 3, 5)]
 
-def add_ROIs(img, colors):      # Add ROIs to a captured image
+def add_ROIs(img, data):      # Add ROIs to a captured image
+    # Extract well names & colors:
+    well_config = data[0]             # well configuration
+    target_dict = data[1]             # target colors
+    colors = [target_dict[t][0] for t in well_config]
+
     img = img.convert('RGBA')   # convert captured image to support an alpha channel
     img_roi = Image.new('RGBA', img.size, (255, 255, 255, 0))  # create new image with ROIs only
     draw = ImageDraw.Draw(img_roi)
     for idx,roi in enumerate(ROIs):
-        roi_lower_right = [0,0]
-        roi_lower_right[0] = roi[0] + roi_width
-        roi_lower_right[1] = roi[1] + roi_height
-        roi_lower_right = tuple(roi_lower_right)
+        roi_lower_right = (roi[0] + roi_width, roi[1] + roi_height)
         fill_color = hex_to_rgb(colors[idx])  # convert "#rrggbb" to [R,G,B]
         fill_color.append(64)  # Add alpha channel for transparency
+        # Draw the ROI box:
         draw.rectangle([roi, roi_lower_right], outline='#ffffff', fill=tuple(fill_color))
+        # Add well target text:
+        font = ImageFont.truetype("fonts/OpenSans.ttf", 12)
+        text_position = (roi[0] + roi_width + 1, roi[1])
+        draw.text(text_position, well_config[idx],'#ffffff',font=font)
+
     img_new = Image.alpha_composite(img, img_roi)  # composite captured & ROI images
     return(img_new)
 
@@ -93,7 +101,8 @@ def get_image_data():    # Extract fluorescence measurements from ROIs in image
         writer.writerow(timestamp + roi_sums)
     return(roi_sums)
 
-def get_image(colors):       # Return a PIL image with colored ROI boxes
+def get_image(data):       # Return a PIL image with colored ROI boxes
+    # data structure: [wellConfig, target_dict]
     # Acquire an image:
     cam.start()
     GPIO.output(LED_PIN, GPIO.HIGH)
@@ -101,7 +110,7 @@ def get_image(colors):       # Return a PIL image with colored ROI boxes
     cam.stop()
     GPIO.output(LED_PIN, GPIO.LOW)
     print('image acquired')
-    pil_image = add_ROIs(image, colors)  # Add ROIs to image
+    pil_image = add_ROIs(image, data)  # Add ROIs to image
     buffer = BytesIO()                   # create a buffer to hold the image
     pil_image.save(buffer, format="PNG") # Convert image to PNG
     png_image = buffer.getvalue()

@@ -74,10 +74,8 @@ class S(BaseHTTPRequestHandler):
         if action == 'start':            # Start the PID loop for temp control
             start_pid()
         if action == 'getImage':         # Get an image of the chip with colored ROIs
-            well_config = data[0]             # well configuration
-            target_dict = data[1]             # target colors
-            colors = [target_dict[t][0] for t in well_config]
-            results = imager.get_image(colors)
+            # data structure from magi.html: [wellConfig, target_dict]
+            results = imager.get_image(data)
             self.wfile.write(results.encode('utf-8'))
         if action == 'getData':          # Capture & analyze single camera image
             results = imager.get_image_data()
