@@ -54,6 +54,7 @@
 // Globals:
 let assayTimer;              // timer for running an assay
 let sampleInterval = 5000;   // data sampling interval (msec)
+let startTime;               // starting time stamp
 let currentFileName;         // data file from most recent assay
 
 // Custom log function:
@@ -177,14 +178,13 @@ async function getImage() {
 		//document.getElementById('image').src = base64Image;
 		const img = document.getElementById('image');
 		img.src = base64Image;
-
+    timestamp = ((Date.now()-startTime)/1000/60).toFixed(2);
+    
 		// Open image in new window when clicked:
 		img.addEventListener('click', () => {
-			var iframe = "<iframe width='640px' height='480px' src='"+img.src+"'></iframe>"
-			var imgWindow = window.open('', '_blank');
-			//imgWindow.document.open();
-			imgWindow.document.write(new Date(8.64e15).toString())
-			imgWindow.document.write("<br>")
+			const iframe = "<iframe width='640px' height='480px' src='"+img.src+"'></iframe>"
+			const imgWindow = window.open('', '_blank', "width=640,height=500");
+			imgWindow.document.write(`Timestamp: ${timestamp} min<br>`)
 			imgWindow.document.write(iframe);
 			imgWindow.document.close();
     });
@@ -378,13 +378,15 @@ async function startAssay() {
 	let [amplificationChart, wellArray] = setupAmplificationChart('rawDataChart')
 	let [temperatureChart, temperature] = setupTemperatureChart('temperatureChart')
 
-	let time = new Date;
-	let startTime = time.getTime();
+	//let time = new Date;
+	//startTime = time.getTime();
+	startTime = Date.now();
 
   nullData = await startPID();    // Tell Python to start the PID controller
   
 	async function updateChart() {
-		let now = new Date();
+		//let now = new Date();
+		let now = Date.now();		
 		minutes = (now - startTime)/1000/60;
 
 		newData = await getData();   		// Get data from Python
@@ -411,6 +413,9 @@ async function startAssay() {
 	// Start the assay:
 	updateChart();   // Initial chart update to avoid delay
 	assayTimer = setInterval(function(){updateChart()}, sampleInterval);
+	// Note: timer wont work if window is minimized...nned to use
+	// a "web worker" instead to fix this, see 
+	// https://stackoverflow.com/questions/5927284/how-can-i-make-setinterval-also-work-when-a-tab-is-inactive-in-chrome
 }
 
 
