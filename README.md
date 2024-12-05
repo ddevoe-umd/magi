@@ -1,23 +1,24 @@
 Multiplexed Array Gene Imager (MAGI)
+-
 
 Hardware:
----------
+-
 * Raspberry Pi Zero 2 W (Python3, Raspberry Pi OS)
 * Pi Camera (InnoMaker CAM OV5647, 5MP)
 
 Installation 
-------------
+-
 1. Run `setup.sh` (installs required Python modules)
 2. Edit `/etc/rc.local` with the following line to run server code at boot:
    `nohup python3 -u ~/magi/magi_server.py > ~/magi/nohup.out &`
 3. Synchronize Pi system time via "sudo timedatectl" for correct timestamps on file names
 
 Operation:
------------------
+-
 Open `magi.html` on the client laptop
 
 Pi:
------------------
+-
 * `magi_server.py`
 	- set up to launch on boot via `/etc/rc.local`
 	- handle Javascript client <--> Python server communication
@@ -29,7 +30,7 @@ Pi:
 	- filter noise and evaluate time-to-positive values
 
 Client:
---------------
+-
 * `magi.html`
 	- client user interface
 * `css/style.css`
