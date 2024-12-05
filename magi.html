@@ -53,7 +53,7 @@
 
 // Globals:
 let assayTimer;              // timer for running an assay
-let sampleInterval = 2500;   // data sampling interval (msec)
+let sampleInterval = 5000;   // data sampling interval (msec)
 let currentFileName;         // data file from most recent assay
 
 // Custom log function:
@@ -181,10 +181,12 @@ async function getImage() {
 		// Open image in new window when clicked:
 		img.addEventListener('click', () => {
 			var iframe = "<iframe width='640px' height='480px' src='"+img.src+"'></iframe>"
-			var x = window.open();
-			//x.document.open();
-			x.document.write(iframe);
-			//x.document.close();
+			var imgWindow = window.open('', '_blank');
+			//imgWindow.document.open();
+			imgWindow.document.write(new Date(8.64e15).toString())
+			imgWindow.document.write("<br>")
+			imgWindow.document.write(iframe);
+			imgWindow.document.close();
     });
 
 
