@@ -409,6 +409,7 @@ async function startAssay() {
 	}
 
 	// Start the assay:
+	updateChart();   // Initial chart update to avoid delay
 	assayTimer = setInterval(function(){updateChart()}, sampleInterval);
 }
 
