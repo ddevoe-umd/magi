@@ -52,10 +52,13 @@
 <script>
 
 // Globals:
-let assayTimer;              // timer for running an assay
-let sampleInterval = 5000;   // data sampling interval (msec)
-let startTime;               // starting time stamp
-let currentFileName;         // data file from most recent assay
+var assayTimer;              // timer for running an assay
+var sampleInterval = 5000;   // data sampling interval (msec)
+var startTime;               // starting time stamp
+var currentFileName;         // data file from most recent assay
+
+var img = document.getElementById('image');      // chip image
+var imgCaptureTime;                              // time stamp for image capture
 
 // Custom log function:
 function log(message) {
@@ -176,23 +179,27 @@ async function getImage() {
 
 		// Display the image:
 		//document.getElementById('image').src = base64Image;
-		const img = document.getElementById('image');
 		img.src = base64Image;
-    timestamp = ((Date.now()-startTime)/1000/60).toFixed(2);
-    
-		// Open image in new window when clicked:
-		img.addEventListener('click', () => {
-			const iframe = "<iframe width='640px' height='480px' src='"+img.src+"'></iframe>"
-			const imgWindow = window.open('', '_blank', "width=640,height=500");
-			imgWindow.document.write(`Timestamp: ${timestamp} min<br>`)
-			imgWindow.document.write(iframe);
-			imgWindow.document.close();
-    });
-
-
-
+    imgCaptureTime = ((Date.now()-startTime)/1000/60).toFixed(2);
 	}
 }
+
+// Open image in new window when clicked:
+img.addEventListener('click', () => {
+	const iframe = "<iframe width='640px' height='480px' src='"+img.src+"'></iframe>"
+	const imgWindow = window.open('', '_blank', 
+		"width=640,height=500,menubar=no,resizable=yes");
+	imgWindow.document.open();
+	imgWindow.document.write(`Timestamp: ${imgCaptureTime} min<br>`)
+	imgWindow.document.write(iframe);
+	imgWindow.document.close();
+	// Adjust window size to fit content:
+	imgWindow.onload = () => {
+    const w = imgWindow.document.body.scrollWidth;
+    const h = imgWindow.document.body.scrollHeight;
+    imgWindow.resizeTo(w+20, h+40); // Adjust for window borders
+	};
+});
 
 async function analyzeData() {
 	log("analyzeData() called");
