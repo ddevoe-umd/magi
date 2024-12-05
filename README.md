@@ -9,31 +9,32 @@ Installation
 ------------
 1. Run `setup.sh` (installs required Python modules)
 2. Edit `/etc/rc.local` with the following line to run server code at boot:
-   `nohup python3 -u ~pi/imager/python_server.py > ~pi/imager/nohup.out &`
+   `nohup python3 -u ~/magi/magi_server.py > ~/magi/nohup.out &`
 3. Synchronize Pi system time via "sudo timedatectl" for correct timestamps on file names
 
 Operation:
 -----------------
-Open `plot.html` on the client laptop
-
+Open `magi.html` on the client laptop
 
 Pi:
 -----------------
-* `python_server.py`
+* `magi_server.py`
 	- set up to launch on boot via `/etc/rc.local`
-	- handles all Javascript client <--> Python server communication
-	- manages PID control of heater
-	- access `cam4_server.py` to send data to client
-* `cam4_server.py`
-	- get data from the camera
-* `filter_data.py`
+	- handle Javascript client <--> Python server communication
+	- manage PID control of heater
+	- access `imager.py` to send data to client
+* `imager.py`
+	- get & process data from the camera
+* `filter_curves.py`
 	- filter noise and evaluate time-to-positive values
 
 Client:
 --------------
-* `plot.html`
+* `magi.html`
 	- client user interface
 * `css/style.css`
 	- style sheet for plot.html
 * `js/canvasjs.min.js`
 	- Javascript code for plotting (js folder must be in same directory as `plot.html`)
+* `fonts/OpenSans.ttf`
+	- Truetype font for image annotations
