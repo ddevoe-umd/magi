@@ -83,6 +83,10 @@ def roi_sum(image, roi):   # Return sum of pixel values in ROI
             r += image.getpixel(xy)[0]
             g += image.getpixel(xy)[1]
             b += image.getpixel(xy)[2]
+    pixels = roi_width * roi_height;
+    r /= pixels;
+    g /= pixels;
+    b /= pixels;
     return((r,b,g))
 
 def get_image_data():    # Extract fluorescence measurements from ROIs in image
