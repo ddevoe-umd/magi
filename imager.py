@@ -87,7 +87,7 @@ def roi_avg(image, roi):   # Return average pixel values in ROI
     r /= pixels;
     g /= pixels;
     b /= pixels;
-    return((r,b,g))
+    return((r,g,b))
 
 def get_image_data():    # Extract fluorescence measurements from ROIs in image
     cam.start()
@@ -98,7 +98,7 @@ def get_image_data():    # Extract fluorescence measurements from ROIs in image
     # Get average pixel value for each ROI:
     roi_avgs = []
     for roi in ROIs: 
-        roi_avgs.append(roi_avg(image, roi)[2])  # green channel
+        roi_avgs.append(roi_avg(image, roi)[1])  # green channel
     # Add timestamp & ROI averages to temp data file:
     timestamp = [int(time.time())]        # 1st entry is the time stamp
     with open('data/temp_data.csv', 'a') as f:
