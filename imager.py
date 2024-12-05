@@ -54,7 +54,7 @@ def add_ROIs(img, data):      # Add ROIs to a captured image
         # Draw the ROI box:
         draw.rectangle([roi, roi_lower_right], outline='#ffffff', fill=tuple(fill_color))
         # Add well target text:
-        font = ImageFont.truetype("fonts/OpenSans.ttf", 12)
+        font = ImageFont.truetype("fonts/OpenSans.ttf", 9)
         text_position = (roi[0] + roi_width + 1, roi[1])
         draw.text(text_position, well_config[idx],'#ffffff',font=font)
 
@@ -109,7 +109,6 @@ def get_image(data):       # Return a PIL image with colored ROI boxes
     image = cam.capture_image("main")   # capture as PIL image
     cam.stop()
     GPIO.output(LED_PIN, GPIO.LOW)
-    print('image acquired')
     pil_image = add_ROIs(image, data)  # Add ROIs to image
     buffer = BytesIO()                   # create a buffer to hold the image
     pil_image.save(buffer, format="PNG") # Convert image to PNG
