@@ -74,19 +74,17 @@ def setup_camera():    # Set up camera
     os.makedirs(data_directory, exist_ok=True)
     time.sleep(3)   # time to stabilize settings
 
-def roi_sum(image, roi):   # Return sum of pixel values in ROI
+def roi_avg(image, roi):   # Return average pixel values in ROI
     r,b,g = 0,0,0
     px,py = roi
     for x in range(int(px),int(px+roi_width)):
         for y in range(int(py),int(py+roi_height)):
             xy = (x,y)
-            r += image.getpixel(xy)[0]
-            g += image.getpixel(xy)[1]
-            b += image.getpixel(xy)[2]
+            r,g,b += image.getpixel(xy)
     pixels = roi_width * roi_height;
-    r /= pixels;
-    g /= pixels;
-    b /= pixels;
+    r = (r/pixels).toFixed(2);
+    g = (g/pixels).toFixed(2);
+    b = (b/pixels).toFixed(2);
     return((r,b,g))
 
 def get_image_data():    # Extract fluorescence measurements from ROIs in image
@@ -95,16 +93,16 @@ def get_image_data():    # Extract fluorescence measurements from ROIs in image
     image = cam.capture_image("main")   # capture as PIL image
     cam.stop()
     GPIO.output(LED_PIN, GPIO.LOW)      # Turn off LED
-    # Get sum of pixel values within all ROIs:
-    roi_sums = []
+    # Get average pixel value for each ROI:
+    roi_avgs = []
     for roi in ROIs: 
-        roi_sums.append(roi_sum(image, roi)[1])  # green channel
-    # Add timestamp & new ROI sums to temp data file:
+        roi_avgs.append(roi_avg(image, roi)[1])  # green channel
+    # Add timestamp & ROI averages to temp data file:
     timestamp = [int(time.time())]        # 1st entry is the time stamp
     with open('data/temp_data.csv', 'a') as f:
         writer = csv.writer(f, delimiter=',', lineterminator='\n')
-        writer.writerow(timestamp + roi_sums)
-    return(roi_sums)
+        writer.writerow(timestamp + roi_avgs)
+    return(roi_avgs)
 
 def get_image(data):       # Return a PIL image with colored ROI boxes
     # data structure: [wellConfig, target_dict]
