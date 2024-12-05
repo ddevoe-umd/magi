@@ -73,6 +73,8 @@ class S(BaseHTTPRequestHandler):
         #print(f'{action}: {data}')
         if action == 'start':            # Start the PID loop for temp control
             start_pid()
+            results = "PID thread started";
+            self.wfile.write(results.encode('utf-8'))
         if action == 'getImage':         # Get an image of the chip with colored ROIs
             # data structure from magi.html: [wellConfig, target_dict]
             results = imager.get_image(data)
