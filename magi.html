@@ -172,7 +172,23 @@ async function getImage() {
 		log("Image data received")
 		const base64Image = results;
 		let results_array = results.split(",");
-		document.getElementById('image').src = base64Image;
+
+		// Display the image:
+		//document.getElementById('image').src = base64Image;
+		const img = document.getElementById('image');
+		img.src = base64Image;
+
+		// Open image in new window when clicked:
+		img.addEventListener('click', () => {
+			var iframe = "<iframe width='640px' height='480px' src='"+img.src+"'></iframe>"
+			var x = window.open();
+			//x.document.open();
+			x.document.write(iframe);
+			//x.document.close();
+    });
+
+
+
 	}
 }
 

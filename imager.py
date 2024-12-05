@@ -100,7 +100,7 @@ def get_image(colors):       # Return a PIL image with colored ROI boxes
     image = cam.capture_image("main")   # capture as PIL image
     cam.stop()
     GPIO.output(LED_PIN, GPIO.LOW)
-    print('cam4_server: image acquired')
+    print('image acquired')
     pil_image = add_ROIs(image, colors)  # Add ROIs to image
     buffer = BytesIO()                   # create a buffer to hold the image
     pil_image.save(buffer, format="PNG") # Convert image to PNG
