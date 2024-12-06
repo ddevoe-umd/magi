@@ -90,36 +90,42 @@ def roi_avg(image, roi):   # Return average pixel values in ROI
     return((r,g,b))
 
 def get_image_data():    # Extract fluorescence measurements from ROIs in image
-    cam.start()
-    GPIO.output(LED_PIN, GPIO.HIGH)     # Turn on LED
-    image = cam.capture_image("main")   # capture as PIL image
-    cam.stop()
-    GPIO.output(LED_PIN, GPIO.LOW)      # Turn off LED
-    # Get average pixel value for each ROI:
-    roi_avgs = []
-    for roi in ROIs: 
-        roi_avgs.append(roi_avg(image, roi)[1])  # green channel
-    # Add timestamp & ROI averages to temp data file:
-    timestamp = [int(time.time())]        # 1st entry is the time stamp
-    with open('data/temp_data.csv', 'a') as f:
-        writer = csv.writer(f, delimiter=',', lineterminator='\n')
-        writer.writerow(timestamp + roi_avgs)
-    return(roi_avgs)
+    try:
+        cam.start()
+        GPIO.output(LED_PIN, GPIO.HIGH)     # Turn on LED
+        image = cam.capture_image("main")   # capture as PIL image
+        cam.stop()
+        GPIO.output(LED_PIN, GPIO.LOW)      # Turn off LED
+        # Get average pixel value for each ROI:
+        roi_avgs = []
+        for roi in ROIs: 
+            roi_avgs.append(roi_avg(image, roi)[1])  # green channel
+        # Add timestamp & ROI averages to temp data file:
+        timestamp = [int(time.time())]        # 1st entry is the time stamp
+        with open('data/temp_data.csv', 'a') as f:
+            writer = csv.writer(f, delimiter=',', lineterminator='\n')
+            writer.writerow(timestamp + roi_avgs)
+        return(roi_avgs)
+    except Exception as e:
+        print(f'Exception in get_image_data(): {e}')
 
 def get_image(data):       # Return a PIL image with colored ROI boxes
     # data structure: [wellConfig, target_dict]
     # Acquire an image:
-    cam.start()
-    GPIO.output(LED_PIN, GPIO.HIGH)
-    image = cam.capture_image("main")   # capture as PIL image
-    cam.stop()
-    GPIO.output(LED_PIN, GPIO.LOW)
-    pil_image = add_ROIs(image, data)  # Add ROIs to image
-    buffer = BytesIO()                   # create a buffer to hold the image
-    pil_image.save(buffer, format="PNG") # Convert image to PNG
-    png_image = buffer.getvalue()
-    png_base64 = base64.b64encode(png_image).decode('utf-8')  # Encode as base64
-    return(f"data:image/png;base64,{png_base64}")
+    try:
+        cam.start()
+        GPIO.output(LED_PIN, GPIO.HIGH)
+        image = cam.capture_image("main")   # capture as PIL image
+        cam.stop()
+        GPIO.output(LED_PIN, GPIO.LOW)
+        pil_image = add_ROIs(image, data)  # Add ROIs to image
+        buffer = BytesIO()                   # create a buffer to hold the image
+        pil_image.save(buffer, format="PNG") # Convert image to PNG
+        png_image = buffer.getvalue()
+        png_base64 = base64.b64encode(png_image).decode('utf-8')  # Encode as base64
+        return(f"data:image/png;base64,{png_base64}")
+    except Exception as e:
+        print(f'Exception in get_image(): {e}')
 
 def end_imaging():
     # Rename temp data file:

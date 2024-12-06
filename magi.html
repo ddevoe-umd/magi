@@ -7,7 +7,7 @@
 <title>MAGI</title>
 </head>
 
-<body>
+<body style="background-color:LightSteelBlue;">
 
 <div class="main-container">
 
@@ -199,6 +199,31 @@ img.addEventListener('click', () => {
     imgWindow.resizeTo(w+20, h+40); // Adjust for window borders
 	};
 });
+
+// Enable image zoom/unzoom:
+document.addEventListener("DOMContentLoaded", () => {
+    const iframe = document.querySelector("iframe"); // Replace with the selector for your iframe
+    let zoomed = false;
+    iframe.addEventListener("load", () => {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        const img = iframeDoc.querySelector("img");
+        img.style.cursor = "pointer"; // Make it clear the image is clickable
+        img.addEventListener("click", () => {
+            zoomed = !zoomed;
+            if (zoomed) {
+                img.style.transform = "scale(2)";
+                img.style.transformOrigin = "center"; // Adjust scaling origin if needed
+                iframe.style.width = `${img.clientWidth * 2}px`;
+                iframe.style.height = `${img.clientHeight * 2}px`;
+            } else {
+                img.style.transform = "scale(1)";
+                iframe.style.width = `${img.clientWidth}px`;
+                iframe.style.height = `${img.clientHeight}px`;
+            }
+        });
+    });
+});
+
 
 async function analyzeData() {
 	log("analyzeData() called");
