@@ -61,60 +61,29 @@ class S(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*');
         self.end_headers()
 
-
-
-
+    # File download requests come as GET requests:
     def do_GET(self):
-        file_path = self.path 
-        if os.path.isfile(file_path):
-            file_size = os.path.getsize(file_path)
-            if file_path.endswith(".csv"):
+        if os.path.isfile(self.path):  # self.path is the GET request path
+            print(f'opening {self.path}')
+            file_size = os.path.getsize(self.path)
+            if self.path.endswith(".csv"):
                 content_type = "text/csv"
             else:
                 content_type = "application/octet-stream"
             self.send_response(200)
             self.send_header("Content-Type", content_type)
-            self.send_header("Content-Disposition", f'attachment; filename="{os.path.basename(file_path)}"')
+            self.send_header("Content-Disposition", f'attachment; filename="{os.path.basename(self.path)}"')
             self.send_header("Content-Length", str(file_size))
             self.end_headers()
-
-            # Send the file content:
-            with open(file_path, "rb") as file:
-                self.wfile.write(file.read())
+            with open(file_path, "rb") as file:    
+                self.wfile.write(file.read())       # Send the file
         else:
+            print(f'file access error')
             # If file not found, send a 404 response
             self.send_response(404)
             self.send_header("Content-Type", "text/plain")
             self.end_headers()
             self.wfile.write(b"File not found.")
-
-
-
-
-    # File download requests come as GET requests:
-    def do_GET2(self): 
-        print(self.path)
-        try:
-            if self.path.endswith(".csv"):
-                with open(self.path) as f:
-                    self.send_response(200)
-                    self.send_header('Content-type', 'text/csv')
-                    self.end_headers()
-                    results = f.read()
-                    self.wfile.write(results.encode('utf-8'))
-
-                    f.close()
-                    return
-
-        except IOError:
-            print("error")
-            self.send_error(404,'File Not Found: %s' % self.path)
-
-
-        #self._set_response()
-        #results = imager.get_data()
-        #self.wfile.write(bytes(results).encode('utf-8'))
-        #self.wfile.write(",".join([str(x) for x in results]).encode('utf-8'))
 
     # Server function requests come as POST requests:
     def do_POST(self):
