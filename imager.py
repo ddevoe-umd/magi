@@ -97,9 +97,9 @@ def roi_avg(image, roi):   # Return average pixel values in ROI
             g += image.getpixel(xy)[1]
             b += image.getpixel(xy)[2]
     pixels = roi_width * roi_height;
-    r /= pixels;
-    g /= pixels;
-    b /= pixels;
+    r *= int(100/pixels);
+    g *= int(100/pixels);
+    b *= int(100/pixels);
     return((r,g,b))
 
 def get_image_data():    # Extract fluorescence measurements from ROIs in image
@@ -157,7 +157,8 @@ def analyze_data(filename):
     results = filter(data_directory + '/' + filename)   # run filter function from filter_data.py
 
     # Save filtered data to json file:
-    time_in_min = data[0]["x"]
+    data = results[1]
+    time_in_min = data[0]["x"]   # pull out shared time column (same for all wells)
     columns = [entry["y"] for entry in data]
     with open(data_directory + '/' + filename + '.filt.json', 'a') as f:
         #fieldnames = ["time (min)", "fluorescence"]
