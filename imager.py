@@ -1,14 +1,23 @@
 import time
 from picamera2 import Picamera2
+print('picamera2 loaded')
 import numpy as np
+print('numpy loaded')
 import csv
+print('csv loaded')
 import os
+print('os loaded')
 from filter_curves import filter
+print('filter_curves loaded')
 import RPi.GPIO as GPIO
+print('RPi.GPIO loaded')
 
 from PIL import Image, ImageDraw, ImageFont
+print('PIL loaded')
 import base64
+print('base64 loaded')
 from io import BytesIO
+print('io loaded')
 
 LED_PIN = 13
 
@@ -18,6 +27,7 @@ h = int(3*w/4)  # native 4:3 aspect ratio
 res = (w,h)  
 
 cam = Picamera2() 
+print('Picamera2 declared')
 
 data_directory = 'data'
 
@@ -71,6 +81,7 @@ def setup_camera():    # Set up camera
         "AwbEnable": False,
         "ColourGains": (1.2,1.0)
         })
+    print('Picamera2 setup complete')
     os.makedirs(data_directory, exist_ok=True)
     time.sleep(3)   # time to stabilize settings
 

@@ -5,18 +5,24 @@
 # Start in background, with stdout logged to nohup.out:
 # nohup python3 -u python_server.py &
 
-import simple_pid   # see https://pypi.org/project/simple-pid/
+from simple_pid import PID   # see https://pypi.org/project/simple-pid/
+print('simple_pid loaded')
 import json
+print('json loaded')
 import imager       # camera image capture and analysis
-
+print('imager loaded')
 from http.server import BaseHTTPRequestHandler, HTTPServer
-
+print('http.server loaded')
 import sys
+print('sys loaded')
 import time
+print('time loaded')
 import threading
-from simple_pid import PID
+print('threading loaded')
 import RPi.GPIO as GPIO
+print('RPi.GPIO loaded')
 from gpiozero import MCP3008
+print('gpiozero loaded')
 
 # GLOBALS:
 
@@ -43,10 +49,8 @@ const = MCP3008(channel=0)
 Tb = MCP3008(channel=1)
 Tt = MCP3008(channel=2)
 
-
 # Flag to halt temperature control thread:
 stop_event = threading.Event()
-
 
 class S(BaseHTTPRequestHandler):
     def _set_response(self):

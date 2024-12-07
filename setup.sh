@@ -1,18 +1,21 @@
 #! /bin/bash
 
 # Make script executable via "chmod 755 setup.sh"
-#
-# Setup on a Pi Zero 2 takes >1 hour
 
 echo "==========================================="
 echo "apt-get update"
 echo "==========================================="
 sudo apt-get update
 
-#echo "==========================================="
-#echo "apt-get upgrade"
-#echo "==========================================="
-#sudo apt-get upgrade
+echo "==========================================="
+echo "apt-get upgrade (may take >30 min)"
+echo "==========================================="
+sudo apt-get upgrade
+
+echo "==========================================="
+echo "pip"
+echo "==========================================="
+sudo apt install python3-pip
 
 echo "==========================================="
 echo "picamera2"
@@ -35,11 +38,6 @@ echo "(may break on sympy setup, continue"
 echo " installation manually if necessary)"
 echo "==========================================="
 sudo apt-get --yes install python3-pandas
-
-echo "==========================================="
-echo "pip"
-echo "==========================================="
-sudo apt install python3-pip
 
 echo "==========================================="
 echo "simple-pid"
