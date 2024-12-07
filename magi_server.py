@@ -15,6 +15,8 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 print('http.server loaded')
 import sys
 print('sys loaded')
+import os
+print('os loaded')
 import time
 print('time loaded')
 import threading
