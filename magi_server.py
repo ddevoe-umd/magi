@@ -65,7 +65,7 @@ class S(BaseHTTPRequestHandler):
 
 
     def do_GET(self):
-        file_path = "." + self.path  # Assuming files are in the current directory
+        file_path = self.path 
         if os.path.isfile(file_path):
             file_size = os.path.getsize(file_path)
             if file_path.endswith(".csv"):
