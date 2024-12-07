@@ -65,13 +65,14 @@ class S(BaseHTTPRequestHandler):
         try:
             if self.path.endswith(".csv"):
                 #with open(curdir + sep + self.path) #self.path has /test.html
-                with open("test.csv") #self.path has /test.html
-                self.send_response(200)
-                self.send_header('Content-type', 'text/csv')
-                self.end_headers()
-                self.wfile.write(f.read())
-                f.close()
-                return
+                #with open("/path/to/ramdisk/test.csv") as f: #self.path has /test.html
+                with open("test.csv") as f:#self.path has /test.html
+                    self.send_response(200)
+                    self.send_header('Content-type', 'text/csv')
+                    self.end_headers()
+                    self.wfile.write(f.read())
+                    f.close()
+                    return
 
         except IOError:
             self.send_error(404,'File Not Found: %s' % self.path)
