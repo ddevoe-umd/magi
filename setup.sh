@@ -1,6 +1,9 @@
 #! /bin/bash
 
-# Make script executable via "chmod 755 setup.sh"
+# Make script executable:
+#     chmod +x setup.sh
+# Run as sudo: 
+#     sudo ./setup.sh
 
 echo "==========================================="
 echo "Set up 25 MB RAM disk to avoid writing data to SD card"
