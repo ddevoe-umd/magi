@@ -158,6 +158,7 @@ def analyze_data(filename):
 
     # Save filtered data to json file:
     data = results[1]
+    print(data)
     time_in_min = data[0]["x"]   # pull out shared time column (same for all wells)
     columns = [entry["y"] for entry in data]
     with open(data_directory + '/' + filename + '.filt.json', 'a') as f:
