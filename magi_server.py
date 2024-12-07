@@ -70,7 +70,9 @@ class S(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.send_header('Content-type', 'text/csv')
                     self.end_headers()
-                    self.wfile.write(f.read())
+                    results = f.read()
+                    self.wfile.write(results.encode('utf-8'))
+
                     f.close()
                     return
 
