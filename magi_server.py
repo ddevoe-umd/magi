@@ -59,12 +59,15 @@ class S(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*');
         self.end_headers()
 
-    def do_GET(self):
-        self._set_response()
-        results = imager.get_data()
+    # File download requests will come as GET requests:
+    def do_GET(self): 
+        print(self.path)
+        #self._set_response()
+        #results = imager.get_data()
         #self.wfile.write(bytes(results).encode('utf-8'))
-        self.wfile.write(",".join([str(x) for x in results]).encode('utf-8'))
+        #self.wfile.write(",".join([str(x) for x in results]).encode('utf-8'))
 
+    # Server functions will come as POST requests:
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])  # gets the size of data
         post_data = self.rfile.read(content_length)           # get the data
