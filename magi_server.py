@@ -77,6 +77,7 @@ class S(BaseHTTPRequestHandler):
                     return
 
         except IOError:
+            print("error")
             self.send_error(404,'File Not Found: %s' % self.path)
 
 
