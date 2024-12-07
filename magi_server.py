@@ -5,26 +5,18 @@
 # Start in background, with stdout logged to nohup.out:
 # nohup python3 -u python_server.py &
 
-from simple_pid import PID   # see https://pypi.org/project/simple-pid/
-print('simple_pid loaded')
+import simple_pid   # see https://pypi.org/project/simple-pid/
 import json
-print('json loaded')
 import imager       # camera image capture and analysis
-print('imager loaded')
+
 from http.server import BaseHTTPRequestHandler, HTTPServer
-print('http.server loaded')
+
 import sys
-print('sys loaded')
-import os
-print('os loaded')
 import time
-print('time loaded')
 import threading
-print('threading loaded')
+from simple_pid import PID
 import RPi.GPIO as GPIO
-print('RPi.GPIO loaded')
 from gpiozero import MCP3008
-print('gpiozero loaded')
 
 # GLOBALS:
 
@@ -51,8 +43,10 @@ const = MCP3008(channel=0)
 Tb = MCP3008(channel=1)
 Tt = MCP3008(channel=2)
 
+
 # Flag to halt temperature control thread:
 stop_event = threading.Event()
+
 
 class S(BaseHTTPRequestHandler):
     def _set_response(self):
@@ -61,31 +55,12 @@ class S(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*');
         self.end_headers()
 
-    # File download requests come as GET requests:
     def do_GET(self):
-        if os.path.isfile(self.path):  # self.path is the GET request path
-            print(f'opening {self.path}')
-            file_size = os.path.getsize(self.path)
-            if self.path.endswith(".csv"):
-                content_type = "text/csv"
-            else:
-                content_type = "application/octet-stream"
-            self.send_response(200)
-            self.send_header("Content-Type", content_type)
-            self.send_header("Content-Disposition", f'attachment; filename="{os.path.basename(self.path)}"')
-            self.send_header("Content-Length", str(file_size))
-            self.end_headers()
-            with open(self.path, "rb") as file:    
-                self.wfile.write(file.read())       # Send the file
-        else:
-            print(f'file access error')
-            # If file not found, send a 404 response
-            self.send_response(404)
-            self.send_header("Content-Type", "text/plain")
-            self.end_headers()
-            self.wfile.write(b"File not found.")
+        self._set_response()
+        results = imager.get_data()
+        #self.wfile.write(bytes(results).encode('utf-8'))
+        self.wfile.write(",".join([str(x) for x in results]).encode('utf-8'))
 
-    # Server function requests come as POST requests:
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])  # gets the size of data
         post_data = self.rfile.read(content_length)           # get the data
@@ -98,8 +73,6 @@ class S(BaseHTTPRequestHandler):
         #print(f'{action}: {data}')
         if action == 'start':            # Start the PID loop for temp control
             start_pid()
-            results = "PID thread started";
-            self.wfile.write(results.encode('utf-8'))
         if action == 'getImage':         # Get an image of the chip with colored ROIs
             # data structure from magi.html: [wellConfig, target_dict]
             results = imager.get_image(data)
@@ -113,10 +86,9 @@ class S(BaseHTTPRequestHandler):
             end_pid()
             self.wfile.write(results.encode('utf-8'))
         elif action == 'analyze':        # Filter curves & extract TTP values
-            filename = data;
-            results = imager.analyze_data(filename)
-            self.wfile.write(json.dumps(results).encode('utf-8'))
-            #self.wfile.write(results.encode('utf-8'))
+            results = imager.analyze_data(data)
+            #self.wfile.write(json.dumps(results).encode('utf-8'))
+            self.wfile.write(results.encode('utf-8'))
         elif action == 'shutdown':       # Power down the Pi
             shutdown()
 
