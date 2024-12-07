@@ -97,9 +97,9 @@ def roi_avg(image, roi):   # Return average pixel values in ROI
             g += image.getpixel(xy)[1]
             b += image.getpixel(xy)[2]
     pixels = roi_width * roi_height;
-    r *= int(100/pixels);
-    g *= int(100/pixels);
-    b *= int(100/pixels);
+    r = int(100*r/pixels);
+    g = int(100*g/pixels);
+    b = int(100*b/pixels);
     return((r,g,b))
 
 def get_image_data():    # Extract fluorescence measurements from ROIs in image
