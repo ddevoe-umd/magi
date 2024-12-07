@@ -4,8 +4,6 @@
 
 import numpy as np
 print('numpy loaded')
-import json
-print('json loaded')
 from scipy.signal import butter, filtfilt
 print('scipy.signal loaded')
 import matplotlib.pyplot as plt

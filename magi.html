@@ -143,7 +143,7 @@ async function endAssay() {
 		log(results);
 		currentFileName = results;
 		document.getElementById("analyze").disabled = false;
-		document.getElementById('analyze').innerText = "Analyze " + currentFileName;
+		document.getElementById('analyze').innerText = "Analyze " + currentFileName + ".csv";
 		document.getElementById("shutdown").disabled = false;
 	}
 }
@@ -200,7 +200,7 @@ img.addEventListener('click', () => {
 	};
 });
 
-// Enable image zoom/unzoom:
+// Enable image zoom/unzoom: NOT YET WORKING
 document.addEventListener("DOMContentLoaded", () => {
     const iframe = document.querySelector("iframe"); // Replace with the selector for your iframe
     let zoomed = false;
@@ -278,10 +278,10 @@ function onLegendClick(e) {
 }
 
 function setupAmplificationChart(targetContainer) {
-  // wellArray is a list to hold plot data.
-  // Each list element is for a single well.
-  // Each sub-list consists of single dict elements (one per well)
-  // with format {x: [times_in_min], y: [values_to_plot]}.
+  // wellArray is a list to hold plot data with format:
+  //   [ [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 1
+  //     [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 2
+  //      ... ]                                     <- etc
 
 	let wellArray = [[],[],[],[],[],[],[],[],[],[],[],[]];
 

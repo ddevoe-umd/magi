@@ -142,9 +142,8 @@ def get_image(data):       # Return a PIL image with colored ROI boxes
 
 def end_imaging():
     # Rename temp data file:
-    date_str = time.strftime("%Y%m%d_%Hh%Mm%Ss")
-    output_filename = date_str + '.csv'
-    os.rename(data_directory + '/temp_data.csv', data_directory + '/' + output_filename)
+    output_filename = time.strftime("%Y%m%d_%Hh%Mm%Ss")
+    os.rename(data_directory + '/temp_data.csv', data_directory + '/' + output_filename + '.csv')
     with open(data_directory + '/temp_data.csv', 'w') as f:
         pass      # Delete contents of the temp data file
     return(output_filename)
@@ -156,15 +155,15 @@ def analyze_data(filename):
     #   [ [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 1
     #     [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 2
     #      ... ]                                     <- etc
-    results = filter(data_directory + '/' + filename)   # run filter function from filter_data.py
+    results = filter(data_directory + '/' + filename + '.csv') 
 
-    # Save filtered data to json file:
+    # Save filtered data to csv file:
     data = results[1]
     time_in_min = [entry['x'] for entry in data[0]]  # time values (same for all wells)
     columns = []
     for well_data in data:
         columns.append([entry["y"] for entry in well_data])
-    with open(data_directory + '/' + filename + '.filt.json', 'a') as f:
+    with open(data_directory + '/' + filename + '_filt.csv', 'a') as f:
         #fieldnames = ["time (min)", "fluorescence"]
         writer = csv.writer(f)
         headers = ["time (min)"] + [f"well {i}" for i in range(len(columns))]
