@@ -152,22 +152,25 @@ def end_imaging():
 def analyze_data(filename):
     # filter() returns format: [ttp, y_filtered_dict]
     # where ttp is a list of TTP values for each well, and
-    # y_filtered_dict is a list of single dict elements (one per well) with format:
-    #   {x: [times_in_min], y: [values_to_plot]}
+    # y_filtered_dict is a list of data with format:
+    #   [ [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 1
+    #     [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 2
+    #      ... ]                                     <- etc
     results = filter(data_directory + '/' + filename)   # run filter function from filter_data.py
 
     # Save filtered data to json file:
     data = results[1]
-    print(data)
-    time_in_min = data[0]["x"]   # pull out shared time column (same for all wells)
-    columns = [entry["y"] for entry in data]
+    time_in_min = [entry['x'] for entry in data[0]]  # time values (same for all wells)
+    columns = []
+    for well_data in data:
+        columns.append([entry["y"] for entry in well_data])
     with open(data_directory + '/' + filename + '.filt.json', 'a') as f:
         #fieldnames = ["time (min)", "fluorescence"]
         writer = csv.writer(file)
-        headers = ["time_in_min"] + [f"well {i}" for i in range(len(columns))]
+        headers = ["time (min)"] + [f"well {i}" for i in range(len(columns))]
         writer.writerow(headers)
         for i, t in enumerate(time_in_min):
-            row = [t] + [values[i] for values in value_columns]
+            row = [t] + [values[i] for values in columns]
             writer.writerow(row)
 
     # Return original list of dicts:
