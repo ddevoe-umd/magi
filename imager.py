@@ -166,7 +166,7 @@ def analyze_data(filename):
         columns.append([entry["y"] for entry in well_data])
     with open(data_directory + '/' + filename + '.filt.json', 'a') as f:
         #fieldnames = ["time (min)", "fluorescence"]
-        writer = csv.writer(file)
+        writer = csv.writer(f)
         headers = ["time (min)"] + [f"well {i}" for i in range(len(columns))]
         writer.writerow(headers)
         for i, t in enumerate(time_in_min):
