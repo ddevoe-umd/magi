@@ -75,7 +75,7 @@ class S(BaseHTTPRequestHandler):
             self.send_header("Content-Disposition", f'attachment; filename="{os.path.basename(self.path)}"')
             self.send_header("Content-Length", str(file_size))
             self.end_headers()
-            with open(file_path, "rb") as file:    
+            with open(self.path, "rb") as file:    
                 self.wfile.write(file.read())       # Send the file
         else:
             print(f'file access error')
