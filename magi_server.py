@@ -61,13 +61,8 @@ class S(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*');
         self.end_headers()
 
-    def do_GET(self):
-        #self._set_response()
-        #self.wfile.write(bytes(results).encode('utf-8'))
-        pass
-
     # File download requests come as GET requests:
-    def do_GET_qw(self):
+    def do_GET(self):
         if os.path.isfile(self.path):  # self.path is the GET request path
             print(f'accessing {self.path}')
             file_size = os.path.getsize(self.path)
