@@ -59,8 +59,38 @@ class S(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*');
         self.end_headers()
 
+
+
+
+    def do_GET(self):
+        file_path = "." + self.path  # Assuming files are in the current directory
+        if os.path.isfile(file_path):
+            file_size = os.path.getsize(file_path)
+            if file_path.endswith(".csv"):
+                content_type = "text/csv"
+            else:
+                content_type = "application/octet-stream"
+            self.send_response(200)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Disposition", f'attachment; filename="{os.path.basename(file_path)}"')
+            self.send_header("Content-Length", str(file_size))
+            self.end_headers()
+
+            # Send the file content:
+            with open(file_path, "rb") as file:
+                self.wfile.write(file.read())
+        else:
+            # If file not found, send a 404 response
+            self.send_response(404)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(b"File not found.")
+
+
+
+
     # File download requests come as GET requests:
-    def do_GET(self): 
+    def do_GET2(self): 
         print(self.path)
         try:
             if self.path.endswith(".csv"):
