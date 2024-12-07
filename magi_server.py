@@ -59,15 +59,30 @@ class S(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*');
         self.end_headers()
 
-    # File download requests will come as GET requests:
+    # File download requests come as GET requests:
     def do_GET(self): 
         print(self.path)
+        try:
+            if self.path.endswith(".csv"):
+                #with open(curdir + sep + self.path) #self.path has /test.html
+                with open("test.csv") #self.path has /test.html
+                self.send_response(200)
+                self.send_header('Content-type', 'text/csv')
+                self.end_headers()
+                self.wfile.write(f.read())
+                f.close()
+                return
+
+        except IOError:
+            self.send_error(404,'File Not Found: %s' % self.path)
+
+
         #self._set_response()
         #results = imager.get_data()
         #self.wfile.write(bytes(results).encode('utf-8'))
         #self.wfile.write(",".join([str(x) for x in results]).encode('utf-8'))
 
-    # Server functions will come as POST requests:
+    # Server function requests come as POST requests:
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])  # gets the size of data
         post_data = self.rfile.read(content_length)           # get the data
