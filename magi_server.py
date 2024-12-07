@@ -64,9 +64,7 @@ class S(BaseHTTPRequestHandler):
         print(self.path)
         try:
             if self.path.endswith(".csv"):
-                #with open(curdir + sep + self.path) #self.path has /test.html
-                #with open("/path/to/ramdisk/test.csv") as f: #self.path has /test.html
-                with open("test.csv") as f:#self.path has /test.html
+                with open(self.path) as f:
                     self.send_response(200)
                     self.send_header('Content-type', 'text/csv')
                     self.end_headers()
