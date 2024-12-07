@@ -5,6 +5,8 @@ import numpy as np
 print('numpy loaded')
 import csv
 print('csv loaded')
+import json
+print('json loaded')
 import os
 print('os loaded')
 from filter_curves import filter
