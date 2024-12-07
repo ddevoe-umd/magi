@@ -149,6 +149,10 @@ def end_imaging():
     return(output_filename)
 
 def analyze_data(filename):
+    # Get results as [ttp, y_filtered_dict]:
     results = filter(data_directory + '/' + filename)   # run filter function from filter_data.py
+    # Save filtered data to json file:
+    with open(data_directory + '/' + filename + '.filt.json', 'a') as f:
+        json.dump(results[1], f)
     return(results)
 

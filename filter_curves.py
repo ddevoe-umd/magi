@@ -3,10 +3,15 @@
 # Will remove noise due to bubbles and spurious measurement errors
 
 import numpy as np
+print('numpy loaded')
 import json
+print('json loaded')
 from scipy.signal import butter, filtfilt
+print('scipy.signal loaded')
 import matplotlib.pyplot as plt
+print('matplotlib.pyplot loaded')
 import pandas as pd
+print('pandas loaded')
 
 def butter_lowpass_filter(data, cutoff, fs, order):
     nyq = 0.5 * fs  # Nyquist Frequency
@@ -74,7 +79,7 @@ def filter(filename):
             ttp.append(get_ttp(t,yf_norm))
 
     all_data = [ttp, y_filtered_dict]
-    return(json.dumps(all_data))
+    return(all_data)
 
 
 
