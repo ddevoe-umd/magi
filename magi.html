@@ -278,6 +278,11 @@ function onLegendClick(e) {
 }
 
 function setupAmplificationChart(targetContainer) {
+  // wellArray is a list to hold plot data.
+  // Each list element is for a single well.
+  // Each sub-list consists of single dict elements (one per well)
+  // with format {x: [times_in_min], y: [values_to_plot]}.
+
 	let wellArray = [[],[],[],[],[],[],[],[],[],[],[],[]];
 
 	// Set up plot info:

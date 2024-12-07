@@ -47,6 +47,7 @@ def filter(filename):
     
         cols = df.columns[1:]
     
+        # Find TTP for each well:
         for idx in range(1,13):
             y = df.iloc[:,idx].tolist()
             y = y[cut_number:]     # Remove initial data points
@@ -72,7 +73,7 @@ def filter(filename):
             # normalize to max value:
             y_norm = [x/max(yf) for x in y]
             yf_norm = [x/max(yf) for x in yf]
-    
+
             yf_dict = [{'x':t[i], 'y':yf_norm[i]} for i in range(len(t))]
             y_filtered_dict.append(yf_dict)
 

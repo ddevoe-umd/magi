@@ -13,7 +13,6 @@ from filter_curves import filter
 print('filter_curves loaded')
 import RPi.GPIO as GPIO
 print('RPi.GPIO loaded')
-
 from PIL import Image, ImageDraw, ImageFont
 print('PIL loaded')
 import base64
@@ -151,10 +150,24 @@ def end_imaging():
     return(output_filename)
 
 def analyze_data(filename):
-    # Get results as [ttp, y_filtered_dict]:
+    # filter() returns format: [ttp, y_filtered_dict]
+    # where ttp is a list of TTP values for each well, and
+    # y_filtered_dict is a list of single dict elements (one per well) with format:
+    #   {x: [times_in_min], y: [values_to_plot]}
     results = filter(data_directory + '/' + filename)   # run filter function from filter_data.py
+
     # Save filtered data to json file:
+    time_in_min = data[0]["x"]
+    columns = [entry["y"] for entry in data]
     with open(data_directory + '/' + filename + '.filt.json', 'a') as f:
-        json.dump(results[1], f)
+        #fieldnames = ["time (min)", "fluorescence"]
+        writer = csv.writer(file)
+        headers = ["time_in_min"] + [f"well {i}" for i in range(len(columns))]
+        writer.writerow(headers)
+        for i, t in enumerate(time_in_min):
+            row = [t] + [values[i] for values in value_columns]
+            writer.writerow(row)
+
+    # Return original list of dicts:
     return(results)
 
