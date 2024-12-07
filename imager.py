@@ -29,7 +29,8 @@ res = (w,h)
 cam = Picamera2() 
 print('Picamera2 declared')
 
-data_directory = 'data'
+#data_directory = 'data'
+data_directory = '/path/to/ramdisk'
 
 # Set up list containing upper left corner of all ROIs:
 well_cols = 4   # number of well columns
@@ -113,7 +114,7 @@ def get_image_data():    # Extract fluorescence measurements from ROIs in image
             roi_avgs.append(roi_avg(image, roi)[1])  # green channel
         # Add timestamp & ROI averages to temp data file:
         timestamp = [int(time.time())]        # 1st entry is the time stamp
-        with open('data/temp_data.csv', 'a') as f:
+        with open(data_directory + '/temp_data.csv', 'a') as f:
             writer = csv.writer(f, delimiter=',', lineterminator='\n')
             writer.writerow(timestamp + roi_avgs)
         return(roi_avgs)
