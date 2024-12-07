@@ -3,6 +3,20 @@
 # Make script executable via "chmod 755 setup.sh"
 
 echo "==========================================="
+echo "Set up 25 MB RAM disk to avoid writing data to SD card"
+echo "==========================================="
+FSTAB_LINE="tmpfs /path/to/ramdisk tmpfs defaults,size=25M 0 0"
+if grep -Fxq "$FSTAB_LINE" /etc/fstab; then
+    echo "RAM disk already set up in /etc/fstab"
+else
+    echo "Backing up /etc/fstab to /etc/fstab.bak"
+    sudo cp /etc/fstab /etc/fstab.bak
+    echo "Adding the line to /etc/fstab"
+    echo "$FSTAB_LINE" | sudo tee -a /etc/fstab > /dev/null
+    echo "Line added successfully. Verify /etc/fstab before rebooting."
+fi
+
+echo "==========================================="
 echo "apt-get update"
 echo "==========================================="
 sudo apt-get update
@@ -46,4 +60,5 @@ sudo python3 -m pip install --break-system-packages simple-pid
 
 echo "==========================================="
 echo "              SETUP COMPLETE"
+echo "          REBOOT SYSTEM BEFORE USE"
 echo "==========================================="
