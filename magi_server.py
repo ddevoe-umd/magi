@@ -63,7 +63,7 @@ class S(BaseHTTPRequestHandler):
 
     # File download requests come as GET requests:
     def do_GET(self):
-        if os.path.isfile(self.path):  # self.path is the GET request path
+        if os.path.isfile(self.path):
             print(f'accessing {self.path}')
             file_size = os.path.getsize(self.path)
             if self.path.endswith(".csv"):
@@ -78,11 +78,11 @@ class S(BaseHTTPRequestHandler):
             with open(self.path, "rb") as file:    
                 self.wfile.write(file.read())       # Send the file
         else:
-            print(f'file access error')
-            self.send_response(404)
-            self.send_header("Content-Type", "text/plain")
+            print(f'File not found (204 = no operation)')
+            self.send_response(204)
+            self.send_header("Content-Length", "0")
             self.end_headers()
-            self.wfile.write(b"File not found.")
+            #self.wfile.write(b"File not found.")
 
     # Server function requests come as POST requests:
     def do_POST(self):
