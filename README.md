@@ -8,7 +8,7 @@ Hardware:
 
 Installation 
 -
-1. Install required Python modules:
+1. Install required Python modules and set up ram disk:
    `setup.sh`
 2. Edit `/etc/rc.local` to run server code at boot:
    `nohup python3 -u ~/magi/magi_server.py > ~/magi/nohup.out &`
