@@ -27,8 +27,9 @@ fi
 
 echo "==========================================="
 echo "Edit rc.local to run MAGI server at boot"
+echo "(assumes default pi user -- edit as needed)"
 echo "==========================================="
-LINE="nohup python3 -u ~/magi/magi_server.py > ~/magi/nohup.out &"
+LINE="python3 /home/pi/magi/magi_server.py > /home/pi/magi/magi_server.log 2>&1 &"
 RC_LOCAL="/etc/rc.local"
 # Check if the file exists
 if [ ! -f "$RC_LOCAL" ]; then
