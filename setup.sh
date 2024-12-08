@@ -6,6 +6,11 @@
 #     sudo ./setup.sh
 
 echo "==========================================="
+echo "Synchronize system time"
+echo "==========================================="
+sudo timedatectl
+
+echo "==========================================="
 echo "Set up 25 MB RAM disk to avoid writing data to SD card"
 echo "==========================================="
 FSTAB_LINE="tmpfs /path/to/ramdisk tmpfs defaults,size=25M 0 0"
@@ -18,6 +23,32 @@ else
     echo "$FSTAB_LINE" | sudo tee -a /etc/fstab > /dev/null
     echo "Line added successfully. Verify /etc/fstab before rebooting."
 fi
+
+
+echo "==========================================="
+echo "Edit rc.local to run MAGI server at boot"
+echo "==========================================="
+LINE="nohup python3 -u ~/magi/magi_server.py > ~/magi/nohup.out &"
+RC_LOCAL="/etc/rc.local"
+# Check if the file exists
+if [ ! -f "$RC_LOCAL" ]; then
+    echo "Error: $RC_LOCAL does not exist."
+    exit 1
+fi
+# Check if the line already exists in the file
+if grep -Fxq "$LINE" "$RC_LOCAL"; then
+    echo "The line is already present in $RC_LOCAL."
+else
+    # Add the line before the `exit 0` line
+    sed -i "/exit 0/i $LINE" "$RC_LOCAL"
+    if [ $? -eq 0 ]; then
+        echo "$RC_LOCAL modified"
+    else
+        echo "Error: Failed to modify $RC_LOCAL."
+        exit 1
+    fi
+fi
+
 
 echo "==========================================="
 echo "apt-get update"
