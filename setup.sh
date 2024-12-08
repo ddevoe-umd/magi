@@ -6,12 +6,12 @@
 #     sudo ./setup.sh
 
 echo "==========================================="
-echo "Synchronize system time"
+echo "Synchronizing system time"
 echo "==========================================="
 sudo timedatectl
 
 echo "==========================================="
-echo "Set up 25 MB RAM disk to avoid writing data to SD card"
+echo "Setting up 25 MB RAM disk"
 echo "==========================================="
 FSTAB_LINE="tmpfs /path/to/ramdisk tmpfs defaults,size=25M 0 0"
 if grep -Fxq "$FSTAB_LINE" /etc/fstab; then
@@ -24,10 +24,10 @@ else
     echo "Line added successfully. Verify /etc/fstab before rebooting."
 fi
 
-
+echo before comment
+: <<'END'
 echo "==========================================="
-echo "Edit rc.local to run MAGI server at boot"
-echo "(assumes default pi user -- edit as needed)"
+echo "Editing rc.local to run MAGI server at boot"
 echo "==========================================="
 LINE="python3 /home/pi/magi/magi_server.py > /home/pi/magi/magi_server.log 2>&1 &"
 RC_LOCAL="/etc/rc.local"
@@ -49,6 +49,8 @@ else
         exit 1
     fi
 fi
+END
+echo after comment
 
 
 echo "==========================================="
