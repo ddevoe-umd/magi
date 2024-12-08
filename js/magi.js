@@ -81,21 +81,27 @@ async function startPID() {
 
 async function endAssay() {
 	log("endAssay() called");
-	document.getElementById("stop").disabled = true;
-	if (assayTimer) clearInterval(assayTimer);
-	document.getElementById("start").disabled = false;
-	let message = 'end';
-  let data = '';
-	let response = await queryServer(JSON.stringify([message,data]));
-	if (response.ok) {
-		results = await response.text();
-		log("Server response:")
-		log(results);
-		currentFileName = results;
-		document.getElementById("analyze").disabled = false;
-		//document.getElementById('analyze').innerText = "Analyze " + currentFileName + ".csv";
-		document.getElementById("saveraw").disabled = false;
-		document.getElementById("shutdown").disabled = false;
+	let response = confirm("End current assay?");
+	if (response) {
+		document.getElementById("stop").disabled = true;
+		if (assayTimer) clearInterval(assayTimer);
+		document.getElementById("start").disabled = false;
+		let message = 'end';
+	  let data = '';
+		let response = await queryServer(JSON.stringify([message,data]));
+		if (response.ok) {
+			results = await response.text();
+			log("Server response:")
+			log(results);
+			currentFileName = results;
+			document.getElementById("analyze").disabled = false;
+			//document.getElementById('analyze').innerText = "Analyze " + currentFileName + ".csv";
+			document.getElementById("saveraw").disabled = false;
+			document.getElementById("shutdown").disabled = false;
+		}
+	}
+	else {
+			log("endAssay() cancelled");
 	}
 }
 
