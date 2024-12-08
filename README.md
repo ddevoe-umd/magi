@@ -8,12 +8,8 @@ Hardware:
 
 Installation 
 -
-1. Install required Python modules and set up ram disk:
-   `setup.sh`
-2. Edit `/etc/rc.local` to run server code at boot:
-   `nohup python3 -u ~/magi/magi_server.py > ~/magi/nohup.out &`
-3. Synchronize Pi system time for correct timestamps on file names:
-   `sudo timedatectl`
+* Install Python modules, set up ram disk, Synchronize Pi system time, and modify rc.local to start server at boot:
+   `sudo ./setup.sh`
 
 Operation:
 -
