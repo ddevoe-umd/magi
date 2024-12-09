@@ -19,9 +19,9 @@ def butter_lowpass_filter(data, cutoff, fs, order):
 
 def get_ttp(t,y):
     # Calculate slope at midpoint and project back to baseline to find TTP
-    npoints = 2   # number of points before and after midpoint to use in linear fit
+    npoints = 2    # number of points before and after midpoint to use in linear fit
     indices = [idx for idx in range(len(y)) if y[idx] >= 0.5]
-    ttp = -1
+    ttp = -0.001   # set initial value slightly less than zero
     if len(indices)>0:
         idx = indices[0]    # 1st index > 0.5
         if idx > npoints+1:
