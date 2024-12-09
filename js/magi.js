@@ -5,9 +5,9 @@ var sampleInterval = 5000;   // data sampling interval (msec)
 var startTime;               // starting time stamp
 var img = document.getElementById('image');      // chip image
 var imgCaptureTime;                              // time stamp for image capture
-var currentFileName;         // data file from most recent assay
 var serverURL = "http://raspberrypi.local:8080";
 var serverFilePath = "/path/to/ramdisk/"
+var currentFileName;         // data file from most recent assay
 var ttpMode = false;         // select TTP display mode (all wells vs. grouped)
 var ttpData = [];            // array to hold TTP results
 
@@ -53,6 +53,7 @@ window.onload = function () {
 	document.getElementById("analyze").disabled = true;
 	document.getElementById("saveraw").disabled = true;
 	document.getElementById("savefiltered").disabled = true;
+	document.getElementById("saveTTP").disabled = true;
 	document.getElementById("toggleTTP").disabled = true;
 	// getScreenLock();   // Does not work yet
 };
@@ -101,7 +102,6 @@ async function endAssay() {
 			//document.getElementById('analyze').innerText = "Analyze " + currentFileName + ".csv";
 			document.getElementById("saveraw").disabled = false;
 			document.getElementById("shutdown").disabled = false;
-			document.getElementById("toggleTTP").disabled = true;
 		}
 	}
 	else {
@@ -203,6 +203,7 @@ async function analyzeData() {
 		document.getElementById("analyze").disabled = true;
     document.getElementById("savefiltered").disabled = false;
     document.getElementById("toggleTTP").disabled = false;
+   	document.getElementById("saveTTP").disabled = false;
 	}
 }
 
@@ -399,6 +400,7 @@ async function startAssay() {
 	document.getElementById("shutdown").disabled = true;
 	document.getElementById("saveraw").disabled = true;
 	document.getElementById("savefiltered").disabled = true;
+	document.getElementById("saveTTP").disabled = true;
 	document.getElementById("toggleTTP").disabled = true;
 
 	let [amplificationChart, wellArray] = setupAmplificationChart('rawDataChart')
@@ -605,6 +607,39 @@ function toggleTTP() {
 		displayTTPavgStdDev();
 	}
 	ttpMode = !ttpMode;
+}
+
+
+// Helper function to save a file:
+function saveFile(filename, content, mimeType = "text/plain") {
+    const blob = new Blob([content], { type: mimeType });
+    const link = document.createElement("a");
+    link.download = filename;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    URL.revokeObjectURL(link.href);
+}
+
+// Helper function to save a 2D array to a CSV file:
+function saveCSV(filename, arr) {
+    // Convert array to CSV string
+    const csvContent = arr
+        .map(row => row.map(cell => `"${cell}"`).join(",")) // Quote cells and join with commas
+        .join("\n"); // Join rows with newlines
+    saveFile(filename, csvContent, "text/csv");
+}
+
+function saveTTP() {
+	log("saveTTP called");
+	// Package TTP results into an array:
+	let arr = [];
+	for (let i=0; i<wellConfig.length; i++) {
+		arr.push([wellConfig[i], ttpData[i]]);
+	}
+	let filename = currentFileName+"_ttp.csv";
+	saveCSV(filename, arr);
+	document.getElementById("saveTTP").disabled = true;
+	log(filename + " saved");
 }
 
 
