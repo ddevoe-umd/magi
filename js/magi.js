@@ -8,6 +8,8 @@ var imgCaptureTime;                              // time stamp for image capture
 var currentFileName;         // data file from most recent assay
 var serverURL = "http://raspberrypi.local:8080";
 var serverFilePath = "/path/to/ramdisk/"
+var ttpMode = false;         // select TTP display mode (all wells vs. grouped)
+var ttpData = [];            // array to hold TTP results
 
 var target_dict = {          // Targets with chart display properties:
   "MecA": ["#1f009c", "solid"],   
@@ -51,6 +53,7 @@ window.onload = function () {
 	document.getElementById("analyze").disabled = true;
 	document.getElementById("saveraw").disabled = true;
 	document.getElementById("savefiltered").disabled = true;
+	document.getElementById("toggleTTP").disabled = true;
 	// getScreenLock();   // Does not work yet
 };
 
@@ -98,6 +101,7 @@ async function endAssay() {
 			//document.getElementById('analyze').innerText = "Analyze " + currentFileName + ".csv";
 			document.getElementById("saveraw").disabled = false;
 			document.getElementById("shutdown").disabled = false;
+			document.getElementById("toggleTTP").disabled = true;
 		}
 	}
 	else {
@@ -192,12 +196,13 @@ async function analyzeData() {
 		log("Server response: ");
 		log(results);
 		let data = JSON.parse(results);
-    let ttp = data[0];
+    ttpData = data[0];  // ttpData is global
     let xy = data[1];
     displayFilteredData(xy);
-		displayTTP(ttp);
+		displayTTP();
 		document.getElementById("analyze").disabled = true;
     document.getElementById("savefiltered").disabled = false;
+    document.getElementById("toggleTTP").disabled = false;
 	}
 }
 
@@ -230,6 +235,7 @@ async function shutdown() {
 		document.getElementById("analyze").disabled = true;
 		document.getElementById("saveraw").disabled = true;
 		document.getElementById("savefiltered").disabled = true;
+		document.getElementById("toggleTTP").disabled = true;
 		let message = 'shutdown';
 	  let data = '';
 		let response = await queryServer(JSON.stringify([message,data]));
@@ -254,6 +260,7 @@ function onLegendClick(e) {
     }
   }
 }
+
 
 function setupAmplificationChart(targetContainer) {
   // wellArray is a list to hold plot data with format:
@@ -392,6 +399,7 @@ async function startAssay() {
 	document.getElementById("shutdown").disabled = true;
 	document.getElementById("saveraw").disabled = true;
 	document.getElementById("savefiltered").disabled = true;
+	document.getElementById("toggleTTP").disabled = true;
 
 	let [amplificationChart, wellArray] = setupAmplificationChart('rawDataChart')
 	let [temperatureChart, temperature] = setupTemperatureChart('temperatureChart')
@@ -451,7 +459,8 @@ function displayFilteredData(data) {
 }
 
 
-function displayTTP(ttpData) {
+// Display TTP for all wells individually:
+function displayTTP() {
   ttpBars = [];
   for (const key in target_dict) {
 		for (let i=0; i<wellConfig.length; i++) {
@@ -489,3 +498,114 @@ function displayTTP(ttpData) {
 	chart.render();
 	chart.axisY[0].set('minimum',0);   // Only show results with positive TTPs
 }
+
+
+// Helper function to sum values in an array:
+function sumArray(arr) {
+    return arr.reduce((sum, current) => sum + current, 0);
+}
+
+// Helper function to calculate average of an array:
+function avgArray(arr) {
+	  const n = arr.length;
+    if (n === 0) return 0; // Handle empty array case
+    return sumArray(arr) / n;
+}
+
+// Helper function to calculate std dev of an array:
+function stdDevArray(arr) {
+	  const n = arr.length;
+    const squaredDifferences = arr.map(value => (value - avgArray(arr)) ** 2);
+    const variance = sumArray(squaredDifferences) / n;
+    return Math.sqrt(variance);
+}
+
+
+// Display mean & std dev TTP for each target group:
+function displayTTPavgStdDev() {
+	// Calculate mean and standard deviation for each target:
+  let dataPoints = [];
+  let errorBars = [];
+  for (const key in target_dict) {
+  	let vals = [];
+  	let sum = 0;
+		for (let i=0; i<wellConfig.length; i++) {
+			if (wellConfig[i] == key) {
+				vals.push(ttpData[i]);
+			}
+		}
+		mean = avgArray(vals);
+		stdev = stdDevArray(vals);
+		dataPoints.push({ 
+			label: key,
+			color: target_dict[key][0],
+			y: mean
+		});
+		errorBars.push({
+			y: [mean-stdev, mean+stdev]
+		});
+  }
+
+	let chart = new CanvasJS.Chart("ttpChart", {
+		zoomEnabled: true,
+		title: {
+			text: "Time to Positive",
+			fontFamily: "tahoma",
+			fontSize: 16,
+			fontWeight: "normal"
+		},
+		axisY: {
+			title: "TTP (min)",
+			titleFontSize: 14
+		},		
+		animationEnabled: true,
+			toolTip: {
+			shared: true
+		},
+		axisX:{ interval: 1 },   // show all axis labels
+		data: [
+			{        
+				type: "column",  
+  			showInLegend: false, 
+				dataPoints: dataPoints
+			},
+			{ 
+        type: "error",
+        showInLegend: false,
+        markerType: "none",
+        lineColor: "black",
+        lineThickness: 1,
+        dataPoints: errorBars
+			}
+		]
+	})
+
+	function toggleDataSeries(e) {
+		if (typeof(e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+			e.dataSeries.visible = false;
+		}
+		else {
+			e.dataSeries.visible = true;
+		}
+		chart.render();
+	}
+
+	chart.render();
+	chart.axisY[0].set('minimum',0);   // Only show results with positive TTPs
+}
+
+
+// Switch between TTP display modes (show all wells
+// vs. show mean & std dev for each target set):
+function toggleTTP() {
+	if (ttpMode) { 
+		displayTTP(); 
+	}
+	else {
+		displayTTPavgStdDev();
+	}
+	ttpMode = !ttpMode;
+}
+
+
+
