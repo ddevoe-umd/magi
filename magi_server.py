@@ -186,6 +186,8 @@ def blinkLED(period):
 def run(port):
     # Start blinking LED during startup process:
     p = multiprocessing.Process(name='blinkLED',target=blinkLED,args=(1,))
+    p.daemon = True  
+    p.start()
     # Start blinking LED during startup process:
     handler_class=S
     server_address = ('', port)
@@ -195,6 +197,7 @@ def run(port):
     print("Camera setup done")
     print("System ready")
     p.terminate()                   # stop blinking LED
+    p.join()
     GPIO.output(LED_PIN, GPIO.HIGH)  # keep LED on to indicate system is ready
     try:
         httpd.serve_forever()     # blocking call
