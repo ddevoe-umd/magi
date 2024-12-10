@@ -378,6 +378,7 @@ async function startAssay() {
 	document.getElementById("savefiltered").disabled = true;
 	document.getElementById("saveTTP").disabled = true;
 	document.getElementById("toggleTTP").disabled = true;
+  showTPPallWells = false;
 
 	let [amplificationChart, wellArray] = setupAmplificationChart('rawDataChart')
 	let [temperatureChart, temperature] = setupTemperatureChart('temperatureChart')
