@@ -23,7 +23,7 @@ print('io loaded')
 
 font_path = "/home/pi/magi/fonts"
 
-LED_PIN = 13
+LED_PIN = 14    # status LED - value must be the same as in magi_server.py
 
 # Image size:
 w = 640         # min of 64, max of 2592 for 5MP camera
@@ -109,10 +109,10 @@ def roi_avg(image, roi):   # Return average pixel values in ROI
 def get_image_data():    # Extract fluorescence measurements from ROIs in image
     try:
         cam.start()
-        GPIO.output(LED_PIN, GPIO.HIGH)     # Turn on LED
+        GPIO.output(LED_PIN, GPIO.LOW)     # Turn off LED
         image = cam.capture_image("main")   # capture as PIL image
         cam.stop()
-        GPIO.output(LED_PIN, GPIO.LOW)      # Turn off LED
+        GPIO.output(LED_PIN, GPIO.HIGH)      # Turn on LED
         # Get average pixel value for each ROI:
         roi_avgs = []
         for roi in ROIs: 
