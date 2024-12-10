@@ -20,6 +20,9 @@ print('base64 loaded')
 from io import BytesIO
 print('io loaded')
 
+
+font_path = "/home/pi/magi/fonts"
+
 LED_PIN = 13
 
 # Image size:
@@ -51,27 +54,28 @@ def hex_to_rgb(h):   # convert "#rrggbb" to [R,G,B]
     return [int(h[i:i+2], 16) for i in (1, 3, 5)]
 
 def add_ROIs(img, data):      # Add ROIs to a captured image
-    # Extract well names & colors:
-    well_config = data[0]             # well configuration
-    target_dict = data[1]             # target colors
-    colors = [target_dict[t][0] for t in well_config]
+    try:
+        # Extract well names & colors:
+        well_config = data[0]             # well configuration
+        target_dict = data[1]             # target colors
+        colors = [target_dict[t][0] for t in well_config]
+        img = img.convert('RGBA')   # convert captured image to support an alpha channel
+        img_roi = Image.new('RGBA', img.size, (255, 255, 255, 0))  # create new image with ROIs only
+        draw = ImageDraw.Draw(img_roi)
+        for idx,roi in enumerate(ROIs):
+            roi_lower_right = (roi[0] + roi_width, roi[1] + roi_height)
+            fill_color = hex_to_rgb(colors[idx])  # convert "#rrggbb" to [R,G,B]
+            fill_color.append(64)  # Add alpha channel for transparency
+            draw.rectangle([roi, roi_lower_right], outline='#ffffff', fill=tuple(fill_color))   # Draw ROI
+            font = ImageFont.truetype(font_path + "/" + "OpenSans.ttf", 9)         # Add well target text
+            text_position = (roi[0] + roi_width + 1, roi[1])
+            draw.text(text_position, well_config[idx],'#ffffff',font=font)
+        img_new = Image.alpha_composite(img, img_roi)  # composite captured & ROI images
+        return(img_new)
+    except Exception as e:
+        print('Exception in get_image():')
+        print(f'{type(e)}: {e}')
 
-    img = img.convert('RGBA')   # convert captured image to support an alpha channel
-    img_roi = Image.new('RGBA', img.size, (255, 255, 255, 0))  # create new image with ROIs only
-    draw = ImageDraw.Draw(img_roi)
-    for idx,roi in enumerate(ROIs):
-        roi_lower_right = (roi[0] + roi_width, roi[1] + roi_height)
-        fill_color = hex_to_rgb(colors[idx])  # convert "#rrggbb" to [R,G,B]
-        fill_color.append(64)  # Add alpha channel for transparency
-        # Draw the ROI box:
-        draw.rectangle([roi, roi_lower_right], outline='#ffffff', fill=tuple(fill_color))
-        # Add well target text:
-        font = ImageFont.truetype("fonts/OpenSans.ttf", 9)
-        text_position = (roi[0] + roi_width + 1, roi[1])
-        draw.text(text_position, well_config[idx],'#ffffff',font=font)
-
-    img_new = Image.alpha_composite(img, img_roi)  # composite captured & ROI images
-    return(img_new)
 
 def setup_camera():    # Set up camera
     config = cam.create_still_configuration(main={"size": res})
@@ -138,7 +142,8 @@ def get_image(data):       # Return a PIL image with colored ROI boxes
         png_base64 = base64.b64encode(png_image).decode('utf-8')  # Encode as base64
         return(f"data:image/png;base64,{png_base64}")
     except Exception as e:
-        print(f'Exception in get_image(): {e}')
+        print('Exception in get_image():')
+        print(f'{type(e)}: {e}')
 
 def end_imaging():
     # Rename temp data file:

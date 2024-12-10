@@ -56,6 +56,8 @@ window.onload = function () {
 	document.getElementById("saveTTP").disabled = true;
 	document.getElementById("toggleTTP").disabled = true;
 	// getScreenLock();   // Does not work yet
+
+	getImage(); 
 };
 
 async function queryServer(message) {

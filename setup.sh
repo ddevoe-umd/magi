@@ -10,6 +10,8 @@ echo "Synchronizing system time"
 echo "==========================================="
 sudo timedatectl
 
+
+
 echo "==========================================="
 echo "Setting up 25 MB RAM disk"
 echo "==========================================="
@@ -24,33 +26,27 @@ else
     echo "Line added successfully. Verify /etc/fstab before rebooting."
 fi
 
-echo before comment
-: <<'END'
+
+echo "==========================================="
+echo "Add crontab entry to run MAGI server at boot"
+echo "==========================================="
+CRON_SCHEDULE="@reboot"
+COMMAND="cd /home/pi/magi && python3 -u /home/pi/magi/magi_server.py >> /home/pi/magi/magi_server.log 2>&1"
+CRON_ENTRY="$CRON_SCHEDULE $COMMAND"
+# Check if the cron job already exists
+(crontab -u pi -l 2>/dev/null | grep -Fxq "$CRON_ENTRY") || {
+    # Append the new cron job to the existing crontab
+    (crontab -u pi -l 2>/dev/null; echo "$CRON_ENTRY") | crontab -u pi -
+    echo "Crontab entry added successfully."
+}
+echo "Current crontab for user 'pi':"
+crontab -u pi -l
+
+
 echo "==========================================="
 echo "Editing rc.local to run MAGI server at boot"
 echo "==========================================="
-LINE="python3 /home/pi/magi/magi_server.py > /home/pi/magi/magi_server.log 2>&1 &"
-RC_LOCAL="/etc/rc.local"
-# Check if the file exists
-if [ ! -f "$RC_LOCAL" ]; then
-    echo "Error: $RC_LOCAL does not exist."
-    exit 1
-fi
-# Check if the line already exists in the file
-if grep -Fxq "$LINE" "$RC_LOCAL"; then
-    echo "The line is already present in $RC_LOCAL."
-else
-    # Add the line before the `exit 0` line
-    sed -i "/exit 0/i $LINE" "$RC_LOCAL"
-    if [ $? -eq 0 ]; then
-        echo "$RC_LOCAL modified"
-    else
-        echo "Error: Failed to modify $RC_LOCAL."
-        exit 1
-    fi
-fi
-END
-echo after comment
+export PYTHONPATH="${PYTHONPATH}:/home/pi/magi"
 
 
 echo "==========================================="

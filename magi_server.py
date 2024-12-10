@@ -26,6 +26,8 @@ print('RPi.GPIO loaded')
 from gpiozero import MCP3008
 print('gpiozero loaded')
 
+sys.path.append('/home/pi/magi')
+
 # GLOBALS:
 
 # PID:
