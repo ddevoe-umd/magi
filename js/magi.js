@@ -8,22 +8,22 @@ var imgCaptureTime;                              // time stamp for image capture
 var serverURL = "http://raspberrypi.local:8080";
 var serverFilePath = "/path/to/ramdisk/"
 var currentFileName;         // data file from most recent assay
-var ttpMode = false;         // select TTP display mode (all wells vs. grouped)
+var showTPPallWells = false;         // select TTP display mode (all wells vs. grouped)
 var ttpData = [];            // array to hold TTP results
 
 var target_dict = {          // Targets with chart display properties:
   "MecA": ["#1f009c", "solid"],   
   "FemB": ["#006aa8", "solid"],
   "Nuc": ["#338f4c", "solid"],
-  "Ctrl+": ["#363636", "dash"],
-  "Ctrl-": ["#363636", "dot"]
+  "POS": ["#363636", "dash"],
+  "NEG": ["#363636", "dot"]
 };
 
 var wellConfig = [           // Well array configuration (start at upper left):
-		"MecA", "Nuc", "FemB", "Ctrl+",
-		"MecA", "Nuc", "FemB", "Ctrl+",
-		"MecA",	"Nuc", "FemB", "Ctrl-"
-		];
+	"MecA", "Nuc", "FemB", "POS",
+	"MecA", "Nuc", "FemB", "POS",
+	"MecA",	"Nuc", "FemB", "NEG"
+];
 
 
 // Custom log function:
@@ -157,32 +157,8 @@ img.addEventListener('click', () => {
 	imgWindow.onload = () => {
     const w = imgWindow.document.body.scrollWidth;
     const h = imgWindow.document.body.scrollHeight;
-    imgWindow.resizeTo(w+20, h+40); // Adjust for window borders
+    imgWindow.resizeTo(w+20, h+40); // Account for window borders
 	};
-});
-
-// Enable image zoom/unzoom: NOT YET WORKING
-document.addEventListener("DOMContentLoaded", () => {
-    const iframe = document.querySelector("iframe"); // Replace with the selector for your iframe
-    let zoomed = false;
-    iframe.addEventListener("load", () => {
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-        const img = iframeDoc.querySelector("img");
-        img.style.cursor = "pointer"; // Make it clear the image is clickable
-        img.addEventListener("click", () => {
-            zoomed = !zoomed;
-            if (zoomed) {
-                img.style.transform = "scale(2)";
-                img.style.transformOrigin = "center"; // Adjust scaling origin if needed
-                iframe.style.width = `${img.clientWidth * 2}px`;
-                iframe.style.height = `${img.clientHeight * 2}px`;
-            } else {
-                img.style.transform = "scale(1)";
-                iframe.style.width = `${img.clientWidth}px`;
-                iframe.style.height = `${img.clientHeight}px`;
-            }
-        });
-    });
 });
 
 
@@ -211,18 +187,18 @@ async function analyzeData() {
 // Download files with raw and filtered amplification data. 
 // Can't combine into a single function since opening multiple
 // windows leads to popup blocking in browser:
-function saveRaw() {
-	log("saveRaw() called");
-  const url = serverURL + serverFilePath + currentFileName + ".csv";
+function downloadFileFromServer(url) {
 	log(`opening ${url}`);
   window.open(url, '_blank');
+}
+function saveRaw() {
+	log("saveRaw() called");
+  downloadFileFromServer(serverURL + serverFilePath + currentFileName + ".csv");
   document.getElementById("saveraw").disabled = true;
 }
 function saveFiltered() {
 	log("saveFiltered() called");
-  const url = serverURL + serverFilePath + currentFileName + "_filt.csv";
-	log(`opening ${url}`);
-  window.open(url, '_blank');
+  downloadFileFromServer(serverURL + serverFilePath + currentFileName + "_filt.csv");
   document.getElementById("savefiltered").disabled = true;
 }
 
@@ -597,20 +573,19 @@ function displayTTPavgStdDev() {
 }
 
 
-// Switch between TTP display modes (show all wells
-// vs. show mean & std dev for each target set):
+// Switch between TTP display modes (all wells vs. mean & std dev):
 function toggleTTP() {
-	if (ttpMode) { 
+	if (showTPPallWells) { 
 		displayTTP(); 
 	}
 	else {
 		displayTTPavgStdDev();
 	}
-	ttpMode = !ttpMode;
+	showTPPallWells = !showTPPallWells;
 }
 
 
-// Helper function to save a file:
+// Helper function to save data to a file:
 function saveFile(filename, content, mimeType = "text/plain") {
     const blob = new Blob([content], { type: mimeType });
     const link = document.createElement("a");
@@ -620,7 +595,7 @@ function saveFile(filename, content, mimeType = "text/plain") {
     URL.revokeObjectURL(link.href);
 }
 
-// Helper function to save a 2D array to a CSV file:
+// Helper function to save 2D array to a CSV file:
 function saveCSV(filename, arr) {
     // Convert array to CSV string
     const csvContent = arr
