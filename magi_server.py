@@ -34,8 +34,8 @@ sys.path.append('/home/pi/magi')  # Add application path to the Python search pa
 
 # PID:
 PWM_PIN = 19
-FAN = 15
-LED_PIN = 13
+FAN = 26
+LED_PIN = 14
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(LED_PIN, GPIO.OUT)     # System status LED pin
 GPIO.setup(FAN, GPIO.OUT) 
