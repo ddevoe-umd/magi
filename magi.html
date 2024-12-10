@@ -13,45 +13,43 @@
 <div class="main-container">
 
 	<div class="button-container">
-		<div class="left-buttons">
-		  <button id="start" class="button-84" role="button" onclick="startAssay()" > Start </button>
-		  <button id="stop" class="button-84" onclick="endAssay()" > End </button>
+		<div buttons>
+			Run Assay:
+			<button id="start" class="button" role="button" onclick="startAssay()" > Start </button>
+			<button id="stop" class="button" onclick="endAssay()" > End </button>
+			<button id="getImage" class="button" role="button" onclick="getImage()" > Get Image </button>
 		</div>
-		<div>
-		  <button id="getImage" class="button-84" role="button" onclick="getImage()" > Get Image </button>
+		<div buttons>
+			Results:
+			<button id="analyze" class="button" onclick="analyzeData()" > Analyze </button>
+			<button id="toggleTTP" class="button" onclick="toggleTTP()" > TTP mode</button>
 		</div>
-		<div>
-			<button id="analyze" class="button-84" onclick="analyzeData()" > Analyze </button>
-			<button id="toggleTTP" class="button-84" onclick="toggleTTP()" > TTP mode</button>
+		<div buttons>
+			Save:
+			<button id="saveraw" class="button" onclick="saveRaw()" > Raw </button>
+			<button id="savefiltered" class="button" onclick="saveFiltered()" > Filtered </button>
+			<button id="saveTTP" class="button" onclick="saveTTP()" > TTP </button>
 		</div>
-		<div>
-			Save Data:
-		  <button id="saveraw" class="button-84" onclick="saveRaw()" > Raw </button>
-		  <button id="savefiltered" class="button-84" onclick="saveFiltered()" > Filtered </button>
-		  <button id="saveTTP" class="button-84" onclick="saveTTP()" > TTP </button>
-		</div>
-	  <div>
-	  	<button id="shutdown" class="button-84" role="button" onclick="shutdown()" > Shutdown </button>
+		<div buttons>
+		  	<button id="shutdown" class="button" role="button" onclick="shutdown()" > Shutdown </button>
 		</div>
 	</div>
 
 	<div class="chart-container">
-	  <div class="row">
-	    <div class="chart" id="rawDataChart"><b>Fluorescence Data</b></div>
-	    <div class="chart" id="temperatureChart"><b>Chip Temperature</b></div>
-	  </div>
-	  <div class="row">
-	    <div class="chart" id="filteredDataChart"><b>Filtered Data</b></div>
-	    <div class="chart" id="ttpChart"><b>Time to Positive</b></div>
-	  </div>
+		<div class="chart-row">
+			<div class="chart" id="rawDataChart"><b>Fluorescence Data</b></div>
+			<div class="chart" id="temperatureChart"><b>Chip Temperature</b></div>
+		</div>
+			<div class="chart-row">
+			<div class="chart" id="filteredDataChart"><b>Filtered Data</b></div>
+			<div class="chart" id="ttpChart"><b>Time to Positive</b></div>
+		</div>
 	</div>
-
-	<br>
 
 	<div class="log-image-container">
 		<div class="log-image-row">
-		  <div class="image"><img id="image" alt="Chip Image" /></div>
-		  <div class="log" id="log"><b>Server Log</b><br><br></div>
+			<div class="image"><img id="image" onerror="this.style.display='none'" /></div>
+			<div class="log" id="log"><b>Server Log</b><br><br></div>
 		</div>
 	</div>
 

@@ -57,7 +57,7 @@ def filter(filename):
                     y[i] = y[i-1]
             
             # Butterworth low-pass filter:
-            cutoff = 0.2/60    # cutoff frequency (0.05 - 0.2 cycles/min is a good range)
+            cutoff = 0.5/60    # cutoff frequency (0.05 - 0.5 cycles/min is a good range)
             T = t[-1]          # Sample Period
             n = len(t)         # total number of samples
             fs = T/n           # sample rate, Hz
