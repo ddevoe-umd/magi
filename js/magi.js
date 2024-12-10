@@ -36,15 +36,15 @@ function log(message) {
 	log.scroll({ top: log.scrollHeight, behavior: 'smooth' }); // pin scroll to bottom
 }
 
-// Prevent system from sleeping (does not work yet):
-async function getScreenLock() {
+// Prevent system from sleeping:   Does not work yet
+async function getWakeLock() {
 	try {
 		const wakeLock = await navigator.wakeLock.request('screen');
-		log('Wake Lock acquired:', wakeLock);
+		log('Wake Lock acquired');
+		return wakeLock;
 	} catch(err) {
-		log('Error acquiring wake lock:', err);
+		log(`Error acquiring wake lock: ${err}`);
 	}
-	//return wakeLock;
 }
 
 window.onload = function () {
@@ -55,9 +55,9 @@ window.onload = function () {
 	document.getElementById("savefiltered").disabled = true;
 	document.getElementById("saveTTP").disabled = true;
 	document.getElementById("toggleTTP").disabled = true;
-	// getScreenLock();   // Does not work yet
-
-	getImage(); 
+	
+	getImage();        // Get initial chip image at start
+	getWakeLock();   
 };
 
 async function queryServer(message) {
@@ -196,12 +196,10 @@ function downloadFileFromServer(url) {
 function saveRaw() {
 	log("saveRaw() called");
   downloadFileFromServer(serverURL + serverFilePath + currentFileName + ".csv");
-  document.getElementById("saveraw").disabled = true;
 }
 function saveFiltered() {
 	log("saveFiltered() called");
   downloadFileFromServer(serverURL + serverFilePath + currentFileName + "_filt.csv");
-  document.getElementById("savefiltered").disabled = true;
 }
 
 async function shutdown() {
@@ -518,12 +516,13 @@ function displayTTPavgStdDev() {
 		mean = avgArray(vals);
 		stdev = stdDevArray(vals);
 		dataPoints.push({ 
+			y: mean,
 			label: key,
-			color: target_dict[key][0],
-			y: mean
+			color: target_dict[key][0]
 		});
 		errorBars.push({
-			y: [mean-stdev, mean+stdev]
+			y: [mean-stdev, mean+stdev],
+			label: key
 		});
   }
 
@@ -554,7 +553,6 @@ function displayTTPavgStdDev() {
         type: "error",
         showInLegend: false,
         markerType: "none",
-        lineColor: "black",
         lineThickness: 1,
         dataPoints: errorBars
 			}
@@ -605,6 +603,7 @@ function saveCSV(filename, arr) {
         .map(row => row.map(cell => `"${cell}"`).join(",")) // Quote cells and join with commas
         .join("\n"); // Join rows with newlines
     saveFile(filename, csvContent, "text/csv");
+    return(success)
 }
 
 function saveTTP() {
@@ -616,7 +615,6 @@ function saveTTP() {
 	}
 	let filename = currentFileName+"_ttp.csv";
 	saveCSV(filename, arr);
-	document.getElementById("saveTTP").disabled = true;
 	log(filename + " saved");
 }
 
