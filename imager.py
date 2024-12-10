@@ -126,15 +126,15 @@ def get_image_data():    # Extract fluorescence measurements from ROIs in image
     except Exception as e:
         print(f'Exception in get_image_data(): {e}')
 
-def get_image(data):       # Return a PIL image with colored ROI boxes
+def get_image(data):       # Return a PIL image with colored ROI boxes for display
     # data structure: [wellConfig, target_dict]
     # Acquire an image:
     try:
         cam.start()
-        GPIO.output(LED_PIN, GPIO.HIGH)
+        GPIO.output(LED_PIN, GPIO.LOW)
         image = cam.capture_image("main")   # capture as PIL image
         cam.stop()
-        GPIO.output(LED_PIN, GPIO.LOW)
+        GPIO.output(LED_PIN, GPIO.HIGH)
         pil_image = add_ROIs(image, data)  # Add ROIs to image
         buffer = BytesIO()                   # create a buffer to hold the image
         pil_image.save(buffer, format="PNG") # Convert image to PNG
