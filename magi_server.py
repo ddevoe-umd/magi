@@ -9,8 +9,7 @@ from simple_pid import PID   # see https://pypi.org/project/simple-pid/
 print('simple_pid loaded')
 import json
 print('json loaded')
-import imager       # camera image capture and analysis
-print('imager loaded')
+
 from http.server import BaseHTTPRequestHandler, HTTPServer
 print('http.server loaded')
 import sys
@@ -187,8 +186,9 @@ def run(port):
     # Start blinking LED during startup process:
     p = multiprocessing.Process(name='blinkLED',target=blinkLED,args=(1,))
     p.daemon = True  
-    p.start()
-    # Start blinking LED during startup process:
+    p.start()   # Start blinking LED during startup process
+    import imager                # camera image capture and analysis
+    print('imager loaded')
     handler_class=S
     server_address = ('', port)
     httpd = HTTPServer(server_address, handler_class)
