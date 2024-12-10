@@ -23,10 +23,12 @@ import threading
 print('threading loaded')
 import RPi.GPIO as GPIO
 print('RPi.GPIO loaded')
+import multiprocessing
+print('multiprocessing loaded')
 from gpiozero import MCP3008
 print('gpiozero loaded')
 
-sys.path.append('/home/pi/magi')
+sys.path.append('/home/pi/magi')  # Add application path to the Python search path
 
 # GLOBALS:
 
@@ -35,7 +37,7 @@ PWM_PIN = 19
 FAN = 15
 LED_PIN = 13
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(LED_PIN, GPIO.OUT)
+GPIO.setup(LED_PIN, GPIO.OUT)     # System status LED pin
 GPIO.setup(FAN, GPIO.OUT) 
 GPIO.setup(PWM_PIN, GPIO.OUT) 
 pwm = GPIO.PWM(PWM_PIN,490)
@@ -176,7 +178,15 @@ def end_pid():
     stop_event.set()
     pwm.ChangeDutyCycle(0)
 
+def blinkLED(period):
+    GPIO.output(LED_PIN, GPIO.HIGH)
+    time.sleep(period/2.0);
+    GPIO.output(LED_PIN, GPIO.LOW)
+
 def run(port):
+    # Start blinking LED during startup process:
+    p = multiprocessing.Process(name='blinkLED',target=blinkLED,args=(1,))
+    # Start blinking LED during startup process:
     handler_class=S
     server_address = ('', port)
     httpd = HTTPServer(server_address, handler_class)
@@ -184,6 +194,8 @@ def run(port):
     imager.setup_camera()
     print("Camera setup done")
     print("System ready")
+    p.terminate()                   # stop blinking LED
+    GPIO.output(LED_PIN, GPIO.HIGH)  # keep LED on to indicate system is ready
     try:
         httpd.serve_forever()     # blocking call
     except KeyboardInterrupt:
