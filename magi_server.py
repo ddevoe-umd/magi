@@ -9,7 +9,8 @@ from simple_pid import PID   # see https://pypi.org/project/simple-pid/
 print('simple_pid loaded')
 import json
 print('json loaded')
-
+import imager                # camera image capture and analysis
+print('imager loaded')
 from http.server import BaseHTTPRequestHandler, HTTPServer
 print('http.server loaded')
 import sys
@@ -177,18 +178,7 @@ def end_pid():
     stop_event.set()
     pwm.ChangeDutyCycle(0)
 
-def blinkLED(period):
-    GPIO.output(LED_PIN, GPIO.HIGH)
-    time.sleep(period/2.0);
-    GPIO.output(LED_PIN, GPIO.LOW)
-
 def run(port):
-    # Start blinking LED during startup process:
-    p = multiprocessing.Process(name='blinkLED',target=blinkLED,args=(1,))
-    p.daemon = True  
-    p.start()   # Start blinking LED during startup process
-    import imager                # camera image capture and analysis
-    print('imager loaded')
     handler_class=S
     server_address = ('', port)
     httpd = HTTPServer(server_address, handler_class)
@@ -196,9 +186,7 @@ def run(port):
     imager.setup_camera()
     print("Camera setup done")
     print("System ready")
-    p.terminate()                   # stop blinking LED
-    p.join()
-    GPIO.output(LED_PIN, GPIO.HIGH)  # keep LED on to indicate system is ready
+    GPIO.output(LED_PIN, GPIO.HIGH)  # turn LED on to indicate system is ready
     try:
         httpd.serve_forever()     # blocking call
     except KeyboardInterrupt:
