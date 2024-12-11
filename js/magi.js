@@ -10,6 +10,7 @@ var serverFilePath = "/path/to/ramdisk/"
 var currentFileName;         // data file from most recent assay
 var showTPPallWells = false;         // select TTP display mode (all wells vs. grouped)
 var ttpData = [];            // array to hold TTP results
+var wakeLock;
 
 var target_dict = {          // Targets with chart display properties:
   "MecA": ["#1f009c", "solid"],   
@@ -36,12 +37,11 @@ function log(message) {
 	log.scroll({ top: log.scrollHeight, behavior: 'smooth' }); // pin scroll to bottom
 }
 
-// Prevent system from sleeping:   Does not work yet
+// Get wake lock to prevent system from sleeping:
 async function getWakeLock() {
 	try {
-		const wakeLock = await navigator.wakeLock.request('screen');
+		wakeLock = await navigator.wakeLock.request('screen');
 		log('Wake Lock acquired');
-		return wakeLock;
 	} catch(err) {
 		log(`Error acquiring wake lock: ${err}`);
 	}
@@ -55,25 +55,24 @@ window.onload = function () {
 	document.getElementById("savefiltered").disabled = true;
 	document.getElementById("saveTTP").disabled = true;
 	document.getElementById("toggleTTP").disabled = true;
-	
 	getImage();        // Get initial chip image at start
-	getWakeLock();   
 };
 
+// Send POST message to server:
 async function queryServer(message) {
 	let response = await fetch( serverURL, {
 		method: "POST",
-    	headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
 		body: 'todo=' + message
-		} );
+	});
 	return(response)
 }
 
-
 async function startPID() {
+	log("startPID() called");
+	wakeLock = getWakeLock();     // Acquire wake lock when assay starts
 	let message = 'start';
 	let data = '';
-	log("startPID() called");
 	let response = await queryServer(JSON.stringify([message,data]));
   if (response.ok) {
 		results = await response.text();
@@ -87,6 +86,8 @@ async function startPID() {
 
 async function endAssay() {
 	log("endAssay() called");
+	await wakeLock.release();          // Release the wake lock when assay ends
+	log("wake lock released");
 	let response = confirm("End current assay?");
 	if (response) {
 		document.getElementById("stop").disabled = true;
@@ -146,7 +147,7 @@ async function getImage() {
 	}
 }
 
-// Open image in new window when clicked:
+// Open chip image in new window when clicked:
 img.addEventListener('click', () => {
 	const iframe = "<iframe width='640px' height='480px' src='"+img.src+"'></iframe>"
 	const imgWindow = window.open('', '_blank', 
