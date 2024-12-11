@@ -188,17 +188,38 @@ async function analyzeData() {
 // Download files with raw and filtered amplification data. 
 // Can't combine into a single function since opening multiple
 // windows leads to popup blocking in browser:
-function downloadFileFromServer(url) {
-	log(`opening ${url}`);
-  window.open(url, '_blank');
+function downloadCrossOriginFile(fileName) {
+	let fileUrl = serverURL + serverFilePath + fileName;
+  fetch(fileUrl)
+    .then(response => {
+      if (!response.ok) {
+          throw new Error(`Failed to fetch file: ${response.statusText}`);
+      }
+      return response.blob(); // Convert the response to a Blob
+    })
+    .then(blob => {
+      const blobUrl = URL.createObjectURL(blob);   // Create a local URL for the Blob
+      const a = document.createElement('a');       // Create a temporary <a> element
+      a.href = blobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);      // Trigger the download
+      a.click();
+      document.body.removeChild(a);      // Clean up
+      URL.revokeObjectURL(blobUrl);
+    })
+    .catch(error => {
+      console.error('Error downloading file:', error);
+  });
 }
+
 function saveRaw() {
 	log("saveRaw() called");
-  downloadFileFromServer(serverURL + serverFilePath + currentFileName + ".csv");
+  downloadCrossOriginFile(currentFileName + ".csv");
 }
+
 function saveFiltered() {
 	log("saveFiltered() called");
-  downloadFileFromServer(serverURL + serverFilePath + currentFileName + "_filt.csv");
+  downloadCrossOriginFile(currentFileName + "_filt.csv");
 }
 
 async function shutdown() {
@@ -574,7 +595,7 @@ function toggleTTP() {
 }
 
 
-// Helper function to save data to a file:
+// Helper function to save local JS data to a file:
 function saveFile(filename, content, mimeType = "text/plain") {
     const blob = new Blob([content], { type: mimeType });
     const link = document.createElement("a");
