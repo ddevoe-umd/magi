@@ -1,16 +1,5 @@
 
 // Globals:
-var assayTimer;              // timer for running an assay
-var sampleInterval = 5000;   // data sampling interval (msec)
-var startTime;               // starting time stamp
-var img = document.getElementById('image');      // chip image
-var imgCaptureTime;                              // time stamp for image capture
-var serverURL = "http://raspberrypi.local:8080";
-var serverFilePath = "/path/to/ramdisk/"
-var currentFileName;         // data file from most recent assay
-var showTPPallWells = false;         // select TTP display mode (all wells vs. grouped)
-var ttpData = [];            // array to hold TTP results
-var wakeLock;
 
 var target_dict = {          // Targets with chart display properties:
   "MecA": ["#1f009c", "solid"],   
@@ -26,14 +15,26 @@ var wellConfig = [           // Well array configuration (start at upper left):
 	"MecA",	"Nuc", "FemB", "NEG"
 ];
 
+var sampleInterval = 5000;   // image sampling period (msec)
+
+var assayTimer;              // timer for running an assay
+var startTime;               // assay start time stamp
+var img = document.getElementById('image');      // chip image
+var imgCaptureTime;                              // time stamp for image
+var serverURL = "http://raspberrypi.local:8080";
+var serverFilePath = "/path/to/ramdisk/"
+var currentFileName;          // base data file name for most recent assay
+var showTTPallWells = false;  // select TTP display mode (all wells vs. grouped)
+var ttpData = [];             // array to hold TTP results
+var wakeLock;
+
 
 // Custom log function:
 function log(message) {
   document.getElementById('log').style.backgroundColor = 'white';
-	console.log(message);            // display message on Javascript console
+	console.log(message);      // display message in Javascript console
 	const log = document.getElementById("log");
-	log.innerHTML += message + "<br />";      // display message in HTML
-	//log.scrollTop = log.scrollHeight;       // pin scroll to bottom
+	log.innerHTML += message + "<br />";      // display message in div
 	log.scroll({ top: log.scrollHeight, behavior: 'smooth' }); // pin scroll to bottom
 }
 
@@ -123,7 +124,7 @@ async function getData() {
 		log(results);
 		let results_array = results.split(",");
 		newData = [];
-		results_array.forEach( ele => newData.push(+ele))   // strings to numbers
+		results_array.forEach( e => newData.push(+e))   // strings to numbers
 		return(newData);
 	}
 }
@@ -138,30 +139,55 @@ async function getImage() {
 		results = await response.text();
 		log("Image data received")
 		const base64Image = results;
-		let results_array = results.split(",");
 
 		// Display the image:
-		//document.getElementById('image').src = base64Image;
 		img.src = base64Image;
     imgCaptureTime = ((Date.now()-startTime)/1000/60).toFixed(2);
 	}
 }
 
-// Open chip image in new window when clicked:
+
+// Open chip image in a new window when clicked:
 img.addEventListener('click', () => {
-	const iframe = "<iframe width='640px' height='480px' src='"+img.src+"'></iframe>"
+	const html = 
+		`<!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <style>
+          body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+          }
+          img {
+            max-width: 100%;
+            max-height: 100%;
+            width: 200%;
+            height: 200%;
+          }
+        </style>
+      </head>
+      <body>
+        <img src="${img.src}">
+      </body>
+      </html>`
 	const imgWindow = window.open('', '_blank', 
-		"width=640,height=500,menubar=no,resizable=yes");
+		"width=640,height=480,menubar=no,resizable=yes");
 	imgWindow.document.open();
-	imgWindow.document.write(`Timestamp: ${imgCaptureTime} min<br>`)
-	imgWindow.document.write(iframe);
-	imgWindow.document.close();
-	// Adjust window size to fit content:
-	imgWindow.onload = () => {
-    const w = imgWindow.document.body.scrollWidth;
-    const h = imgWindow.document.body.scrollHeight;
-    imgWindow.resizeTo(w+20, h+40); // Account for window borders
-	};
+  imgWindow.document.write(html);
+  imgWindow.document.close();
+  // keep window aspect ratio on resizing:
+  imgWindow.addEventListener('resize', () => {  
+    const currentWidth = imgWindow.innerWidth;
+    const newHeight = currentWidth * 480/640;
+    imgWindow.resizeTo(currentWidth, Math.round(newHeight));
+              imgWindow.document.title = "asd";
+  });
+
+  imgWindow.document.title = imgCaptureTime;
 });
 
 
@@ -386,8 +412,9 @@ async function startAssay() {
 	
 	enableButtons(["stop"]);
 	disableButtons(["start","analyze","saveraw","savefiltered","saveTTP","toggleTTP","shutdown"]);
+  document.getElementById("toggleTTP").innerHTML = "TTP mode";
 
-  showTPPallWells = false;
+  showTTPallWells = false;
 
 	let [amplificationChart, wellArray] = setupAmplificationChart('rawDataChart')
 	let [temperatureChart, temperature] = setupTemperatureChart('temperatureChart')
@@ -449,6 +476,7 @@ function displayFilteredData(data) {
 
 // Display TTP for all wells individually:
 function displayTTP() {
+  document.getElementById("toggleTTP").innerHTML = "Show averages";
   ttpBars = [];
   for (const key in target_dict) {
 		for (let i=0; i<wellConfig.length; i++) {
@@ -511,6 +539,7 @@ function stdDevArray(arr) {
 
 // Display mean & std dev TTP for each target group:
 function displayTTPavgStdDev() {
+	document.getElementById("toggleTTP").innerHTML = "Show all wells";
 	// Calculate mean and standard deviation for each target:
   let dataPoints = [];
   let errorBars = [];
@@ -585,13 +614,13 @@ function displayTTPavgStdDev() {
 
 // Switch between TTP display modes (all wells vs. mean & std dev):
 function toggleTTP() {
-	if (showTPPallWells) { 
+	if (showTTPallWells) { 
 		displayTTP(); 
 	}
 	else {
 		displayTTPavgStdDev();
 	}
-	showTPPallWells = !showTPPallWells;
+	showTTPallWells = !showTTPallWells;
 }
 
 
