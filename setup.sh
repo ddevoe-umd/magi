@@ -11,7 +11,6 @@ echo "==========================================="
 sudo timedatectl
 
 
-
 echo "==========================================="
 echo "Setting up 25 MB RAM disk"
 echo "==========================================="
@@ -28,7 +27,7 @@ fi
 
 
 echo "==========================================="
-echo "Add crontab entry to run MAGI server at boot"
+echo "Adding crontab entry to run MAGI server at boot"
 echo "==========================================="
 CRON_SCHEDULE="@reboot"
 COMMAND="cd /home/pi/magi && python3 -u /home/pi/magi/magi_server.py >> /home/pi/magi/magi_server.log 2>&1"
@@ -39,15 +38,8 @@ CRON_ENTRY="$CRON_SCHEDULE $COMMAND"
     (crontab -u pi -l 2>/dev/null; echo "$CRON_ENTRY") | crontab -u pi -
     echo "Crontab entry added successfully."
 }
-echo "Current crontab for user 'pi':"
+echo "Current crontab:"
 crontab -u pi -l
-
-
-echo "==========================================="
-echo "Editing rc.local to run MAGI server at boot"
-echo "==========================================="
-export PYTHONPATH="${PYTHONPATH}:/home/pi/magi"
-
 
 echo "==========================================="
 echo "apt-get update"
@@ -93,5 +85,4 @@ sudo python3 -m pip install --break-system-packages simple-pid
 
 echo "==========================================="
 echo "              SETUP COMPLETE"
-echo "          REBOOT SYSTEM BEFORE USE"
 echo "==========================================="
