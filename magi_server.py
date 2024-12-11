@@ -76,6 +76,7 @@ class S(BaseHTTPRequestHandler):
                 content_type = "application/octet-stream"
             self.send_response(200)
             self.send_header("Content-Type", content_type)
+            self.send_header('Access-Control-Allow-Origin', '*');
             self.send_header("Content-Disposition", f'attachment; filename="{os.path.basename(self.path)}"')
             self.send_header("Content-Length", str(file_size))
             self.end_headers()
