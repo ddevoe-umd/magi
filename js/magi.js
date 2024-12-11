@@ -47,14 +47,17 @@ async function getWakeLock() {
 	}
 }
 
+function disableButtons(elements) {
+	elements.forEach(e => document.getElementById(e).disabled = true);
+}
+
+function enableButtons(elements) {
+	elements.forEach(e => document.getElementById(e).disabled = false);
+}
+
 window.onload = function () {
 	// Disable buttons at start-up:
-	document.getElementById("stop").disabled = true;
-	document.getElementById("analyze").disabled = true;
-	document.getElementById("saveraw").disabled = true;
-	document.getElementById("savefiltered").disabled = true;
-	document.getElementById("saveTTP").disabled = true;
-	document.getElementById("toggleTTP").disabled = true;
+	disableButtons(["stop","analyze","saveraw","savefiltered","saveTTP","toggleTTP"]);
 	getImage();        // Get initial chip image at start
 };
 
@@ -90,9 +93,9 @@ async function endAssay() {
 	log("wake lock released");
 	let response = confirm("End current assay?");
 	if (response) {
-		document.getElementById("stop").disabled = true;
+		disableButtons(["stop"]);
 		if (assayTimer) clearInterval(assayTimer);
-		document.getElementById("start").disabled = false;
+		enableButtons(["start"]);
 		let message = 'end';
 	  let data = '';
 		let response = await queryServer(JSON.stringify([message,data]));
@@ -101,10 +104,7 @@ async function endAssay() {
 			log("Server response:")
 			log(results);
 			currentFileName = results;
-			document.getElementById("analyze").disabled = false;
-			//document.getElementById('analyze').innerText = "Analyze " + currentFileName + ".csv";
-			document.getElementById("saveraw").disabled = false;
-			document.getElementById("shutdown").disabled = false;
+	   	enableButtons(["analyze","saveraw","shutdown"]);
 		}
 	}
 	else {
@@ -179,10 +179,8 @@ async function analyzeData() {
     let xy = data[1];
     displayFilteredData(xy);
 		displayTTP();
-		document.getElementById("analyze").disabled = true;
-    document.getElementById("savefiltered").disabled = false;
-    document.getElementById("toggleTTP").disabled = false;
-   	document.getElementById("saveTTP").disabled = false;
+	  enableButtons(["savefiltered","toggleTTP","saveTTP"]);
+	  disableButtons(["analyze"]);
 	}
 }
 
@@ -208,12 +206,7 @@ async function shutdown() {
 	let response = confirm("Do you want to shut down?");
 	if (response) {
 		log("System is powering off!!!");
-		document.getElementById("stop").disabled = true;
-		document.getElementById("start").disabled = true;
-		document.getElementById("analyze").disabled = true;
-		document.getElementById("saveraw").disabled = true;
-		document.getElementById("savefiltered").disabled = true;
-		document.getElementById("toggleTTP").disabled = true;
+		disableButtons(["stop","start","analyze","saveraw","savefiltered","saveTTP","toggleTTP"]);
 		let message = 'shutdown';
 	  let data = '';
 		let response = await queryServer(JSON.stringify([message,data]));
@@ -370,15 +363,9 @@ function setupTemperatureChart(targetContainer) {
 
 async function startAssay() {
 	
-	document.getElementById("start").disabled = true;
-	document.getElementById("stop").disabled = false;
-	document.getElementById("analyze").disabled = true;
-	//document.getElementById("analyze").innerText = "Analyze";
-	document.getElementById("shutdown").disabled = true;
-	document.getElementById("saveraw").disabled = true;
-	document.getElementById("savefiltered").disabled = true;
-	document.getElementById("saveTTP").disabled = true;
-	document.getElementById("toggleTTP").disabled = true;
+	enableButtons(["stop"]);
+	disableButtons(["start","analyze","saveraw","savefiltered","saveTTP","toggleTTP","shutdown"]);
+
   showTPPallWells = false;
 
 	let [amplificationChart, wellArray] = setupAmplificationChart('rawDataChart')
