@@ -70,6 +70,8 @@ def add_ROIs(img, data):      # Add ROIs to a captured image
             font = ImageFont.truetype(font_path + "/" + "OpenSans.ttf", 9)         # Add well target text
             text_position = (roi[0] + roi_width + 1, roi[1])
             draw.text(text_position, well_config[idx],'#ffffff',font=font)
+        font_timestamp = ImageFont.truetype(font_path + "/" + "OpenSans.ttf", 12) 
+        draw.text((10,10), time.strftime("%Y%m%d_%Hh%Mm%Ss", font=font_timestamp))  # add timestamp
         img_new = Image.alpha_composite(img, img_roi)  # composite captured & ROI images
         return(img_new)
     except Exception as e:

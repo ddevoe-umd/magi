@@ -167,6 +167,7 @@ img.addEventListener('click', () => {
             max-height: 100%;
             width: 200%;
             height: 200%;
+            cursor: zoom-in;
           }
         </style>
       </head>
@@ -179,13 +180,24 @@ img.addEventListener('click', () => {
 	imgWindow.document.open();
   imgWindow.document.write(html);
   imgWindow.document.close();
+
   // keep window aspect ratio on resizing:
   imgWindow.addEventListener('resize', () => {  
-    const currentWidth = imgWindow.innerWidth;
-    const newHeight = currentWidth * 480/640;
-    imgWindow.resizeTo(currentWidth, Math.round(newHeight));
+    const width = imgWindow.innerWidth;
+    const height = imgWindow.innerHeight;
+    const aspectRatio = 640/480;
+    const newHeight = width / aspectRatio;
+    imgWindow.resizeTo(width, Math.round(newHeight));
               imgWindow.document.title = "asd";
   });
+
+  imgWindow.addEventListener('click', () => {
+  	const width = imgWindow.innerWidth;
+    const height = imgWindow.innerHeight;
+    if (width == 640) { imgWindow.resizeTo(1280,960); }
+    else { imgWindow.resizeTo(640,480); }
+  });
+
 
   imgWindow.document.title = imgCaptureTime;
 });
