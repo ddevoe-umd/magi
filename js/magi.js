@@ -1,12 +1,12 @@
 
 // Globals:
 
-var target_dict = {          // Targets with chart display properties:
-  "MecA": ["#1f009c", "solid"],   
-  "FemB": ["#006aa8", "solid"],
-  "Nuc": ["#338f4c", "solid"],
-  "POS": ["#363636", "dash"],
-  "NEG": ["#363636", "dot"]
+var targets = {          // Targets with chart display properties:
+  "MecA": ["#4C4CEB", "solid"],   
+  "FemB": ["#5ED649", "solid"],
+  "Nuc": ["#DD4444", "solid"],
+  "POS": ["#222222", "dash"],
+  "NEG": ["#222222", "dot"]
 };
 
 var wellConfig = [           // Well array configuration (start at upper left):
@@ -133,7 +133,7 @@ async function getImage() {
 	log("getImage() called");
   document.getElementById('image').style.backgroundColor = 'white';
 	let message = 'getImage';
-	let data = [wellConfig, target_dict];  // use to color ROIs in image
+	let data = [wellConfig, targets];  // use to color ROIs in image
 	let response = await queryServer(JSON.stringify([message,data]));
   if (response.ok) {
 		results = await response.text();
@@ -172,14 +172,14 @@ img.addEventListener('click', () => {
         </style>
       </head>
       <body>
-        <img src="${img.src}">
+        <img id="chipImg" src="${img.src}">
       </body>
       </html>`
-	const imgWindow = window.open('', '_blank', 
-		"width=640,height=480,menubar=no,resizable=yes");
+	const imgWindow = window.open('', '_blank', "resizable=yes");
 	imgWindow.document.open();
   imgWindow.document.write(html);
   imgWindow.document.close();
+	imgWindow.resizeTo(640,480)
 
   // keep window aspect ratio on resizing:
   imgWindow.addEventListener('resize', () => {  
@@ -188,18 +188,23 @@ img.addEventListener('click', () => {
     const aspectRatio = 640/480;
     const newHeight = width / aspectRatio;
     imgWindow.resizeTo(width, Math.round(newHeight));
-              imgWindow.document.title = "asd";
   });
-
+  // toggle 2x window zoom on user click:
   imgWindow.addEventListener('click', () => {
   	const width = imgWindow.innerWidth;
     const height = imgWindow.innerHeight;
-    if (width == 640) { imgWindow.resizeTo(1280,960); }
-    else { imgWindow.resizeTo(640,480); }
+    if (width == 640) { 
+    	imgWindow.resizeTo(1280,960);
+      imgWindow.document.getElementById('chipImg').style.cursor = "zoom-out";
+      log("zoomed in")
+    }
+    else { 
+    	imgWindow.resizeTo(640,480);
+      imgWindow.document.getElementById('chipImg').style.cursor = "zoom-in";
+      log("zoomed out")
+    }
   });
-
-
-  imgWindow.document.title = imgCaptureTime;
+  imgWindow.document.title = imgCaptureTime;   // does not work...
 });
 
 
@@ -249,12 +254,10 @@ function downloadCrossOriginFile(fileName) {
       console.error('Error downloading file:', error);
   });
 }
-
 function saveRaw() {
 	log("saveRaw() called");
   downloadCrossOriginFile(currentFileName + ".csv");
 }
-
 function saveFiltered() {
 	log("saveFiltered() called");
   downloadCrossOriginFile(currentFileName + "_filt.csv");
@@ -305,7 +308,7 @@ function setupAmplificationChart(targetContainer) {
 	let plotInfo = [];
 
 	let g = 1;   // group number (for grouping target sets in charts)
-	for (const key in target_dict) {
+	for (const key in targets) {
 		let key_found = false;
 		for (let i=0; i<wellConfig.length; i++) {
       if (wellConfig[i] == key) {
@@ -315,8 +318,8 @@ function setupAmplificationChart(targetContainer) {
 					type: "line",
 					group: g,
 					dataPoints: wellArray[i],
-		      color: target_dict[wellConfig[i]][0],
-					lineDashType: target_dict[wellConfig[i]][1]
+		      color: targets[wellConfig[i]][0],
+					lineDashType: targets[wellConfig[i]][1]
 				};
 				// Only show each gene target in the legend once:
 				if (!key_found) {
@@ -490,13 +493,13 @@ function displayFilteredData(data) {
 function displayTTP() {
   document.getElementById("toggleTTP").innerHTML = "Show averages";
   ttpBars = [];
-  for (const key in target_dict) {
+  for (const key in targets) {
 		for (let i=0; i<wellConfig.length; i++) {
 			if (wellConfig[i] == key) {
 				ttpBars.push({
 					y: ttpData[i],
 					label: key,
-					color: target_dict[key][0]
+					color: targets[key][0]
 				});
 			}
 		}
@@ -555,7 +558,7 @@ function displayTTPavgStdDev() {
 	// Calculate mean and standard deviation for each target:
   let dataPoints = [];
   let errorBars = [];
-  for (const key in target_dict) {
+  for (const key in targets) {
   	let vals = [];
   	let sum = 0;
 		for (let i=0; i<wellConfig.length; i++) {
@@ -568,7 +571,7 @@ function displayTTPavgStdDev() {
 		dataPoints.push({ 
 			y: mean,
 			label: key,
-			color: target_dict[key][0]
+			color: targets[key][0]
 		});
 		errorBars.push({
 			y: [mean-stdev, mean+stdev],
