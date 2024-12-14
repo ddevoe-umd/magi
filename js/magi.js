@@ -59,8 +59,34 @@ function enableButtons(elements) {
 window.onload = function () {
 	// Disable buttons at start-up:
 	disableButtons(["stop","analyze","saveraw","savefiltered","saveTTP","toggleTTP"]);
+	enableButtons(["start","period-slider"]);
+  period = document.getElementById('period-slider').value;
+  document.getElementById('period-slider-value').innerHTML = `Period: ${period}s`;
 	getImage();        // Get initial chip image at start
 };
+
+// Apply the maximum width to all buttons:
+document.addEventListener("DOMContentLoaded", () => {
+  const buttons = document.querySelectorAll(".button");
+  let maxWidth = 0;
+  // Determine the maximum width of any button
+  buttons.forEach(button => {
+    const buttonWidth = button.offsetWidth;
+    if (buttonWidth > maxWidth) {
+      maxWidth = buttonWidth;
+    }
+  });
+  buttons.forEach(button => {
+	  button.style.width = maxWidth + "px";
+  });
+});
+
+// Update assay period value from slider:
+document.getElementById("period-slider").addEventListener('input', function() {
+  document.getElementById('period-slider-value').innerHTML = `Period: ${this.value}s`;
+  sampleInterval = this.value * 1000;
+});
+
 
 // Send POST message to server:
 async function queryServer(message) {
@@ -96,7 +122,7 @@ async function endAssay() {
 	if (response) {
 		disableButtons(["stop"]);
 		if (assayTimer) clearInterval(assayTimer);
-		enableButtons(["start"]);
+	  enableButtons(["start","period-slider"]);
 		let message = 'end';
 	  let data = '';
 		let response = await queryServer(JSON.stringify([message,data]));
@@ -156,16 +182,18 @@ img.addEventListener('click', () => {
         <style>
           body {
             margin: 0;
+            overflow: hidden;  /* prevent scrollbars */
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            width: 100vw;
             background-color: #f0f0f0;
           }
           img {
             max-width: 100%;
             max-height: 100%;
-            width: 200%;
+            width: 200%;      /* image size when zoomed in */
             height: 200%;
             cursor: zoom-in;
           }
@@ -175,11 +203,10 @@ img.addEventListener('click', () => {
         <img id="chipImg" src="${img.src}">
       </body>
       </html>`
-	const imgWindow = window.open('', '_blank', "resizable=yes");
+	const imgWindow = window.open('', '_blank', "width=640, height=480, resizable=yes");
 	imgWindow.document.open();
   imgWindow.document.write(html);
   imgWindow.document.close();
-	imgWindow.resizeTo(640,480)
 
   // keep window aspect ratio on resizing:
   imgWindow.addEventListener('resize', () => {  
@@ -204,7 +231,6 @@ img.addEventListener('click', () => {
       log("zoomed out")
     }
   });
-  imgWindow.document.title = imgCaptureTime;   // does not work...
 });
 
 
@@ -216,14 +242,20 @@ async function analyzeData() {
 	if (response.ok) {
 		results = await response.text();
 		log("Server response: ");
-		log(results);
-		let data = JSON.parse(results);
-    ttpData = data[0];  // ttpData is global
-    let xy = data[1];
-    displayFilteredData(xy);
-		displayTTP();
-	  enableButtons(["savefiltered","toggleTTP","saveTTP"]);
-	  disableButtons(["analyze"]);
+		if (results) { 
+			log(results);
+			let data = JSON.parse(results);
+	    ttpData = data[0];  // ttpData is global
+	    let xy = data[1];
+	    displayFilteredData(xy);
+			displayTTP();
+		  enableButtons(["savefiltered","toggleTTP","saveTTP"]);
+		  disableButtons(["analyze"]);
+		}
+		else { 
+			log("Anlysis incomplete: insufficient data points for filter parameters");
+		}
+
 	}
 }
 
@@ -426,7 +458,7 @@ function setupTemperatureChart(targetContainer) {
 async function startAssay() {
 	
 	enableButtons(["stop"]);
-	disableButtons(["start","analyze","saveraw","savefiltered","saveTTP","toggleTTP","shutdown"]);
+	disableButtons(["start","period-slider","analyze","saveraw","savefiltered","saveTTP","toggleTTP","shutdown"]);
   document.getElementById("toggleTTP").innerHTML = "TTP mode";
 
   showTTPallWells = false;
