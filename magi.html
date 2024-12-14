@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">	
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/slider.css">
 <script src="js/canvasjs.min.js"></script>
 <script src="js/magi.js" defer></script>
 <title>MAGI</title>
@@ -12,35 +13,29 @@
 
 <div class="main-container">
 
-	<div class="button-container">
-		<div buttons>
-			Run Assay:
-			<button id="start" class="button" role="button" onclick="startAssay()" > Start </button>
-			<button id="stop" class="button" onclick="endAssay()" > End </button>
-			<button id="getImage" class="button" role="button" onclick="getImage()" > Get Image </button>
-		</div>
-		<div buttons>
-			Results:
-			<button id="analyze" class="button" onclick="analyzeData()" > Analyze </button>
-			<button id="toggleTTP" class="button" onclick="toggleTTP()" > TTP mode</button>
-		</div>
-		<div buttons>
-			Save:
-			<button id="saveraw" class="button" onclick="saveRaw()" > Raw </button>
-			<button id="savefiltered" class="button" onclick="saveFiltered()" > Filtered </button>
-			<button id="saveTTP" class="button" onclick="saveTTP()" > TTP </button>
-		</div>
-		<div buttons>
-		  	<button id="shutdown" class="button" role="button" onclick="shutdown()" > Shutdown </button>
-		</div>
-	</div>
 
 	<div class="chart-container">
 		<div class="chart-row">
+			<div class="side-button-container"> 
+				<button id="start" class="button" role="button" onclick="startAssay()"> Start </button>
+				<button id="stop" class="button" onclick="endAssay()"> End </button>
+				<button id="saveraw" class="button" onclick="saveRaw()"> Save Raw </button>
+				<div class="slider-container">
+				    <div id="period-slider-value" class="slider-value"> Period: 5s</div>
+				    <input type="range" id="period-slider" class="slider" 
+				           min="1" max="10" value="5">
+				</div>
+			</div>
 			<div class="chart" id="rawDataChart"><b>Fluorescence Data</b></div>
 			<div class="chart" id="temperatureChart"><b>Chip Temperature</b></div>
 		</div>
-			<div class="chart-row">
+		<div class="chart-row">
+			<div class="side-button-container"> 
+				<button id="analyze" class="button" onclick="analyzeData()"> Analyze </button>
+				<button id="toggleTTP" class="button" onclick="toggleTTP()"> TTP mode</button>
+				<button id="savefiltered" class="button" onclick="saveFiltered()"> Save Filtered </button>
+				<button id="saveTTP" class="button" onclick="saveTTP()"> Save TTP </button>
+			</div>
 			<div class="chart" id="filteredDataChart"><b>Filtered Data</b></div>
 			<div class="chart" id="ttpChart"><b>Time to Positive</b></div>
 		</div>
@@ -48,6 +43,10 @@
 
 	<div class="log-image-container">
 		<div class="log-image-row">
+			<div class="side-button-container"> 
+				<button id="getImage" class="button" role="button" onclick="getImage()"> Get Image </button>
+			  	<button id="shutdown" class="button" role="button" onclick="shutdown()"> Shutdown </button>
+			</div>
 			<div class="image"><img id="image" onerror="this.style.display='none'" /></div>
 			<div class="log" id="log"><b>Server Log</b><br><br></div>
 		</div>
