@@ -58,7 +58,7 @@ function enableButtons(elements) {
 
 window.onload = function () {
 	// Disable buttons at start-up:
-	disableButtons(["stop","analyze","saveraw","savefiltered","saveTTP","toggleTTP"]);
+	disableButtons(["stop","saveraw","savefiltered","saveTTP","toggleTTP"]);
 	enableButtons(["start","period-slider"]);
   period = document.getElementById('period-slider').value;
   document.getElementById('period-slider-value').innerHTML = `Period: ${period}s`;
@@ -131,7 +131,8 @@ async function endAssay() {
 			log("Server response:")
 			log(results);
 			currentFileName = results;
-	   	enableButtons(["analyze","saveraw","shutdown"]);
+	   	enableButtons(["saveraw","shutdown"]);
+	   	analyzeData();
 		}
 	}
 	else {
@@ -250,10 +251,9 @@ async function analyzeData() {
 	    displayFilteredData(xy);
 			displayTTP();
 		  enableButtons(["savefiltered","toggleTTP","saveTTP"]);
-		  disableButtons(["analyze"]);
 		}
 		else { 
-			log("Anlysis incomplete: insufficient data points for filter parameters");
+			log("Anlysis incomplete: insufficient data points (>20 required)?");
 		}
 
 	}
@@ -300,7 +300,7 @@ async function shutdown() {
 	let response = confirm("Do you want to shut down?");
 	if (response) {
 		log("System is powering off!!!");
-		disableButtons(["stop","start","analyze","saveraw","savefiltered","saveTTP","toggleTTP"]);
+		disableButtons(["stop","start","saveraw","savefiltered","saveTTP","toggleTTP"]);
 		let message = 'shutdown';
 	  let data = '';
 		let response = await queryServer(JSON.stringify([message,data]));
@@ -458,7 +458,7 @@ function setupTemperatureChart(targetContainer) {
 async function startAssay() {
 	
 	enableButtons(["stop"]);
-	disableButtons(["start","period-slider","analyze","saveraw","savefiltered","saveTTP","toggleTTP","shutdown"]);
+	disableButtons(["start","period-slider","saveraw","savefiltered","saveTTP","toggleTTP","shutdown"]);
   document.getElementById("toggleTTP").innerHTML = "TTP mode";
 
   showTTPallWells = false;
