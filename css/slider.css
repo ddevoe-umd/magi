@@ -1,0 +1,61 @@
+.slider-container {
+    position: relative;
+    overflow: hidden; 
+    width: 100%;
+    height: 30%;
+    margin: 0px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* The slider itself */
+.slider {
+    -webkit-appearance: none;    /* Override default CSS styles */
+    appearance: none;
+    width: 90%;
+    height: auto;
+    background: #d3d3d3;
+    /* transform: rotate(-90deg);   /* Rotate to make it vertical */
+    outline: none;  
+    border: 2px solid #444444;
+    -webkit-transition: .2s;     /* transition time on hover */
+    transition: opacity .2s;    
+    margin-top: 18px;            /* Prevent overlap with value display */
+}
+
+/* Slider value display */
+.slider-value {
+    position: absolute;
+    align: left;
+    /* top: 5px;                  /* Distance from the top */
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Mouse-over effects */
+.slider:hover {
+    opacity: 1;                  /* Fully shown on mouse-over */
+}
+
+/* Slider handle:
+   webkit (Chrome, Opera, Safari, Edge) and
+   moz (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;    /* Override default look */
+    appearance: none;
+    width: 10px;                 /* handle height (rotated) */
+    height: 15px;                /* handle width (rotated) */
+    background: #04AA6D;
+    cursor: pointer; 
+  }
+.slider::-moz-range-thumb {
+    width: 10px; 
+    height: 15px;
+    background: #04AA6D;
+    cursor: pointer;
+}
+
+.slider:disabled {
+  opacity: 0.5;  
+}
