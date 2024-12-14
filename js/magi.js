@@ -28,6 +28,9 @@ var showTTPallWells = false;  // select TTP display mode (all wells vs. grouped)
 var ttpData = [];             // array to hold TTP results
 var wakeLock;
 
+var filteredChart;            // chart to display filtered curves
+var ttpChartAll;                 // chart to display all TTP values
+var ttpChartGrouped;                 // chart to display avg & stdev TTP values
 
 // Custom log function:
 function log(message) {
@@ -454,12 +457,44 @@ function setupTemperatureChart(targetContainer) {
 	return [chart, temperature]
 }
 
+// Utility function to convert hex color to rgba:
+function hexToRgba(hex, alpha) {
+  let c = hex.substring(1).split('');
+  if (c.length === 3) { c = [c[0], c[0], c[1], c[1], c[2], c[2]]; }
+  c = '0x' + c.join('');
+  return `rgba(${(c>>16)&255}, ${(c>>8)&255}, ${c&255}, ${alpha})`;
+}
+
+// Dim a canvasJS chart:
+function dimChart(chart) {
+  // Dim data markers / lines:
+	chart.options.data.forEach(dataSet => {
+		const originalColor = dataSet.color || "#000000";
+    dataSet.color = hexToRgba(originalColor, 0.5); // Set line color with 50% opacity
+    if (dataSet.markerColor) dataSet.markerColor = "rgba(0, 0, 255, 0.5)"; 
+  });
+  chart.options.axisX.gridColor = "rgba(0, 0, 0, 0.5)"; // Gridlines X
+  chart.options.axisY.gridColor = "rgba(0, 0, 0, 0.5)"; // Gridlines Y
+  chart.options.backgroundColor = "rgba(255,255,255,0.2)";
+  chart.options.interactivityEnabled = false;
+  chart.render();
+}
 
 async function startAssay() {
-	
+	log("startAssay() called");
 	enableButtons(["stop"]);
 	disableButtons(["start","period-slider","saveraw","savefiltered","saveTTP","toggleTTP","shutdown"]);
-  document.getElementById("toggleTTP").innerHTML = "TTP mode";
+  document.getElementById("toggleTTP").innerHTML = "Show grouped";
+
+  // Dim charts from previous run:
+  if (filteredChart) {
+  	log("Hiding filtered data & TTP charts");
+    dimChart(filteredChart);
+    dimChart(ttpChartAll);
+    if (ttpChartGrouped) {
+      dimChart(ttpChartGrouped);
+    }
+  }
 
   showTTPallWells = false;
 
@@ -508,22 +543,23 @@ async function startAssay() {
 
 
 function displayFilteredData(data) {
-	let [chart, wellArray] = setupAmplificationChart('filteredDataChart');
-	chart.options.title.text = "Fluorescence (filtered)";
+	let wellArray;
+	[filteredChart, wellArray] = setupAmplificationChart('filteredDataChart');
+	filteredChart.options.title.text = "Fluorescence (filtered)";
 	for (let i=0; i<wellArray.length; i++) {
 		for (let j=0; j<data[0].length; j++) {
 			wellArray[i].push(data[i][j]);
 		}
 	}
-	chart.render();
-	chart.axisY[0].set('minimum',0);
-	chart.axisY[0].set('maximum',1);
+	filteredChart.render();
+	filteredChart.axisY[0].set('minimum',0);
+	filteredChart.axisY[0].set('maximum',1);
 }
 
 
 // Display TTP for all wells individually:
 function displayTTP() {
-  document.getElementById("toggleTTP").innerHTML = "Show averages";
+  document.getElementById("toggleTTP").innerHTML = "Show grouped";
   ttpBars = [];
   for (const key in targets) {
 		for (let i=0; i<wellConfig.length; i++) {
@@ -536,7 +572,7 @@ function displayTTP() {
 			}
 		}
   }
-	let chart = new CanvasJS.Chart("ttpChart", {
+	ttpChartAll = new CanvasJS.Chart("ttpChart", {
 		title: {
 			text: "Time to Positive",
 			fontFamily: "tahoma",
@@ -558,8 +594,8 @@ function displayTTP() {
 			dataPoints: ttpBars
 		}]
 	})
-	chart.render();
-	chart.axisY[0].set('minimum',0);   // Only show results with positive TTPs
+	ttpChartAll.render();
+	ttpChartAll.axisY[0].set('minimum',0);   // Only show results with positive TTPs
 }
 
 
@@ -611,7 +647,7 @@ function displayTTPavgStdDev() {
 		});
   }
 
-	let chart = new CanvasJS.Chart("ttpChart", {
+	ttpChartGrouped = new CanvasJS.Chart("ttpChart", {
 		zoomEnabled: true,
 		title: {
 			text: "Time to Positive",
@@ -651,11 +687,11 @@ function displayTTPavgStdDev() {
 		else {
 			e.dataSeries.visible = true;
 		}
-		chart.render();
+		ttpChartGrouped.render();
 	}
 
-	chart.render();
-	chart.axisY[0].set('minimum',0);   // Only show results with positive TTPs
+	ttpChartGrouped.render();
+	ttpChartGrouped.axisY[0].set('minimum',0);   // Only show results with positive TTPs
 }
 
 
