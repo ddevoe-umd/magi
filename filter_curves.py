@@ -57,12 +57,12 @@ def filter(filename):
                     y[i] = y[i-1]
             
             # Butterworth low-pass filter:
-            cutoff = 0.5/60    # cutoff frequency (0.05 - 0.5 cycles/min is a good range)
-            T = t[-1]          # Sample Period
+            T = t[-1]          # Sample Period (min)
             n = len(t)         # total number of samples
-            fs = T/n           # sample rate, Hz
+            fs = n/T           # sample rate (cycles/min)
+            Wn = fs/10         # Wn cutoff (fs > Wn/2 required by Nyquist)
             order = 6          # filter order       
-            yf = butter_lowpass_filter(y, cutoff, fs, order)
+            yf = butter_lowpass_filter(y, Wn, fs, order)
             
             # shift curves to min value:
             y = [x-min(yf) for x in y]
