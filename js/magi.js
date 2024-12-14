@@ -41,6 +41,22 @@ function log(message) {
 	log.scroll({ top: log.scrollHeight, behavior: 'smooth' }); // pin scroll to bottom
 }
 
+// Custom notification window:
+function notification(message) {
+    const win = document.createElement('div');        // create the window container
+    win.className = 'notification-window';
+    const content = document.createElement('div');    // create the content container
+    content.className = 'notification-content';
+    const text = document.createElement('p');
+    text.textContent = message;
+    content.appendChild(text);          // Append the text to the content container
+    win.appendChild(content);           // Append the content to the window container
+    document.body.appendChild(win);     // Add the window to the body
+    log(`notification window added: ${message}`);
+    return(win);                        // return the window so it can be deleted later
+}
+
+
 // Get wake lock to prevent system from sleeping:
 async function getWakeLock() {
 	try {
@@ -51,14 +67,15 @@ async function getWakeLock() {
 	}
 }
 
+// Disable / Enable HTML buttons in a list of button IDs:
 function disableButtons(elements) {
 	elements.forEach(e => document.getElementById(e).disabled = true);
 }
-
 function enableButtons(elements) {
 	elements.forEach(e => document.getElementById(e).disabled = false);
 }
 
+// Initial window loading:
 window.onload = function () {
 	// Disable buttons at start-up:
 	disableButtons(["stop","saveraw","savefiltered","saveTTP","toggleTTP"]);
@@ -151,7 +168,7 @@ async function getData() {
   if (response.ok) {
 		results = await response.text();
 		log("Server response:")
-		log(results);
+		log(`JSON data length = ${results.length}`);
 		let results_array = results.split(",");
 		newData = [];
 		results_array.forEach( e => newData.push(+e))   // strings to numbers
@@ -174,6 +191,21 @@ async function getImage() {
 		img.src = base64Image;
     imgCaptureTime = ((Date.now()-startTime)/1000/60).toFixed(2);
 	}
+}
+
+
+// Get unscaled chip image:
+function unscaledImage() {  
+	const scaledImage = document.getElementById('image');
+  const unscaledImage = new Image();
+  unscaledImage.src = scaledImage.src;
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = unscaledImage.naturalWidth;
+  canvas.height = unscaledImage.naturalHeight;
+  ctx.drawImage(unscaledImage, 0, 0);
+  const dataURL = canvas.toDataURL("image/png");
+  return(dataURL);
 }
 
 
@@ -204,7 +236,7 @@ img.addEventListener('click', () => {
         </style>
       </head>
       <body>
-        <img id="chipImg" src="${img.src}">
+        <img id="chipImg" src="${unscaledImage()}">
       </body>
       </html>`
 	const imgWindow = window.open('', '_blank', "width=640, height=480, resizable=yes");
@@ -238,8 +270,10 @@ img.addEventListener('click', () => {
 });
 
 
+// Filter the raw data and get TTP values:
 async function analyzeData() {
 	log("analyzeData() called");
+	let win = notification("Filtering data and extracting TTP values");
   let message = 'analyze';
 	let data = currentFileName;
 	let response = await queryServer(JSON.stringify([message,data]));
@@ -247,7 +281,7 @@ async function analyzeData() {
 		results = await response.text();
 		log("Server response: ");
 		if (results) { 
-			log(results);
+		  log(`JSON data length = ${results.length}`);
 			let data = JSON.parse(results);
 	    ttpData = data[0];  // ttpData is global
 	    let xy = data[1];
@@ -256,10 +290,10 @@ async function analyzeData() {
 		  enableButtons(["savefiltered","toggleTTP","saveTTP"]);
 		}
 		else { 
-			log("Anlysis incomplete: insufficient data points (>20 required)?");
+			log("Anlysis incomplete (check # data points, >21 required)");
 		}
-
 	}
+  win.remove();    // Remove the notification window
 }
 
 
@@ -298,6 +332,7 @@ function saveFiltered() {
   downloadCrossOriginFile(currentFileName + "_filt.csv");
 }
 
+// System shutdown:
 async function shutdown() {
 	log("shutdown() called");
 	let response = confirm("Do you want to shut down?");
@@ -338,10 +373,7 @@ function setupAmplificationChart(targetContainer) {
 
   // Set up empty array with length equal to the number of wells:
   let wellArray = Array.from({ length: wellConfig.length }, () => []);
-
-	// Set up plot info:
 	let plotInfo = [];
-
 	let g = 1;   // group number (for grouping target sets in charts)
 	for (const key in targets) {
 		let key_found = false;
@@ -366,7 +398,6 @@ function setupAmplificationChart(targetContainer) {
     }
     g += 1;
   }
-
 	let chart = new CanvasJS.Chart(targetContainer, {
 		zoomEnabled: true,
 		title: {
@@ -403,8 +434,6 @@ function setupAmplificationChart(targetContainer) {
 
 
 function setupTemperatureChart(targetContainer) {
-
-	// Set up plot info:
 	let plotInfo = [];
 	let temperature = [];
 	plotInfo.push(
@@ -480,12 +509,12 @@ function dimChart(chart) {
   chart.render();
 }
 
+// Start a new assay:
 async function startAssay() {
 	log("startAssay() called");
 	enableButtons(["stop"]);
 	disableButtons(["start","period-slider","saveraw","savefiltered","saveTTP","toggleTTP","shutdown"]);
   document.getElementById("toggleTTP").innerHTML = "Show grouped";
-
   // Dim charts from previous run:
   if (filteredChart) {
   	log("Hiding filtered data & TTP charts");
@@ -495,25 +524,17 @@ async function startAssay() {
       dimChart(ttpChartGrouped);
     }
   }
-
   showTTPallWells = false;
-
 	let [amplificationChart, wellArray] = setupAmplificationChart('rawDataChart')
 	let [temperatureChart, temperature] = setupTemperatureChart('temperatureChart')
-
-	//let time = new Date;
-	//startTime = time.getTime();
 	startTime = Date.now();
-
   nullData = await startPID();    // Tell Python to start the PID controller
-  
+
 	async function updateChart() {
 		//let now = new Date();
 		let now = Date.now();		
 		minutes = (now - startTime)/1000/60;
-
 		newData = await getData();   		// Get data from Python
-
 		// extend the amplification curve data:
 		for (let j=0; j<wellArray.length; j++) {
 			wellArray[j].push({
@@ -521,22 +542,19 @@ async function startAssay() {
 				y: newData[j]
 			});
 		}
-
 		// extend the temperature array:
 		temperature.push({
 			x: minutes,
 			y: newData[wellArray.length]   // T is last element in newData
 			});   
-
 		// Display the real-time amplification & temperature curves:
 		amplificationChart.render();
 		temperatureChart.render();
 	}
-
 	// Start the assay:
 	updateChart();   // Initial chart update to avoid delay
 	assayTimer = setInterval(function(){updateChart()}, sampleInterval);
-	// Note: timer wont work if window is minimized...nned to use
+	// Note: timer wont work if window is minimized...need to use
 	// a "web worker" instead to fix this, see 
 	// https://stackoverflow.com/questions/5927284/how-can-i-make-setinterval-also-work-when-a-tab-is-inactive-in-chrome
 }
@@ -707,7 +725,7 @@ function toggleTTP() {
 }
 
 
-// Helper function to save local JS data to a file:
+// Helper function to save local JS data to a file on the client:
 function saveFile(filename, content, mimeType = "text/plain") {
     const blob = new Blob([content], { type: mimeType });
     const link = document.createElement("a");
@@ -717,7 +735,7 @@ function saveFile(filename, content, mimeType = "text/plain") {
     URL.revokeObjectURL(link.href);
 }
 
-// Helper function to save 2D array to a CSV file:
+// Helper function to save 2D array to a CSV file on the client:
 function saveCSV(filename, arr) {
     // Convert array to CSV string
     const csvContent = arr
@@ -727,6 +745,7 @@ function saveCSV(filename, arr) {
     return(success)
 }
 
+// Save TTP data locally (on the client):
 function saveTTP() {
 	log("saveTTP called");
 	// Package TTP results into an array:
