@@ -287,19 +287,26 @@ async function analyzeData() {
 		log("Server response: ");
 		if (results) { 
 		  log(`JSON data length = ${results.length}`);
-			let data = JSON.parse(results);
-	    ttpData = data[0];  // ttpData is global
-	    let xy = data[1];
-	    displayFilteredData(xy);
-			displayTTP();
-		  enableButtons(["savefiltered","toggleTTP","saveTTP"]);
+		  // Check for NaN in filter results, which seems to happen when the
+		  // raw image data contains too many zero values:
+		  if (results.includes("NaN")) {
+		  	log("Anlysis incomplete:")
+		  	log("- NaN found in filter data");
+		    log("- check if camera brightness values == 0");
+		  }
+		  else {
+				let data = JSON.parse(results);
+		    ttpData = data[0];  // ttpData is global
+		    let xy = data[1];
+		    displayFilteredData(xy);
+				displayTTP();
+			  enableButtons(["savefiltered","toggleTTP","saveTTP"]);
+			}
 		}
 		else { 
 			log("Anlysis incomplete:");
 			log("- check # data points, >21 required");
 			log("- check Wn parameter in Butterworth filter");
-			log("- check magi_server.log for NaN in data");
-			log("- check if all camera brightness values == 0");
 		}
 	}
   win.remove();    // Remove the notification window
@@ -441,7 +448,9 @@ function setupAmplificationChart(targetContainer) {
   }
 	let chart = new CanvasJS.Chart(targetContainer, {
 		zoomEnabled: true,
-		title: {
+		exportEnabled: true,
+		exportFileName: targetContainer,
+ 		title: {
 			text: "Fluorescence",
 			fontFamily: "tahoma",
 			fontSize: 16
@@ -488,6 +497,8 @@ function setupTemperatureChart(targetContainer) {
 	)
 	let chart = new CanvasJS.Chart(targetContainer, {
 		zoomEnabled: true,
+		exportEnabled: true,
+		exportFileName: targetContainer,
 		title: {
 			text: "Temperature",
 			fontFamily: "tahoma",
@@ -537,13 +548,13 @@ function hexToRgba(hex, alpha) {
 
 // Dim a canvasJS chart:
 function dimChart(chart) {
-  // Dim data markers / lines:
+  // Dim lines & markers:
 	chart.options.data.forEach(dataSet => {
 		const originalColor = dataSet.color || "#000000";
-    dataSet.color = hexToRgba(originalColor, 0.5); // Set line color with 50% opacity
+    dataSet.color = hexToRgba(originalColor, 0.5);
     if (dataSet.markerColor) dataSet.markerColor = "rgba(0, 0, 255, 0.5)"; 
   });
-  // Dim gridlines and background:
+  // Dim gridlines & background:
   chart.options.axisX.gridColor = "rgba(0, 0, 0, 0.5)";
   chart.options.axisY.gridColor = "rgba(0, 0, 0, 0.5)";
   chart.options.backgroundColor = "rgba(200,200,200,0.4)";
@@ -633,6 +644,9 @@ function displayTTP() {
 		}
   }
 	ttpChartAll = new CanvasJS.Chart("ttpChart", {
+		zoomEnabled: true,
+		exportEnabled: true,
+		exportFileName: "ttpChart",
 		title: {
 			text: "Time to Positive",
 			fontFamily: "tahoma",
@@ -643,8 +657,6 @@ function displayTTP() {
 			title: "TTP (min)",
 			titleFontSize: 14
 		},		
-		animationEnabled: true,
-		//theme: "light2",   // "light1", "light2", "dark1", "dark2"
 		axisX:{ interval: 1 },   // show all axis labels
 		data: [{        
 			type: "column",  
@@ -709,6 +721,8 @@ function displayTTPavgStdDev() {
 
 	ttpChartGrouped = new CanvasJS.Chart("ttpChart", {
 		zoomEnabled: true,
+		exportEnabled: true,
+		exportFileName: "ttpChartGrouped",
 		title: {
 			text: "Time to Positive",
 			fontFamily: "tahoma",
