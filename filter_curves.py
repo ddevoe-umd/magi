@@ -70,7 +70,7 @@ def filter(filename):
             normal_cutoff = cutoff / nyq
             b, a = butter(order, normal_cutoff, btype='low', analog=False)
             # b, a = butter(order, cutoff, btype='low', analog=False, fs=fs, output='sos')
-            yf = filtfilt(b, a, data)   # filtered data
+            yf = filtfilt(b, a, y)   # filtered data
 
             print(yf, flush=true)
 
