@@ -12,9 +12,10 @@ import pandas as pd
 print('pandas loaded')
 
 def butter_lowpass_filter(data, cutoff, fs, order):
-    nyq = 0.5 * fs  # Nyquist Frequency
-    normal_cutoff = cutoff / nyq
-    b, a = butter(order, normal_cutoff, btype='low', analog=False)
+    # nyq = 0.5 * fs                  # Nyquist Frequency
+    # normal_cutoff = cutoff / nyq
+    # b, a = butter(order, normal_cutoff, btype='low', analog=False)
+    b, a = butter(order, cutoff, btype='low', analog=False, fs=fs, output='sos')
     return filtfilt(b, a, data)
 
 def get_ttp(t,y):
@@ -57,12 +58,12 @@ def filter(filename):
                     y[i] = y[i-1]
             
             # Butterworth low-pass filter:
-            T = t[-1]          # Sample Period (min)
+            T = t[-1]          # sample Period (min)
             n = len(t)         # total number of samples
             fs = n/T           # sample rate (cycles/min)
-            Wn = fs/10         # Wn cutoff (fs > Wn/2 required by Nyquist)
+            cutoff = fs/10     # cutoff frequency (Wn)
             order = 6          # filter order       
-            yf = butter_lowpass_filter(y, Wn, fs, order)
+            yf = butter_lowpass_filter(y, cutoff, fs, order)
             
             # shift curves to min value:
             y = [x-min(yf) for x in y]
