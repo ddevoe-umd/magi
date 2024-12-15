@@ -72,7 +72,7 @@ def filter(filename):
             # b, a = butter(order, cutoff, btype='low', analog=False, fs=fs, output='sos')
             yf = filtfilt(b, a, y)   # filtered data
 
-            print(yf, flush=true)
+            print(yf, flush=True)
 
             # shift curves to min value:
             y = [x-min(yf) for x in y]
