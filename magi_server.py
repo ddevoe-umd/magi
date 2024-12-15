@@ -127,8 +127,10 @@ class S(BaseHTTPRequestHandler):
         elif action == 'reboot':         # Reboot the Pi
             reboot()
         elif action == 'clear':          # Clear the server log file
-            clear_logfile()
-            
+            open(logfile, 'w').close()
+            results = "Log file cleared"
+            self.wfile.write(json.dumps(results).encode('utf-8'))
+
     def log_message(self, format, *args):  # Suppress server output
         return
 
@@ -210,10 +212,6 @@ def reboot():
     GPIO.cleanup()
     from subprocess import call
     call("sudo reboot", shell=True)
-
-def  clear_logfile()
-    open(logfile, 'w').close()
-
 
 
 if __name__ == "__main__":
