@@ -80,13 +80,13 @@ window.onload = function () {
 	// Disable buttons at start-up:
 	disableButtons(["stop","saveraw","savefiltered","saveTTP","toggleTTP"]);
 	enableButtons(["start","period-slider","shutdown","reboot"]);
+  // Set sampling period from default slider setting:
   period = document.getElementById('period-slider').value;
+  sampleInterval = period * 1000;
   document.getElementById('period-slider-value').innerHTML = `Period: ${period}s`;
-	getImage();        // Get initial chip image at start
-
-  // Set initial sampling period:
-  sampleInterval = document.getElementById("period-slider").value * 1000;
+  log(`Saving Python output (stdio, stderr) to magi_server.log`);
   log(`sampleInterval updated (from slider): ${sampleInterval} msec`);
+  getImage();        // Get initial chip image
 };
 
 // Apply the maximum width to all buttons:
@@ -298,7 +298,7 @@ async function analyzeData() {
 			log("Anlysis incomplete:");
 			log("- check # data points, >21 required");
 			log("- check Wn parameter in Butterworth filter");
-			log("- check for NaN in data");
+			log("- check magi_server.log for NaN in data");
 			log("- check if all camera brightness values == 0");
 		}
 	}
@@ -530,7 +530,7 @@ function dimChart(chart) {
   // Dim gridlines and background:
   chart.options.axisX.gridColor = "rgba(0, 0, 0, 0.5)";
   chart.options.axisY.gridColor = "rgba(0, 0, 0, 0.5)";
-  chart.options.backgroundColor = "rgba(200,200,200,0.1)";
+  chart.options.backgroundColor = "rgba(200,200,200,0.4)";
   chart.options.interactivityEnabled = false;
   chart.render();
 }

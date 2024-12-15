@@ -53,22 +53,24 @@ def filter(filename):
                     y[i] = y[i-1]
             
             # Butterworth low-pass filter:
-            T = t[-1]          # sample Period (min)
-            n = len(t)         # total number of samples
-            fs = n/T           # sample rate (cycles/min)
-            f_nyquist = fs/2.0 # Nyquist frequency
-            Wn = 3             # Low pass cutoff (cycles/min)
-            # Wn = fs/10     
+            T = t[-1]            # sample Period (min)
+            n = len(t)           # total number of samples
+            fs = n/T             # sample rate (cycles/min)
+            f_nyquist = fs/2.0   # Nyquist frequency
+            Wn = fs/10           # Low pass cutoff (cycles/min)
             if Wn >= f_nyquist:  # Wn < f_nyquist required
                 Wn = 0.99*f_nyquist
             order = 6          # filter order       
-            
+            #
+            # Pre-SOS filter:
             # b, a = butter(order, Wn, btype='low', analog=False, fs=fs)
             # yf = filtfilt(b, a, y)   # filtered data
-
+            #
+            # SOS filter is a better option:
             sos = butter(order, Wn, btype='low', analog=False, fs=fs, output='sos')
             yf = sosfiltfilt(sos, y)   # filtered data
 
+            print(f'filter parameters: n={n}, T={T}, fs={fs}, f_nyquist={f_nyquist}, Wn={Wn}')
             print(yf, flush=True)
 
             # shift curves to min value:
