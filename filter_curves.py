@@ -70,7 +70,7 @@ def filter(filename):
             sos = butter(order, Wn, btype='low', analog=False, fs=fs, output='sos')
             yf = sosfiltfilt(sos, y)   # filtered data
 
-            print(f'filter parameters: n={n}, T={T}, fs={fs}, f_nyquist={f_nyquist}, Wn={Wn}')
+            print(f'filter parameters: n={n}, T={T}, fs={fs}, f_nyquist={f_nyquist}, Wn={Wn}', flush=True)
             print(yf, flush=True)
 
             # shift curves to min value:

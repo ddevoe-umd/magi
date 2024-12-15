@@ -29,6 +29,7 @@ from gpiozero import MCP3008
 print('gpiozero loaded')
 
 sys.path.append('/home/pi/magi')  # Add application path to the Python search path
+logfile = "magi_server.log"       # Log file for stdio + stderr (see setup.sh)
 
 # GLOBALS:
 
@@ -125,7 +126,9 @@ class S(BaseHTTPRequestHandler):
             shutdown()
         elif action == 'reboot':         # Reboot the Pi
             reboot()
-
+        elif action == 'clear':          # Clear the server log file
+            clear_logfile()
+            
     def log_message(self, format, *args):  # Suppress server output
         return
 
@@ -207,6 +210,10 @@ def reboot():
     GPIO.cleanup()
     from subprocess import call
     call("sudo reboot", shell=True)
+
+def  clear_logfile()
+    open(logfile, 'w').close()
+
 
 
 if __name__ == "__main__":

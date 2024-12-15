@@ -79,7 +79,7 @@ function enableButtons(elements) {
 window.onload = function () {
 	// Disable buttons at start-up:
 	disableButtons(["stop","saveraw","savefiltered","saveTTP","toggleTTP"]);
-	enableButtons(["start","period-slider","shutdown","reboot"]);
+	enableButtons(["start","period-slider","shutdown","reboot","clear"]);
   // Set sampling period from default slider setting:
   period = document.getElementById('period-slider').value;
   sampleInterval = period * 1000;
@@ -156,7 +156,7 @@ async function endAssay() {
 			log("Server response:")
 			log(results);
 			currentFileName = results;
-	   	enableButtons(["saveraw","shutdown","reboot"]);
+	   	enableButtons(["saveraw","shutdown","reboot","clear"]);
 	   	analyzeData();
 		}
 	}
@@ -375,6 +375,22 @@ async function reboot() {
 	}
 }
 
+// Clear server log:
+async function clearServerLog() {
+	log("clearServerLog() called");
+	let response = confirm("Clear the server log file?");
+	if (response) {
+		disableButtons(["clear"]);
+		let message = 'clear';
+	  let data = '';
+		let response = await queryServer(JSON.stringify([message,data]));
+		if (response.ok) { log("Server log cleared"); } 
+	}
+	else {
+		log("clearServerLog() cancelled");
+	}
+}
+
 // Function to display/hide grouped data sets in charts:
 function onLegendClick(e) {
   var groupSelected = e.dataSeries.group;
@@ -539,7 +555,7 @@ function dimChart(chart) {
 async function startAssay() {
 	log("startAssay() called");
 	enableButtons(["stop"]);
-	disableButtons(["start","period-slider","saveraw","savefiltered","saveTTP","toggleTTP","shutdown","reboot"]);
+	disableButtons(["start","period-slider","saveraw","savefiltered","saveTTP","toggleTTP","shutdown","reboot","clear"]);
   document.getElementById("toggleTTP").innerHTML = "Show grouped";
   // Dim charts from previous run:
   if (filteredChart) {
