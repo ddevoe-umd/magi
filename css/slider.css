@@ -13,15 +13,15 @@
 .slider {
     -webkit-appearance: none;    /* Override default CSS styles */
     appearance: none;
+    background: linear-gradient(#464d55, #25292e);
     width: 90%;
     height: auto;
-    background: #d3d3d3;
-    /* transform: rotate(-90deg);   /* Rotate to make it vertical */
     outline: none;  
     border: 4px solid #444444;
     -webkit-transition: .2s;     /* transition time on hover */
     transition: opacity .2s;    
     margin-top: 18px;            /* Prevent overlap with value display */
+    border-radius: 8px;
 }
 
 /* Slider value display */
@@ -44,7 +44,7 @@
     -webkit-appearance: none;    /* Override default look */
     width: 10px;                 /* handle height (rotated) */
     height: 15px;                /* handle width (rotated) */
-    background: #04AA6D;
+    background: #04dd6d;
     cursor: pointer; 
     border: none;
     border-radius: 25%;
