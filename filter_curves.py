@@ -62,8 +62,12 @@ def filter(filename):
             if Wn >= f_nyquist:  # Wn < f_nyquist required
                 Wn = 0.99*f_nyquist
             order = 6          # filter order       
-            b, a = butter(order, Wn, btype='low', analog=False, fs=fs, output='sos')
-            yf = filtfilt(b, a, y)   # filtered data
+            
+            # b, a = butter(order, Wn, btype='low', analog=False, fs=fs)
+            # yf = filtfilt(b, a, y)   # filtered data
+
+            sos = butter(order, Wn, btype='low', analog=False, fs=fs, output='sos')
+            yf = sosfiltfilt(sos, y)   # filtered data
 
             print(yf, flush=True)
 
