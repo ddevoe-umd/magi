@@ -15,7 +15,7 @@ var wellConfig = [           // Well array configuration (start at upper left):
 	"MecA",	"Nuc", "FemB", "NEG"
 ];
 
-var sampleInterval = 5000;   // image sampling period (msec)
+var sampleInterval;          // image sampling period (msec), value assigned via slider
 
 var assayTimer;              // timer for running an assay
 var startTime;               // assay start time stamp
@@ -79,10 +79,14 @@ function enableButtons(elements) {
 window.onload = function () {
 	// Disable buttons at start-up:
 	disableButtons(["stop","saveraw","savefiltered","saveTTP","toggleTTP"]);
-	enableButtons(["start","period-slider"]);
+	enableButtons(["start","period-slider","shutdown","reboot"]);
   period = document.getElementById('period-slider').value;
   document.getElementById('period-slider-value').innerHTML = `Period: ${period}s`;
 	getImage();        // Get initial chip image at start
+
+  // Set initial sampling period:
+  sampleInterval = document.getElementById("period-slider").value * 1000;
+  log(`sampleInterval updated (from slider): ${sampleInterval} msec`);
 };
 
 // Apply the maximum width to all buttons:
@@ -101,7 +105,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Update assay period value from slider:
+
+// Add event listener to update assay period value from slider:
 document.getElementById("period-slider").addEventListener('input', function() {
   document.getElementById('period-slider-value').innerHTML = `Period: ${this.value}s`;
   sampleInterval = this.value * 1000;
@@ -151,7 +156,7 @@ async function endAssay() {
 			log("Server response:")
 			log(results);
 			currentFileName = results;
-	   	enableButtons(["saveraw","shutdown"]);
+	   	enableButtons(["saveraw","shutdown","reboot"]);
 	   	analyzeData();
 		}
 	}
@@ -281,6 +286,7 @@ async function analyzeData() {
 		results = await response.text();
 		log("Server response: ");
 		if (results) { 
+		  log(results);
 		  log(`JSON data length = ${results.length}`);
 			let data = JSON.parse(results);
 	    ttpData = data[0];  // ttpData is global
@@ -349,6 +355,22 @@ async function shutdown() {
 	}
 }
 
+// System reboot:
+async function reboot() {
+	log("reboot() called");
+	let response = confirm("Do you want to reboot?");
+	if (response) {
+		log("System is rebooting!!!");
+		disableButtons(["stop","start","saveraw","savefiltered","saveTTP","toggleTTP"]);
+		let message = 'reboot';
+	  let data = '';
+		let response = await queryServer(JSON.stringify([message,data]));
+		if (response.ok) {} // Pi should reboot, so no response
+	}
+	else {
+		log("reboot cancelled");
+	}
+}
 
 // Function to display/hide grouped data sets in charts:
 function onLegendClick(e) {
@@ -502,9 +524,10 @@ function dimChart(chart) {
     dataSet.color = hexToRgba(originalColor, 0.5); // Set line color with 50% opacity
     if (dataSet.markerColor) dataSet.markerColor = "rgba(0, 0, 255, 0.5)"; 
   });
-  chart.options.axisX.gridColor = "rgba(0, 0, 0, 0.5)"; // Gridlines X
-  chart.options.axisY.gridColor = "rgba(0, 0, 0, 0.5)"; // Gridlines Y
-  chart.options.backgroundColor = "rgba(255,255,255,0.2)";
+  // Dim gridlines and background:
+  chart.options.axisX.gridColor = "rgba(0, 0, 0, 0.5)";
+  chart.options.axisY.gridColor = "rgba(0, 0, 0, 0.5)";
+  chart.options.backgroundColor = "rgba(255,255,255,0.1)";
   chart.options.interactivityEnabled = false;
   chart.render();
 }
@@ -513,7 +536,7 @@ function dimChart(chart) {
 async function startAssay() {
 	log("startAssay() called");
 	enableButtons(["stop"]);
-	disableButtons(["start","period-slider","saveraw","savefiltered","saveTTP","toggleTTP","shutdown"]);
+	disableButtons(["start","period-slider","saveraw","savefiltered","saveTTP","toggleTTP","shutdown","reboot"]);
   document.getElementById("toggleTTP").innerHTML = "Show grouped";
   // Dim charts from previous run:
   if (filteredChart) {

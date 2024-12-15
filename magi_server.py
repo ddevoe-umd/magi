@@ -123,6 +123,8 @@ class S(BaseHTTPRequestHandler):
             #self.wfile.write(results.encode('utf-8'))
         elif action == 'shutdown':       # Power down the Pi
             shutdown()
+        elif action == 'reboot':         # Reboot the Pi
+            reboot()
 
     def log_message(self, format, *args):  # Suppress server output
         return
@@ -200,6 +202,11 @@ def shutdown():
     GPIO.cleanup()
     from subprocess import call
     call("sudo shutdown -h now", shell=True)
+
+def reboot():
+    GPIO.cleanup()
+    from subprocess import call
+    call("sudo reboot", shell=True)
 
 
 if __name__ == "__main__":
