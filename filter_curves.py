@@ -11,12 +11,14 @@ print('matplotlib.pyplot loaded')
 import pandas as pd
 print('pandas loaded')
 
+"""
 def butter_lowpass_filter(data, cutoff, fs, order):
-    # nyq = 0.5 * fs                  # Nyquist Frequency
-    # normal_cutoff = cutoff / nyq
-    # b, a = butter(order, normal_cutoff, btype='low', analog=False)
-    b, a = butter(order, cutoff, btype='low', analog=False, fs=fs, output='sos')
+    nyq = 0.5 * fs                  # Nyquist Frequency
+    normal_cutoff = cutoff / nyq
+    b, a = butter(order, normal_cutoff, btype='low', analog=False)
+    # b, a = butter(order, cutoff, btype='low', analog=False, fs=fs, output='sos')
     return filtfilt(b, a, data)
+"""
 
 def get_ttp(t,y):
     # Calculate slope at midpoint and project back to baseline to find TTP
@@ -61,10 +63,17 @@ def filter(filename):
             T = t[-1]          # sample Period (min)
             n = len(t)         # total number of samples
             fs = n/T           # sample rate (cycles/min)
-            cutoff = fs/10     # cutoff frequency (Wn)
+            cutoff = fs/10     # low pass cutoff frequency (Wn)
             order = 6          # filter order       
-            yf = butter_lowpass_filter(y, cutoff, fs, order)
-            
+            # yf = butter_lowpass_filter(y, cutoff, fs, order)
+            nyq = 0.5 * fs                  # Nyquist Frequency
+            normal_cutoff = cutoff / nyq
+            b, a = butter(order, normal_cutoff, btype='low', analog=False)
+            # b, a = butter(order, cutoff, btype='low', analog=False, fs=fs, output='sos')
+            yf = filtfilt(b, a, data)   # filtered data
+
+            print(yf, flush=true)
+
             # shift curves to min value:
             y = [x-min(yf) for x in y]
             yf = [x-min(yf) for x in yf]
