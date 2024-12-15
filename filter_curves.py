@@ -60,7 +60,7 @@ def filter(filename):
             Wn = 3             # Low pass cutoff (cycles/min)
             # Wn = fs/10     
             if Wn >= f_nyquist:  # Wn < f_nyquist required
-                Wn = f_nyquist
+                Wn = 0.99*f_nyquist
             order = 6          # filter order       
             b, a = butter(order, Wn, btype='low', analog=False, fs=fs, output='sos')
             yf = filtfilt(b, a, y)   # filtered data
