@@ -56,11 +56,9 @@ def filter(filename):
             T = t[-1]          # sample Period (min)
             n = len(t)         # total number of samples
             fs = n/T           # sample rate (cycles/min)
-            cutoff = fs/10     # low pass cutoff frequency (Wn)
+            #cutoff = fs/10     # low pass cutoff frequency (Wn) (cycles/min)
+            cutoff = 3         # low pass cutoff frequency (Wn) (cycles/min)
             order = 6          # filter order       
-            nyq = 0.5 * fs                  # Nyquist Frequency
-            normal_cutoff = cutoff / nyq
-            # b, a = butter(order, normal_cutoff, btype='low', analog=False)
             b, a = butter(order, cutoff, btype='low', analog=False, fs=fs, output='sos')
             yf = filtfilt(b, a, y)   # filtered data
 
