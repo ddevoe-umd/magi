@@ -4,7 +4,7 @@
 
 import numpy as np
 print('numpy loaded')
-from scipy.signal import butter, filtfilt
+from scipy.signal import butter, filtfilt, sosfiltfilt
 print('scipy.signal loaded')
 import matplotlib.pyplot as plt
 print('matplotlib.pyplot loaded')
