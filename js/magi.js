@@ -48,10 +48,13 @@ function notification(message) {
     const content = document.createElement('div');    // create the content container
     content.className = 'notification-content';
     const text = document.createElement('p');
+    const div = document.createElement('div');
     text.textContent = message;
-    content.appendChild(text);          // Append the text to the content container
-    win.appendChild(content);           // Append the content to the window container
-    document.body.appendChild(win);     // Add the window to the body
+    content.appendChild(text); 
+    content.appendChild(div);
+    div.className = 'spinner';
+    win.appendChild(content); 
+    document.body.appendChild(win); 
     log(`notification window added: ${message}`);
     return(win);                        // return the window so it can be deleted later
 }
@@ -399,7 +402,7 @@ async function clearServerLog() {
 }
 
 // Function to display/hide grouped data sets in charts:
-function onLegendClick(e) {
+function toggleGroupedSeries(e) {
   var groupSelected = e.dataSeries.group;
   for(var i = 0; i < e.chart.data.length; i++) {
     if(e.chart.options.data[i].group === groupSelected) {
@@ -448,8 +451,6 @@ function setupAmplificationChart(targetContainer) {
   }
 	let chart = new CanvasJS.Chart(targetContainer, {
 		zoomEnabled: true,
-		exportEnabled: true,
-		exportFileName: targetContainer,
  		title: {
 			text: "Fluorescence",
 			fontFamily: "tahoma",
@@ -460,7 +461,9 @@ function setupAmplificationChart(targetContainer) {
 			titleFontSize: 14
 		},
 		axisY:{
-			includeZero: true
+			includeZero: true,
+			title: "Fluorescence (arb)",
+			titleFontSize: 14
 		}, 
 		toolTip: {
 			shared: true
@@ -471,7 +474,7 @@ function setupAmplificationChart(targetContainer) {
 	    fontSize: 12,
 			fontColor: "dimGrey",
 	    itemclick: function(e) {
-	      onLegendClick(e);
+	      toggleGroupedSeries(e);
 	      e.chart.render();
 	    }
 	  },
@@ -497,8 +500,6 @@ function setupTemperatureChart(targetContainer) {
 	)
 	let chart = new CanvasJS.Chart(targetContainer, {
 		zoomEnabled: true,
-		exportEnabled: true,
-		exportFileName: targetContainer,
 		title: {
 			text: "Temperature",
 			fontFamily: "tahoma",
@@ -509,7 +510,9 @@ function setupTemperatureChart(targetContainer) {
 			titleFontSize: 14
 		},
 		axisY:{
-			includeZero: true
+			includeZero: true,
+			title: "Temperature (\u00B0C)",
+			titleFontSize: 14
 		}, 
 		toolTip: {
 			shared: true
@@ -523,7 +526,6 @@ function setupTemperatureChart(targetContainer) {
 		},
 		data: plotInfo
 	});
-
 	function toggleDataSeries(e) {
 		if (typeof(e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
 			e.dataSeries.visible = false;
@@ -533,7 +535,6 @@ function setupTemperatureChart(targetContainer) {
 		}
 		chart.render();
 	}
-
 	chart.render();
 	return [chart, temperature]
 }
@@ -605,7 +606,7 @@ async function startAssay() {
 		temperatureChart.render();
 	}
 	// Start the assay:
-	updateChart();   // Initial chart update to avoid delay
+	updateChart();   // Initial update before starting timer
 	assayTimer = setInterval(function(){updateChart()}, sampleInterval);
 	// Note: timer wont work if window is minimized...need to use
 	// a "web worker" instead to fix this, see 
@@ -645,8 +646,6 @@ function displayTTP() {
   }
 	ttpChartAll = new CanvasJS.Chart("ttpChart", {
 		zoomEnabled: true,
-		exportEnabled: true,
-		exportFileName: "ttpChart",
 		title: {
 			text: "Time to Positive",
 			fontFamily: "tahoma",
@@ -721,8 +720,6 @@ function displayTTPavgStdDev() {
 
 	ttpChartGrouped = new CanvasJS.Chart("ttpChart", {
 		zoomEnabled: true,
-		exportEnabled: true,
-		exportFileName: "ttpChartGrouped",
 		title: {
 			text: "Time to Positive",
 			fontFamily: "tahoma",

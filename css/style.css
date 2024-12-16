@@ -124,7 +124,6 @@ body, html {
 }
 
 
-
 .button {
   align-items: center;
   background-color: initial;
@@ -198,3 +197,16 @@ body, html {
     text-align: center;
     color: white;
 }
+
+.notification-content p {
+    display: block;         /* Ensures the <p> behaves like a block element */
+    align-items: center;
+    margin: 0 0 10px;       /* Adds spacing below the text */
+}
+
+.notification-content .spinner {
+    display: block;         /* Ensures the <div> behaves like a block element */
+    margin-top: 10px;       /* Adds spacing above the div content */
+    margin: auto;           /* center in div */
+}
+
