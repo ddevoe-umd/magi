@@ -32,6 +32,8 @@ var filteredChart;            // chart to display filtered curves
 var ttpChartAll;                 // chart to display all TTP values
 var ttpChartGrouped;                 // chart to display avg & stdev TTP values
 
+var hasImageFirstLoaded = false;  // track when the first call to getImage() has run
+
 // Custom log function:
 function log(message) {
   document.getElementById('log').style.backgroundColor = 'white';
@@ -89,13 +91,29 @@ window.onload = function () {
   document.getElementById('period-slider-value').innerHTML = `Period: ${period}s`;
   log(`Saving Python output (stdio, stderr) to magi_server.log`);
   log(`sampleInterval updated (from slider): ${sampleInterval} msec`);
-  getImage();        // Get initial chip image
   // Display & dim initial empty filtered data & TTP charts:
   displayFilteredData([[]]);
   dimChart(filteredChart);
   displayTTP();
   dimChart(ttpChartAll);
+  getImage();        // Get initial chip image
 };
+
+// Re-display the filtered data & TTP charts after the 1st time the chip image
+// loads to prevent the charts from being clipped when the div size changes
+// on image load:
+img.addEventListener('load', onImageLoad);
+function onImageLoad() {
+  if (!hasImageFirstLoaded) {
+    log('Image loaded for the first time');
+    hasImageFirstLoaded = true; // Prevent further calls
+	  filteredChart.render();
+	  dimChart(filteredChart);
+	  ttpChartAll.render();
+	  dimChart(ttpChartAll);
+  }
+}
+
 
 // Apply the maximum width to all buttons:
 document.addEventListener("DOMContentLoaded", () => {
