@@ -4,17 +4,22 @@
     right: auto !important;    
 }
 
-.content {overflow:hidden;}   /* Suppress scroll bars */
+/* Suppress window scroll bars */
+.content {
+  overflow:hidden;
+}  
 
+/* Select font properties for all but specified element types */
 *:not(i, code, button, span, a) {
   font-family: expo-brand-demi,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
   font-size: 16px;
   line-height: 1.4;
 }
 
-body, html {
+html, body {
   height: 100%;
   overflow-y:hidden;
+  background-image: linear-gradient(90deg, #939ca3, #999999);
 }
 
 .main-container {
@@ -58,7 +63,7 @@ body, html {
   display: flex;
   flex-grow: 1;
   flex-direction: column;
-  gap: 20px;   /* Space between rows */
+  gap: 20px;          /* Space between rows */
 }
 
 .chart-row {
@@ -74,6 +79,8 @@ body, html {
   width: 50%;
   outline: 2px solid gray;
   background-color: #ebebeb;
+  border-radius: 6px;
+  overflow: hidden;   /* Ensures chart respects rounded corners */
 }
 
 .log-image-container {
@@ -101,6 +108,8 @@ body, html {
   width: 50%;
   outline: 2px solid gray;
   background-color: #ebebeb;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 .image img {
@@ -121,8 +130,9 @@ body, html {
   outline: 2px solid gray;
   background-color: #ebebeb;
   font-size: 12px;
+  padding: 5px;
+  border-radius: 6px;
 }
-
 
 
 .button {
@@ -167,7 +177,6 @@ body, html {
 }
 
 .button:disabled {
-  border: 1px solid #999999;
   background-color: #cccccc;
   color: #666666;
 }
@@ -198,3 +207,16 @@ body, html {
     text-align: center;
     color: white;
 }
+
+.notification-content p {
+    display: block;         /* Ensures the <p> behaves like a block element */
+    align-items: center;
+    margin: 0 0 10px;       /* Adds spacing below the text */
+}
+
+.notification-content .spinner {
+    display: block;         /* Ensures the <div> behaves like a block element */
+    margin-top: 10px;       /* Adds spacing above the div content */
+    margin: auto;           /* center in div */
+}
+

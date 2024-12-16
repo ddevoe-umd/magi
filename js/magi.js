@@ -90,6 +90,11 @@ window.onload = function () {
   log(`Saving Python output (stdio, stderr) to magi_server.log`);
   log(`sampleInterval updated (from slider): ${sampleInterval} msec`);
   getImage();        // Get initial chip image
+  // Display & dim initial empty filtered data & TTP charts:
+  displayFilteredData([[]]);
+  dimChart(filteredChart);
+  displayTTP();
+  dimChart(ttpChartAll);
 };
 
 // Apply the maximum width to all buttons:
@@ -169,7 +174,7 @@ async function endAssay() {
 }
 
 async function getData() {
-	log("getData() called");
+	log(`getData() called @ t = ${((Date.now()-startTime)/1000/60).toFixed(2)} min`);
 	let message = 'getData';
 	let data = '';
 	let response = await queryServer(JSON.stringify([message,data]));
@@ -194,10 +199,10 @@ async function getImage() {
 		results = await response.text();
 		log("Image data received")
 		const base64Image = results;
-
 		// Display the image:
 		img.src = base64Image;
     imgCaptureTime = ((Date.now()-startTime)/1000/60).toFixed(2);
+    img.style.backgroundImage = "linear-gradient(#464d55, #25292e)"; // change background on image load
 	}
 }
 
@@ -237,7 +242,7 @@ img.addEventListener('click', () => {
           img {
             max-width: 100%;
             max-height: 100%;
-            width: 200%;      /* image size when zoomed in */
+            width: 200%;      /* max image size when zoomed in */
             height: 200%;
             cursor: zoom-in;
           }
@@ -309,7 +314,7 @@ async function analyzeData() {
 		else { 
 			log("Anlysis incomplete:");
 			log("- check # data points, >21 required");
-			log("- check Wn parameter in Butterworth filter");
+			log("- ensure Wn < f_nyquist");
 		}
 	}
   win.remove();    // Remove the notification window
@@ -422,7 +427,7 @@ function setupAmplificationChart(targetContainer) {
   //     [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 2
   //      ... ]                                     <- etc
 
-  // Set up empty array with length equal to the number of wells:
+  // Set up empty array with length equal to the number of wells, see toggleGroupedSeries():
   let wellArray = Array.from({ length: wellConfig.length }, () => []);
 	let plotInfo = [];
 	let g = 1;   // group number (for grouping target sets in charts)

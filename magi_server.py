@@ -106,7 +106,7 @@ class S(BaseHTTPRequestHandler):
             results = "PID thread started";
             self.wfile.write(results.encode('utf-8'))
         if action == 'getImage':         # Get an image of the chip with colored ROIs
-            # data structure from magi.html: [wellConfig, target_dict]
+            # data structure from magi.js: [wellConfig, target_dict]
             results = imager.get_image(data)
             self.wfile.write(results.encode('utf-8'))
         if action == 'getData':          # Capture & analyze single camera image

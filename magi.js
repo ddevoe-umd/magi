@@ -48,10 +48,13 @@ function notification(message) {
     const content = document.createElement('div');    // create the content container
     content.className = 'notification-content';
     const text = document.createElement('p');
+    const div = document.createElement('div');
     text.textContent = message;
-    content.appendChild(text);          // Append the text to the content container
-    win.appendChild(content);           // Append the content to the window container
-    document.body.appendChild(win);     // Add the window to the body
+    content.appendChild(text); 
+    content.appendChild(div);
+    div.className = 'spinner';
+    win.appendChild(content); 
+    document.body.appendChild(win); 
     log(`notification window added: ${message}`);
     return(win);                        // return the window so it can be deleted later
 }
@@ -79,14 +82,19 @@ function enableButtons(elements) {
 window.onload = function () {
 	// Disable buttons at start-up:
 	disableButtons(["stop","saveraw","savefiltered","saveTTP","toggleTTP"]);
-	enableButtons(["start","period-slider","shutdown","reboot"]);
+	enableButtons(["start","period-slider","shutdown","reboot","clear"]);
+  // Set sampling period from default slider setting:
   period = document.getElementById('period-slider').value;
+  sampleInterval = period * 1000;
   document.getElementById('period-slider-value').innerHTML = `Period: ${period}s`;
-	getImage();        // Get initial chip image at start
-
-  // Set initial sampling period:
-  sampleInterval = document.getElementById("period-slider").value * 1000;
+  log(`Saving Python output (stdio, stderr) to magi_server.log`);
   log(`sampleInterval updated (from slider): ${sampleInterval} msec`);
+  getImage();        // Get initial chip image
+  // Display & dim initial empty filtered data & TTP charts:
+  displayFilteredData([[]]);
+  dimChart(filteredChart);
+  displayTTP();
+  dimChart(ttpChartAll);
 };
 
 // Apply the maximum width to all buttons:
@@ -156,7 +164,7 @@ async function endAssay() {
 			log("Server response:")
 			log(results);
 			currentFileName = results;
-	   	enableButtons(["saveraw","shutdown","reboot"]);
+	   	enableButtons(["saveraw","shutdown","reboot","clear"]);
 	   	analyzeData();
 		}
 	}
@@ -166,7 +174,7 @@ async function endAssay() {
 }
 
 async function getData() {
-	log("getData() called");
+	log(`getData() called @ t = ${((Date.now()-startTime)/1000/60).toFixed(2)} min`);
 	let message = 'getData';
 	let data = '';
 	let response = await queryServer(JSON.stringify([message,data]));
@@ -191,10 +199,10 @@ async function getImage() {
 		results = await response.text();
 		log("Image data received")
 		const base64Image = results;
-
 		// Display the image:
 		img.src = base64Image;
     imgCaptureTime = ((Date.now()-startTime)/1000/60).toFixed(2);
+    img.style.backgroundImage = "linear-gradient(#464d55, #25292e)"; // change background on image load
 	}
 }
 
@@ -234,7 +242,7 @@ img.addEventListener('click', () => {
           img {
             max-width: 100%;
             max-height: 100%;
-            width: 200%;      /* image size when zoomed in */
+            width: 200%;      /* max image size when zoomed in */
             height: 200%;
             cursor: zoom-in;
           }
@@ -287,19 +295,26 @@ async function analyzeData() {
 		log("Server response: ");
 		if (results) { 
 		  log(`JSON data length = ${results.length}`);
-			let data = JSON.parse(results);
-	    ttpData = data[0];  // ttpData is global
-	    let xy = data[1];
-	    displayFilteredData(xy);
-			displayTTP();
-		  enableButtons(["savefiltered","toggleTTP","saveTTP"]);
+		  // Check for NaN in filter results, which seems to happen when the
+		  // raw image data contains too many zero values:
+		  if (results.includes("NaN")) {
+		  	log("Anlysis incomplete:")
+		  	log("- NaN found in filter data");
+		    log("- check if camera brightness values == 0");
+		  }
+		  else {
+				let data = JSON.parse(results);
+		    ttpData = data[0];  // ttpData is global
+		    let xy = data[1];
+		    displayFilteredData(xy);
+				displayTTP();
+			  enableButtons(["savefiltered","toggleTTP","saveTTP"]);
+			}
 		}
 		else { 
 			log("Anlysis incomplete:");
 			log("- check # data points, >21 required");
-			log("- check Wn parameter in Butterworth filter");
-			log("- check for NaN in data");
-			log("- check if all camera brightness values == 0");
+			log("- ensure Wn < f_nyquist");
 		}
 	}
   win.remove();    // Remove the notification window
@@ -375,8 +390,24 @@ async function reboot() {
 	}
 }
 
+// Clear server log:
+async function clearServerLog() {
+	log("clearServerLog() called");
+	let response = confirm("Clear the server log file?");
+	if (response) {
+		disableButtons(["clear"]);
+		let message = 'clear';
+	  let data = '';
+		let response = await queryServer(JSON.stringify([message,data]));
+		if (response.ok) { log("Server log cleared"); } 
+	}
+	else {
+		log("clearServerLog() cancelled");
+	}
+}
+
 // Function to display/hide grouped data sets in charts:
-function onLegendClick(e) {
+function toggleGroupedSeries(e) {
   var groupSelected = e.dataSeries.group;
   for(var i = 0; i < e.chart.data.length; i++) {
     if(e.chart.options.data[i].group === groupSelected) {
@@ -396,7 +427,7 @@ function setupAmplificationChart(targetContainer) {
   //     [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 2
   //      ... ]                                     <- etc
 
-  // Set up empty array with length equal to the number of wells:
+  // Set up empty array with length equal to the number of wells, see toggleGroupedSeries():
   let wellArray = Array.from({ length: wellConfig.length }, () => []);
 	let plotInfo = [];
 	let g = 1;   // group number (for grouping target sets in charts)
@@ -425,7 +456,7 @@ function setupAmplificationChart(targetContainer) {
   }
 	let chart = new CanvasJS.Chart(targetContainer, {
 		zoomEnabled: true,
-		title: {
+ 		title: {
 			text: "Fluorescence",
 			fontFamily: "tahoma",
 			fontSize: 16
@@ -435,7 +466,9 @@ function setupAmplificationChart(targetContainer) {
 			titleFontSize: 14
 		},
 		axisY:{
-			includeZero: true
+			includeZero: true,
+			title: "Fluorescence (arb)",
+			titleFontSize: 14
 		}, 
 		toolTip: {
 			shared: true
@@ -446,7 +479,7 @@ function setupAmplificationChart(targetContainer) {
 	    fontSize: 12,
 			fontColor: "dimGrey",
 	    itemclick: function(e) {
-	      onLegendClick(e);
+	      toggleGroupedSeries(e);
 	      e.chart.render();
 	    }
 	  },
@@ -482,7 +515,9 @@ function setupTemperatureChart(targetContainer) {
 			titleFontSize: 14
 		},
 		axisY:{
-			includeZero: true
+			includeZero: true,
+			title: "Temperature (\u00B0C)",
+			titleFontSize: 14
 		}, 
 		toolTip: {
 			shared: true
@@ -496,7 +531,6 @@ function setupTemperatureChart(targetContainer) {
 		},
 		data: plotInfo
 	});
-
 	function toggleDataSeries(e) {
 		if (typeof(e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
 			e.dataSeries.visible = false;
@@ -506,7 +540,6 @@ function setupTemperatureChart(targetContainer) {
 		}
 		chart.render();
 	}
-
 	chart.render();
 	return [chart, temperature]
 }
@@ -521,16 +554,16 @@ function hexToRgba(hex, alpha) {
 
 // Dim a canvasJS chart:
 function dimChart(chart) {
-  // Dim data markers / lines:
+  // Dim lines & markers:
 	chart.options.data.forEach(dataSet => {
 		const originalColor = dataSet.color || "#000000";
-    dataSet.color = hexToRgba(originalColor, 0.5); // Set line color with 50% opacity
+    dataSet.color = hexToRgba(originalColor, 0.5);
     if (dataSet.markerColor) dataSet.markerColor = "rgba(0, 0, 255, 0.5)"; 
   });
-  // Dim gridlines and background:
+  // Dim gridlines & background:
   chart.options.axisX.gridColor = "rgba(0, 0, 0, 0.5)";
   chart.options.axisY.gridColor = "rgba(0, 0, 0, 0.5)";
-  chart.options.backgroundColor = "rgba(200,200,200,0.1)";
+  chart.options.backgroundColor = "rgba(200,200,200,0.4)";
   chart.options.interactivityEnabled = false;
   chart.render();
 }
@@ -539,7 +572,7 @@ function dimChart(chart) {
 async function startAssay() {
 	log("startAssay() called");
 	enableButtons(["stop"]);
-	disableButtons(["start","period-slider","saveraw","savefiltered","saveTTP","toggleTTP","shutdown","reboot"]);
+	disableButtons(["start","period-slider","saveraw","savefiltered","saveTTP","toggleTTP","shutdown","reboot","clear"]);
   document.getElementById("toggleTTP").innerHTML = "Show grouped";
   // Dim charts from previous run:
   if (filteredChart) {
@@ -578,7 +611,7 @@ async function startAssay() {
 		temperatureChart.render();
 	}
 	// Start the assay:
-	updateChart();   // Initial chart update to avoid delay
+	updateChart();   // Initial update before starting timer
 	assayTimer = setInterval(function(){updateChart()}, sampleInterval);
 	// Note: timer wont work if window is minimized...need to use
 	// a "web worker" instead to fix this, see 
@@ -617,6 +650,7 @@ function displayTTP() {
 		}
   }
 	ttpChartAll = new CanvasJS.Chart("ttpChart", {
+		zoomEnabled: true,
 		title: {
 			text: "Time to Positive",
 			fontFamily: "tahoma",
@@ -627,8 +661,6 @@ function displayTTP() {
 			title: "TTP (min)",
 			titleFontSize: 14
 		},		
-		animationEnabled: true,
-		//theme: "light2",   // "light1", "light2", "dark1", "dark2"
 		axisX:{ interval: 1 },   // show all axis labels
 		data: [{        
 			type: "column",  
