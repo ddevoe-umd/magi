@@ -60,7 +60,33 @@ function notification(message) {
     win.appendChild(content); 
     document.body.appendChild(win); 
     log(`notification window added: ${message}`);
+    makeDraggable(win);
     return(win);                        // return the window so it can be deleted later
+}
+
+// Make the notification window draggable from any point:
+function makeDraggable(element) {
+    let offsetX = 0, offsetY = 0, mouseX = 0, mouseY = 0;
+    element.onmousedown = function (e) {
+        e.preventDefault();
+        mouseX = e.clientX;     // Get initial mouse position
+        mouseY = e.clientY;
+        document.onmousemove = dragElement;     // Event listeners
+        document.onmouseup = stopDragElement;
+    };
+    function dragElement(e) {
+        e.preventDefault();
+        offsetX = mouseX - e.clientX;    // Calculate the new cursor position
+        offsetY = mouseY - e.clientY;
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        element.style.top = (element.offsetTop - offsetY) + "px";    // Update the position
+        element.style.left = (element.offsetLeft - offsetX) + "px";
+    }
+    function stopDragElement() {       // Remove the event listeners
+        document.onmousemove = null;
+        document.onmouseup = null;
+    }
 }
 
 
@@ -421,7 +447,7 @@ async function reboot() {
 		let response = await queryServer(JSON.stringify([message,data]));
 		if (response.ok) { } // Pi should reboot, so no response
     // Wait a bit and try reloading after reboot:
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise(resolve => setTimeout(resolve, 8000));
 		getFirstImage(); 
 	}
 	else {
