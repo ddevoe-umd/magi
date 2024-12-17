@@ -408,12 +408,23 @@ async function reboot() {
 	}
 }
 
+
+// Show server log in a window:
+async function getServerLog() {
+	log("getServerLog() called");
+	let message = 'getLog';
+  let data = '';
+	let response = await queryServer(JSON.stringify([message,data]));
+	if (response.ok) { log(response); } 
+}
+
+
 // Clear server log:
 async function clearServerLog() {
 	log("clearServerLog() called");
 	let response = confirm("Clear the server log file?");
 	if (response) {
-		disableButtons(["clear"]);
+		disableButtons(["clearLog"]);
 		let message = 'clear';
 	  let data = '';
 		let response = await queryServer(JSON.stringify([message,data]));
