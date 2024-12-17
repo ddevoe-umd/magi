@@ -132,7 +132,8 @@ class S(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(results).encode('utf-8'))
         elif action == 'clearLog':          # Clear the server log file
             open(logfile, 'w').close()
-            results = "Log file cleared"
+            results = f'{logfile} cleared'
+            print(results, flush=True)
             self.wfile.write(json.dumps(results).encode('utf-8'))
 
     def log_message(self, format, *args):  # Suppress server output
