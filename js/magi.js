@@ -34,6 +34,7 @@ var ttpChartGrouped;                 // chart to display avg & stdev TTP values
 
 var hasImageFirstLoaded = false;  // track when the first call to getImage() has run
 
+
 // Custom log function:
 function log(message) {
   document.getElementById('log').style.backgroundColor = 'white';
@@ -42,6 +43,7 @@ function log(message) {
 	log.innerHTML += message + "<br />";      // display message in div
 	log.scroll({ top: log.scrollHeight, behavior: 'smooth' }); // pin scroll to bottom
 }
+
 
 // Custom notification window:
 function notification(message) {
@@ -96,8 +98,24 @@ window.onload = function () {
   dimChart(filteredChart);
   displayTTP();
   dimChart(ttpChartAll);
-  getImage();        // Get initial chip image
+  getFirstImage();          // Get initial image
 };
+
+
+// Try to get an image from the server at code start:
+async function getFirstImage() {
+  win = notification("Searching for MAGI server");
+  while (true) {
+  	try {
+      const awaitResult = await getImage();        // Get initial chip image
+	  	win.remove();   // close the notification window
+	  	return;     
+	  } catch (error) {  // getImage() timed out
+	  	log("getImage() attempt failed, retrying...");
+	  }
+	}
+}
+
 
 // Re-display the filtered data & TTP charts after the 1st time the chip image
 // loads to prevent the charts from being clipped when the div size changes
@@ -401,7 +419,10 @@ async function reboot() {
 		let message = 'reboot';
 	  let data = '';
 		let response = await queryServer(JSON.stringify([message,data]));
-		if (response.ok) {} // Pi should reboot, so no response
+		if (response.ok) { } // Pi should reboot, so no response
+    // Wait a bit and try reloading after reboot:
+    await new Promise(resolve => setTimeout(resolve, 5000));
+		getFirstImage(); 
 	}
 	else {
 		log("reboot cancelled");

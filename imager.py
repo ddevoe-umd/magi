@@ -24,6 +24,7 @@ print('io loaded')
 font_path = "/home/pi/magi/fonts"
 
 LED_PIN = 14    # status LED - value must be the same as in magi_server.py
+GPIO.setmode(GPIO.BCM)
 
 # Image size:
 w = 640         # min of 64, max of 2592 for 5MP camera
