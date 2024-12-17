@@ -29,8 +29,9 @@ var ttpData = [];             // array to hold TTP results
 var wakeLock;
 
 var filteredChart;            // chart to display filtered curves
-var ttpChartAll;                 // chart to display all TTP values
-var ttpChartGrouped;                 // chart to display avg & stdev TTP values
+var ttpChartAll;              // chart to display all TTP values
+var ttpChartGrouped;          // chart to display avg & stdev TTP values
+// Note: other charts do not currently use global variables...
 
 var hasImageFirstLoaded = false;  // track when the first call to getImage() has run
 
@@ -100,26 +101,31 @@ async function getWakeLock() {
 	}
 }
 
-// Disable / Enable HTML buttons in a list of button IDs:
-function disableButtons(elements) {
+// Disable / Enable / Disable All HTML elements in a list of IDs:
+function disableElements(elements) {
 	elements.forEach(e => document.getElementById(e).disabled = true);
 }
-function enableButtons(elements) {
+function enableElements(elements) {
 	elements.forEach(e => document.getElementById(e).disabled = false);
+}
+function disableAllElements() {
+	allButtons = ["start","stop","saveraw","period-slider","toggleTTP","savefiltered",
+							  "saveTTP","getImage","reboot","shutdown","getLog","clearLog"];
+	log(allButtons);
+	allButtons.forEach(e => document.getElementById(e).disabled = true);
 }
 
 // Initial window loading:
 window.onload = function () {
 	// Disable buttons at start-up:
-	disableButtons(["stop","saveraw","savefiltered","saveTTP","toggleTTP"]);
-	enableButtons(["start","period-slider","shutdown","reboot","clearLog"]);
+	disableAllElements();
   // Set sampling period from default slider setting:
   period = document.getElementById('period-slider').value;
   sampleInterval = period * 1000;
   document.getElementById('period-slider-value').innerHTML = `Period: ${period}s`;
   log(`Saving Python output (stdio, stderr) to magi_server.log`);
   log(`sampleInterval updated (from slider): ${sampleInterval} msec`);
-  // Display & dim initial empty filtered data & TTP charts:
+  // Display & dim initial empty charts:
   displayFilteredData([[]]);
   dimChart(filteredChart);
   displayTTP();
@@ -128,13 +134,14 @@ window.onload = function () {
 };
 
 
-// Try to get an image from the server at code start:
+// Try to get initial image from the server at code start or reboot:
 async function getFirstImage() {
   win = notification("Searching for MAGI server");
   while (true) {
   	try {
       const awaitResult = await getImage();        // Get initial chip image
 	  	win.remove();   // close the notification window
+  	 	enableElements(["start","period-slider","shutdown","reboot","getImage","getLog","clearLog"]);
 	  	return;     
 	  } catch (error) {  // getImage() timed out
 	  	log("getImage() attempt failed, retrying...");
@@ -215,9 +222,9 @@ async function endAssay() {
 	log("wake lock released");
 	let response = confirm("End current assay?");
 	if (response) {
-		disableButtons(["stop"]);
+		disableElements(["stop"]);
 		if (assayTimer) clearInterval(assayTimer);
-	  enableButtons(["start","period-slider"]);
+	  enableElements(["start","period-slider"]);
 		let message = 'end';
 	  let data = '';
 		let response = await queryServer(JSON.stringify([message,data]));
@@ -226,7 +233,7 @@ async function endAssay() {
 			log("Server response:")
 			log(results);
 			currentFileName = results;
-	   	enableButtons(["saveraw","shutdown","reboot","clearLog"]);
+	   	enableElements(["saveraw","shutdown","reboot","clearLog"]);
 	   	analyzeData();
 		}
 	}
@@ -370,7 +377,7 @@ async function analyzeData() {
 		    let xy = data[1];
 		    displayFilteredData(xy);
 				displayTTP();
-			  enableButtons(["savefiltered","toggleTTP","saveTTP"]);
+			  enableElements(["savefiltered","toggleTTP","saveTTP"]);
 			}
 		}
 		else { 
@@ -424,7 +431,7 @@ async function shutdown() {
 	let response = confirm("Do you want to shut down?");
 	if (response) {
 		log("System is powering off!!!");
-		disableButtons(["stop","start","saveraw","savefiltered","saveTTP","toggleTTP"]);
+		disableAllElements();
 		let message = 'shutdown';
 	  let data = '';
 		let response = await queryServer(JSON.stringify([message,data]));
@@ -441,7 +448,7 @@ async function reboot() {
 	let response = confirm("Do you want to reboot?");
 	if (response) {
 		log("System is rebooting!!!");
-		disableButtons(["stop","start","saveraw","savefiltered","saveTTP","toggleTTP"]);
+		disableAllElements();
 		let message = 'reboot';
 	  let data = '';
 		let response = await queryServer(JSON.stringify([message,data]));
@@ -478,7 +485,7 @@ async function clearServerLog() {
 	log("clearServerLog() called");
 	let conf = confirm("Clear the server log file?");
 	if (conf) {
-		disableButtons(["clearLog"]);
+		disableElements(["clearLog"]);
 		let message = 'clearLog';
 	  let data = '';
 		let response = await queryServer(JSON.stringify([message,data]));
@@ -657,8 +664,8 @@ function dimChart(chart) {
 // Start a new assay:
 async function startAssay() {
 	log("startAssay() called");
-	enableButtons(["stop"]);
-	disableButtons(["start","period-slider","saveraw","savefiltered","saveTTP","toggleTTP","shutdown","reboot","clearLog"]);
+	enableElements(["stop"]);
+	disableElements(["start","period-slider","saveraw","savefiltered","saveTTP","toggleTTP","shutdown","reboot","clearLog"]);
   document.getElementById("toggleTTP").innerHTML = "Show grouped";
   // Dim charts from previous run:
   if (filteredChart) {
