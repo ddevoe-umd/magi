@@ -84,7 +84,7 @@ function enableButtons(elements) {
 window.onload = function () {
 	// Disable buttons at start-up:
 	disableButtons(["stop","saveraw","savefiltered","saveTTP","toggleTTP"]);
-	enableButtons(["start","period-slider","shutdown","reboot","clear"]);
+	enableButtons(["start","period-slider","shutdown","reboot","clearLog"]);
   // Set sampling period from default slider setting:
   period = document.getElementById('period-slider').value;
   sampleInterval = period * 1000;
@@ -182,7 +182,7 @@ async function endAssay() {
 			log("Server response:")
 			log(results);
 			currentFileName = results;
-	   	enableButtons(["saveraw","shutdown","reboot","clear"]);
+	   	enableButtons(["saveraw","shutdown","reboot","clearLog"]);
 	   	analyzeData();
 		}
 	}
@@ -409,26 +409,36 @@ async function reboot() {
 }
 
 
-// Show server log in a window:
+// Show server log:
 async function getServerLog() {
 	log("getServerLog() called");
 	let message = 'getLog';
   let data = '';
 	let response = await queryServer(JSON.stringify([message,data]));
-	if (response.ok) { log(response); } 
+  if (response.ok) { 
+		let responseText = await response.text();
+		responseText = responseText.replace(/\\n/g, "<br>");  // repace newline with html break
+		responseText = responseText.replace(/^"|"$/g, '');    // strip double quotes @ start and end
+		log("===================<br>Start Server Log<br>===================");
+		log(responseText); 
+		log("===================<br>End Server Log<br>===================");
+	} 
 }
 
 
 // Clear server log:
 async function clearServerLog() {
 	log("clearServerLog() called");
-	let response = confirm("Clear the server log file?");
-	if (response) {
+	let conf = confirm("Clear the server log file?");
+	if (conf) {
 		disableButtons(["clearLog"]);
-		let message = 'clear';
+		let message = 'clearLog';
 	  let data = '';
 		let response = await queryServer(JSON.stringify([message,data]));
-		if (response.ok) { log("Server log cleared"); } 
+		if (response.ok) { 
+			responseText = await response.text();
+			log(`Server response: ${responseText}`); 
+		} 
 	}
 	else {
 		log("clearServerLog() cancelled");
@@ -601,7 +611,7 @@ function dimChart(chart) {
 async function startAssay() {
 	log("startAssay() called");
 	enableButtons(["stop"]);
-	disableButtons(["start","period-slider","saveraw","savefiltered","saveTTP","toggleTTP","shutdown","reboot","clear"]);
+	disableButtons(["start","period-slider","saveraw","savefiltered","saveTTP","toggleTTP","shutdown","reboot","clearLog"]);
   document.getElementById("toggleTTP").innerHTML = "Show grouped";
   // Dim charts from previous run:
   if (filteredChart) {
