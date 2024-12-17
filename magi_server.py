@@ -126,7 +126,11 @@ class S(BaseHTTPRequestHandler):
             shutdown()
         elif action == 'reboot':         # Reboot the Pi
             reboot()
-        elif action == 'clear':          # Clear the server log file
+        elif action == 'getLog':         # Return the server log file contents
+            with open(logfile, 'r') as f:
+                results = f.read()
+            self.wfile.write(json.dumps(results).encode('utf-8'))
+        elif action == 'clearLog':          # Clear the server log file
             open(logfile, 'w').close()
             results = "Log file cleared"
             self.wfile.write(json.dumps(results).encode('utf-8'))
