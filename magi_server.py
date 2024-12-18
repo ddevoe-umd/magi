@@ -6,32 +6,19 @@
 # nohup python3 -u python_server.py &
 
 from simple_pid import PID   # see https://pypi.org/project/simple-pid/
-print('simple_pid loaded')
 import json
-print('json loaded')
 import imager                # camera image capture and analysis
-print('imager loaded')
 from http.server import BaseHTTPRequestHandler, HTTPServer
-print('http.server loaded')
 import sys
-print('sys loaded')
 import os
-print('os loaded')
 import time
-print('time loaded')
 import threading
-print('threading loaded')
 import RPi.GPIO as GPIO
-print('RPi.GPIO loaded')
 import multiprocessing
-print('multiprocessing loaded')
 from gpiozero import MCP3008
-print('gpiozero loaded')
 
 sys.path.append('/home/pi/magi')  # Add application path to the Python search path
 logfile = "magi_server.log"       # Log file for stdio + stderr (see setup.sh)
-
-# GLOBALS:
 
 # PID:
 PWM_PIN = 19
@@ -118,8 +105,9 @@ class S(BaseHTTPRequestHandler):
             end_pid()
             self.wfile.write(results.encode('utf-8'))
         elif action == 'analyze':        # Filter curves & extract TTP values
-            filename = data;
-            results = imager.analyze_data(filename)
+            filename = data[0];
+            filter_factor = data[1]
+            results = imager.analyze_data(filename, filter_factor)
             self.wfile.write(json.dumps(results).encode('utf-8'))
             #self.wfile.write(results.encode('utf-8'))
         elif action == 'shutdown':       # Power down the Pi

@@ -1,25 +1,14 @@
 import time
 from picamera2 import Picamera2
-print('picamera2 loaded')
 import numpy as np
-print('numpy loaded')
 import csv
-print('csv loaded')
 import json
-print('json loaded')
 import os
-print('os loaded')
 from filter_curves import filter
-print('filter_curves loaded')
 import RPi.GPIO as GPIO
-print('RPi.GPIO loaded')
 from PIL import Image, ImageDraw, ImageFont
-print('PIL loaded')
 import base64
-print('base64 loaded')
 from io import BytesIO
-print('io loaded')
-
 
 font_path = "/home/pi/magi/fonts"
 
@@ -132,7 +121,6 @@ def get_image_data():    # Extract fluorescence measurements from ROIs in image
 
 def get_image(data):       # Return a PIL image with colored ROI boxes for display
     # data structure: [wellConfig, target_dict]
-    # Acquire an image:
     try:
         cam.start()
         GPIO.output(LED_PIN, GPIO.LOW)
@@ -146,8 +134,7 @@ def get_image(data):       # Return a PIL image with colored ROI boxes for displ
         png_base64 = base64.b64encode(png_image).decode('utf-8')  # Encode as base64
         return(f"data:image/png;base64,{png_base64}")
     except Exception as e:
-        print('Exception in get_image():')
-        print(f'{type(e)}: {e}')
+        print(f'Exception in get_image(): {e}')
 
 def end_imaging():
     # Rename temp data file:
@@ -157,14 +144,14 @@ def end_imaging():
         pass      # Delete contents of the temp data file
     return(output_filename)
 
-def analyze_data(filename):
+def analyze_data(filename, filter_factor):
     # filter() returns format: [ttp, y_filtered_dict]
     # where ttp is a list of TTP values for each well, and
     # y_filtered_dict is a list of data with format:
     #   [ [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 1
     #     [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 2
     #      ... ]                                     <- etc
-    results = filter(data_directory + '/' + filename + '.csv') 
+    results = filter(data_directory + '/' + filename + '.csv', filter_factor) 
 
     # Save filtered data to csv file:
     data = results[1]

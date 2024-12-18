@@ -28,7 +28,7 @@ def get_ttp(t,y):
     return ttp
 
 
-def filter(filename):
+def filter(filename, filter_factor=10):
     y_filtered_dict = []
     ttp = []
     with open(filename) as f:
@@ -53,12 +53,12 @@ def filter(filename):
                     y[i] = y[i-1]
             
             # Butterworth low-pass filter:
-            T = t[-1]            # sample Period (min)
-            n = len(t)           # total number of samples
-            fs = n/T             # sample rate (cycles/min)
-            f_nyquist = fs/2.0   # Nyquist frequency
-            Wn = fs/10           # Low pass cutoff (cycles/min)
-            if Wn >= f_nyquist:  # Wn < f_nyquist required
+            T = t[-1]                # sample Period (min)
+            n = len(t)               # total number of samples
+            fs = n/T                 # sample rate (cycles/min)
+            f_nyquist = fs/2.0       # Nyquist frequency
+            Wn = fs/filter_factor    # Low pass cutoff (cycles/min)
+            if Wn >= f_nyquist:      # Wn < f_nyquist required
                 Wn = 0.99*f_nyquist
             order = 6          # filter order       
             #
