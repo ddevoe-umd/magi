@@ -105,8 +105,9 @@ class S(BaseHTTPRequestHandler):
             end_pid()
             self.wfile.write(results.encode('utf-8'))
         elif action == 'analyze':        # Filter curves & extract TTP values
-            filename = data[0];
+            filename = data[0]
             filter_factor = data[1]
+            print(f"filter_factor = {filter_factor}")
             results = imager.analyze_data(filename, filter_factor)
             self.wfile.write(json.dumps(results).encode('utf-8'))
             #self.wfile.write(results.encode('utf-8'))

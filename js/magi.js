@@ -363,7 +363,7 @@ async function analyzeData() {
 	log("analyzeData() called");
 	let win = notification("Filtering data and extracting TTP values");
   let message = 'analyze';
-  let filterFactor =   document.getElementById('period-slider-value').value;
+  let filterFactor = document.getElementById('filter-slider-value').value;
 	let data = [currentFileName, filterFactor];
 	let response = await queryServer(JSON.stringify([message,data]));
 	if (response.ok) {
