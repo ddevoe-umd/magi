@@ -35,14 +35,29 @@ html, body {
   transform: translate(-50%, -50%);
 }
 
+/* unused
+.top-button-container {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin: 10px auto;
+}
+*/ 
+
 .side-button-container {
   display: flex;
   flex-direction: column;
   gap: 10px;                /* gap between buttons */
   width: 100px;
-  height: auto;
   margin: 10px auto;
 }
+
+/* unused????
+.buttons {
+  display: flex;
+  gap: 10px;
+}
+*/
 
 .chart-container {
   display: flex;
@@ -80,19 +95,18 @@ html, body {
   flex-direction: row;
   flex-shrink: 1;
   width: 100%;
-  min-height: 20vh;
-  max-height: 30vh;
+  /*min-height: 250px;*/
   gap: 20px;   /* Space between columns */
 }
 
 .image-div {
   flex: 1;  
   max-width: 640px;
-  min-height: 20vh;
+  /*max-height: 480px;*/
   max-height: 30vh;
   height: 100%;
   width: 50%;
-  outline: none;
+  outline: 2px solid gray;
   background-color: #ebebeb;
   background-image: linear-gradient(#464d55, #25292e);
   border-radius: 6px;
@@ -115,7 +129,7 @@ html, body {
   overflow-wrap: break-word;
   overflow-y: scroll; /* Enable vertical scrollbar */
   overflow-x: hidden; /* Hide horizontal scrollbar */
-  outline: none;
+  outline: 2px solid gray;
   background-color: #ebebeb;
   font-size: 12px;
   color: #dddddd;    /* text color */
@@ -142,3 +156,89 @@ html, body {
     border-radius: 6px; 
 }
 */
+
+.button {
+  align-items: center;
+  background-color: initial;
+  background-image: linear-gradient(#464d55, #25292e);
+  border-radius: 8px;
+  border-width: 0;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, .1),0 3px 6px rgba(0, 0, 0, .05);
+  box-sizing: border-box;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  flex-direction: column;
+  font-family: expo-brand-demi,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+  font-size: 14px;
+  height: 25px;
+  justify-content: center;
+  line-height: 1;
+  margin: 0;
+  outline: none;
+  overflow: hidden;
+  padding: 0 12px;
+  text-align: center;
+  text-decoration: none;
+  transform: translate3d(0, 0, 0);
+  transition: all 150ms;
+  vertical-align: baseline;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.button:hover {
+  box-shadow: rgba(0, 1, 0, .2) 0 2px 8px;
+  opacity: .85;
+}
+
+.button:active {
+  outline: 0;
+}
+
+.button:disabled {
+  background-color: #cccccc;
+  color: #666666;
+}
+
+.button:focus {
+  box-shadow: rgba(0, 0, 0, .5) 0 0 0 3px;
+}
+
+
+/* Nofication window for displaying assay info in temporary window */
+.notification-window {
+    width: 300px;
+    height: 120px;
+    background-color: gray;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    resize: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.notification-content {
+    text-align: center;
+    color: white;
+}
+
+.notification-content p {
+    display: block;         /* Ensures the <p> behaves like a block element */
+    align-items: center;
+    margin: 0 0 10px;       /* Adds spacing below the text */
+}
+
+.notification-content .spinner {
+    display: block;         /* Ensures the <div> behaves like a block element */
+    margin-top: 10px;       /* Adds spacing above the div content */
+    margin: auto;           /* center in div */
+}
+

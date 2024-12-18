@@ -151,7 +151,7 @@ def analyze_data(filename, filter_factor):
     #   [ [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 1
     #     [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 2
     #      ... ]                                     <- etc
-    results = filter(data_directory + '/' + filename + '.csv', filter_factor) 
+    results = filter(data_directory + '/' + filename + '.csv', float(filter_factor)) 
 
     # Save filtered data to csv file:
     data = results[1]

@@ -28,7 +28,7 @@ def get_ttp(t,y):
     return ttp
 
 
-def filter(filename, filter_factor=10):
+def filter(filename, filter_factor=10.0):
     y_filtered_dict = []
     ttp = []
     with open(filename) as f:

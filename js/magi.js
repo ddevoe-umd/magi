@@ -363,7 +363,7 @@ async function analyzeData() {
 	log("analyzeData() called");
 	let win = notification("Filtering data and extracting TTP values");
   let message = 'analyze';
-  let filterFactor = document.getElementById('filter-slider-value').value;
+  let filterFactor = document.getElementById('filter-slider').value;
 	let data = [currentFileName, filterFactor];
 	let response = await queryServer(JSON.stringify([message,data]));
 	if (response.ok) {
@@ -374,7 +374,7 @@ async function analyzeData() {
 		  // Check for NaN in filter results, which seems to happen when the
 		  // raw image data contains too many zero values:
 		  if (results.includes("NaN")) {
-		  	log("Anlysis incomplete:")
+		  	log("Anlysis incomplete:");
 		  	log("- NaN found in filter data");
 		    log("- check if camera brightness values == 0");
 		  }
