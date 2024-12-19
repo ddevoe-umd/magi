@@ -12,7 +12,7 @@ import pandas as pd
 print('pandas loaded')
 
 
-def get_ttp(t,y):
+def get_ttp_(t,y):
     # Calculate slope at midpoint and project back to baseline to find TTP
     npoints = 2    # number of points before and after midpoint to use in linear fit
     indices = [idx for idx in range(len(y)) if y[idx] >= 0.5]
@@ -25,6 +25,22 @@ def get_ttp(t,y):
             y_ = y[idx-npoints:idx+npoints]
             m,b = np.polyfit(t_, y_, 1)
             ttp = (y[idx]-b)/m   # x-axis intercept
+    return ttp
+
+
+def get_ttp(t,y):
+    # Calculate slope at midpoint and project back to baseline to find TTP
+    npoints = 2    # number of points before and after midpoint for linear fit
+    # Find index of the first value >0.5
+    idx = next((i for (i, val) in enumerate(y) if val > 0.5), None)
+    ttp = -0.001   # set initial value slightly less than zero
+    if idx is not None:
+        if idx > npoints+1 and idx < len(y)-npoints:
+            # linear curve fit:
+            t_ = t[idx-npoints:idx+npoints]
+            y_ = y[idx-npoints:idx+npoints]
+            m,b = np.polyfit(t_, y_, 1)
+            ttp = (y[idx]-b)/m     # ttp is the x-axis intercept
     return ttp
 
 
@@ -47,7 +63,7 @@ def filter(filename, filter_factor=10.0):
             y = y[cut_number:]     # Remove initial data points
             y = [float(val) for val in y]
     
-            # Remove spurious data:
+            # Remove spurious dropped data:
             for i,val in enumerate(y):
                 if val < 2 and i>0:
                     y[i] = y[i-1]
