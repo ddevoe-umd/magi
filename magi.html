@@ -20,28 +20,29 @@
 	<div class="chart-container">
 		<div class="chart-row">
 			<div class="side-button-container"> 
-				<button id="start" class="button" role="button" onclick="startAssay()"> Start </button>
-				<button id="stop" class="button" onclick="endAssay()"> End </button>
-				<button id="saveraw" class="button" onclick="saveRaw()"> Save Raw </button>
+				<button id="start" class="button" role="button" onclick="startAssay()">Start</button>
 				<div class="slider-container">
-				    <div id="period-slider-value" class="slider-value"> Period: 5s</div>
+				    <div id="period-slider-value" class="slider-value">Period: 5s</div>
 				    <input type="range" id="period-slider" class="slider" 
 				           min="2" max="10" value="6">
-		       </div>
-				<div class="slider-container">
-				    <div id="filter-slider-value" class="slider-value"> Filter x: 1/5</div>
-				    <input type="range" id="filter-slider" class="slider" 
-				           min="5" max="20" value="6">
-				</div>
+		        </div>
+				<button id="stop" class="button" onclick="endAssay()">End</button>
+				<button id="saveraw" class="button" onclick="saveRaw()">Save Raw</button>
 			</div>
 			<div class="chart" id="rawDataChart"><b>Fluorescence Data</b></div>
 			<div class="chart" id="temperatureChart"><b>Chip Temperature</b></div>
 		</div>
 		<div class="chart-row">
 			<div class="side-button-container"> 
-				<button id="toggleTTP" class="button" onclick="toggleTTP()"> TTP mode</button>
+				<button id="analyze" class="button" onclick="analyzeData()">Analyze</button>
+				<div class="slider-container">
+				    <div id="filter-slider-value" class="slider-value">Filter x: 1/12</div>
+				    <input type="range" id="filter-slider" class="slider" 
+				           min="5" max="20" value="12">
+				</div>
+				<button id="toggleTTP" class="button" onclick="toggleTTP()">TTP mode</button>
 				<button id="savefiltered" class="button" onclick="saveFiltered()"> Save Filtered </button>
-				<button id="saveTTP" class="button" onclick="saveTTP()"> Save TTP </button>
+				<button id="saveTTP" class="button" onclick="saveTTP()">Save TTP</button>
 			</div>
 			<div class="chart" id="filteredDataChart"><b>Filtered Data</b></div>
 			<div class="chart" id="ttpChart"><b>Time to Positive</b></div>
