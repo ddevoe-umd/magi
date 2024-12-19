@@ -107,8 +107,9 @@ class S(BaseHTTPRequestHandler):
         elif action == 'analyze':        # Filter curves & extract TTP values
             filename = data[0]
             filter_factor = data[1]
-            print(f"filter_factor = {filter_factor}")
-            results = imager.analyze_data(filename, filter_factor)
+            cut_time = data[2]
+            print(f"filter_factor = {filter_factor}, cut_time = {cut_time}")
+            results = imager.analyze_data(filename, filter_factor, cut_time)
             self.wfile.write(json.dumps(results).encode('utf-8'))
             #self.wfile.write(results.encode('utf-8'))
         elif action == 'shutdown':       # Power down the Pi

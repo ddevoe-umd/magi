@@ -144,14 +144,14 @@ def end_imaging():
         pass      # Delete contents of the temp data file
     return(output_filename)
 
-def analyze_data(filename, filter_factor):
+def analyze_data(filename, filter_factor, cut_time):
     # filter() returns format: [ttp, y_filtered_dict]
     # where ttp is a list of TTP values for each well, and
     # y_filtered_dict is a list of data with format:
     #   [ [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 1
     #     [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 2
     #      ... ]                                     <- etc
-    results = filter(data_directory + '/' + filename + '.csv', float(filter_factor)) 
+    results = filter(data_directory + '/' + filename + '.csv', float(filter_factor), float(cut_time)) 
 
     # Save filtered data to csv file:
     data = results[1]

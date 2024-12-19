@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">	
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/buttons.css">
 <link rel="stylesheet" href="css/notification-window.css">
@@ -42,6 +43,13 @@
 				    </div>
 				    <input type="range" id="filter-slider" class="slider" 
 				           min="1" max="20" value="12">
+				</div>
+				<div class="slider-container">
+				    <div id="cut-time-slider-value" class="slider-value">
+				    	t<sub class="sub75">cut</sub>: 10 min
+				    </div>
+				    <input type="range" id="cut-time-slider" class="slider" 
+				           min="1" max="20" value="10">
 				</div>
 		        <div class="vertical-gap-10"></div>
 				<button id="toggleTTP" class="button" onclick="toggleTTP()">TTP mode</button>

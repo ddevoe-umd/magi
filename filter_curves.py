@@ -12,27 +12,10 @@ import pandas as pd
 print('pandas loaded')
 
 
-def get_ttp_(t,y):
-    # Calculate slope at midpoint and project back to baseline to find TTP
-    npoints = 2    # number of points before and after midpoint to use in linear fit
-    indices = [idx for idx in range(len(y)) if y[idx] >= 0.5]
-    ttp = -0.001   # set initial value slightly less than zero
-    if len(indices)>0:
-        idx = indices[0]    # 1st index > 0.5
-        if idx > npoints+1:
-            # linear curve fit:
-            t_ = t[idx-npoints:idx+npoints]
-            y_ = y[idx-npoints:idx+npoints]
-            m,b = np.polyfit(t_, y_, 1)
-            ttp = (y[idx]-b)/m   # x-axis intercept
-    return ttp
-
-
 def get_ttp(t,y):
     # Calculate slope at midpoint and project back to baseline to find TTP
     npoints = 2    # number of points before and after midpoint for linear fit
-    # Find index of the first value >0.5
-    idx = next((i for (i, val) in enumerate(y) if val > 0.5), None)
+    idx = next((i for (i, val) in enumerate(y) if val > 0.5), None)   # idx of 1st value >0.5
     ttp = -0.001   # set initial value slightly less than zero
     if idx is not None:
         if idx > npoints+1 and idx < len(y)-npoints:
@@ -44,16 +27,16 @@ def get_ttp(t,y):
     return ttp
 
 
-def filter(filename, filter_factor=10.0):
+def filter(filename, filter_factor=10.0, cut_time = 0.0):
     y_filtered_dict = []
     ttp = []
     with open(filename) as f:
         df = pd.read_csv(f, header=None)
-        cut_number = 0        # number of initial data points to ignore
         t = df.iloc[:, 0].tolist()
-        t = t[cut_number:]    # Remove initial data points
+        t = [val/60.0 for val in t]          # Convert seconds -> minutes
+        cut_num = int(cut_time/t[-1] * len(t))   # number of initial data points to drop
+        t = t[cut_num:]                   # Remove initial data points
         t = [float(val-t[0]) for val in t]   # start time axis at t=0
-        t = [val/60.0 for val in t]   # Convert seconds -> minutes
     
         cols = df.columns[1:]
     
