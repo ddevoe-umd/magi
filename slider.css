@@ -27,6 +27,7 @@
 /* Slider value display */
 .slider-value {
     position: absolute;
+    height: auto;
     align: left;
     /* top: 5px;                  /* Distance from the top */
     font-size: 12px;

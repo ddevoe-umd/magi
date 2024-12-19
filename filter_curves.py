@@ -57,9 +57,9 @@ def filter(filename, filter_factor=10.0):
             n = len(t)               # total number of samples
             fs = n/T                 # sample rate (cycles/min)
             f_nyquist = fs/2.0       # Nyquist frequency
-            Wn = fs/filter_factor    # Low pass cutoff (cycles/min)
+            Wn = f_nyquist/filter_factor    # Low pass cutoff (cycles/min)
             if Wn >= f_nyquist:      # Wn < f_nyquist required
-                Wn = 0.99*f_nyquist
+                Wn = 0.999*f_nyquist
             order = 6          # filter order       
             #
             # Pre-SOS filter:

@@ -110,7 +110,8 @@ function enableElements(elements) {
 	elements.forEach(e => document.getElementById(e).disabled = false);
 }
 function disableAllElements() {
-	allButtons = ["start","stop","saveraw","period-slider","toggleTTP","savefiltered",
+	allButtons = ["start","stop","saveraw","period-slider","analyze","filter-slider",
+		            "toggleTTP","savefiltered",
 							  "saveTTP","getImage","reboot","shutdown","getLog","clearLog"];
 	log(allButtons);
 	allButtons.forEach(e => document.getElementById(e).disabled = true);
@@ -192,8 +193,8 @@ document.getElementById("period-slider").addEventListener('input', function() {
 
 // Event listener to update curve filter factor from slider:
 document.getElementById("filter-slider").addEventListener('input', function() {
-  document.getElementById('filter-slider-value').innerHTML = `Filter x: 1/${this.value}`;
-  sampleInterval = this.value * 1000;
+  const html = `f<sub class="sub75">c</sub> = f<sub class="sub75">nyq</sub>/${this.value}`;
+  document.getElementById('filter-slider-value').innerHTML = html;
 });
 
 // Send POST message to server:
@@ -239,7 +240,7 @@ async function endAssay() {
 			log("Server response:")
 			log(results);
 			currentFileName = results;
-	   	enableElements(["saveraw","shutdown","reboot","clearLog"]);
+	   	enableElements(["saveraw","analyze","filter-slider","shutdown","reboot","clearLog"]);
 	   	analyzeData();
 		}
 	}
@@ -672,7 +673,7 @@ function dimChart(chart) {
 async function startAssay() {
 	log("startAssay() called");
 	enableElements(["stop"]);
-	disableElements(["start","period-slider","saveraw","savefiltered","saveTTP","toggleTTP","shutdown","reboot","clearLog"]);
+	disableElements(["start","period-slider","saveraw","analyze","filter-slider","savefiltered","saveTTP","toggleTTP","shutdown","reboot","clearLog"]);
   document.getElementById("toggleTTP").innerHTML = "Show grouped";
   // Dim charts from previous run:
   if (filteredChart) {

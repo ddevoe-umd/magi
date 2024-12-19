@@ -193,7 +193,8 @@ document.getElementById("period-slider").addEventListener('input', function() {
 
 // Event listener to update curve filter factor from slider:
 document.getElementById("filter-slider").addEventListener('input', function() {
-  document.getElementById('filter-slider-value').innerHTML = `Filter x: 1/${this.value}`;
+  const html = `f<sub class="sub75">c</sub> = f<sub class="sub75">nyq</sub>/${this.value}`;
+  document.getElementById('filter-slider-value').innerHTML = html;
 });
 
 // Send POST message to server:

@@ -22,6 +22,13 @@ html, body {
   background-image: linear-gradient(90deg, #939ca3, #999999);
 }
 
+
+/* subscript style */
+.sub75 {
+    font-size: 75%;
+    vertical-align: sub;
+}
+
 .main-container {
   display: flex;
   flex-direction: column;
@@ -40,7 +47,6 @@ html, body {
   flex-direction: column;
   gap: 10px;                /* gap between buttons */
   width: 100px;
-  height: auto;
   margin: 10px auto;
 }
 
@@ -48,13 +54,14 @@ html, body {
   display: flex;
   flex-grow: 1;
   flex-direction: column;
-  gap: 20px;          /* Space between rows */
+  gap: 20px;                /* gap between rows */
 }
 
 .chart-row {
   display: flex;
   flex-grow: 1;
   width: 100%;
+  /*max-height: 30vh;*/
   gap: 20px;   /* Space between columns */
 }
 
