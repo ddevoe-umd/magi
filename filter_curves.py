@@ -35,6 +35,7 @@ def filter(filename, filter_factor=10.0, cut_time = 0.0):
         t = df.iloc[:, 0].tolist()
         t = [val/60.0 for val in t]              # Convert seconds -> minutes
         cut_num = int(cut_time/t[-1] * len(t))   # number of initial data points to drop
+        print(f'cut_time: {cut_time}, cut_num: {cut_num}', flush=True)
         t = t[cut_num:]                          # Remove initial data points
         t = [float(val-t[0]) for val in t]       # start time axis at t=0
     
