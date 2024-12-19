@@ -7,6 +7,7 @@
 /* Suppress window scroll bars */
 .content {
   overflow:hidden;
+  user-scalable:no;  /* prevent scaling on mobile devices */
 }  
 
 /* Select font properties for all but specified element types */

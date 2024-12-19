@@ -44,7 +44,7 @@
 .slider::-webkit-slider-thumb {
     -webkit-appearance: none;    /* Override default look */
     width: 10px;                 /* handle height (rotated) */
-    height: 20px;                /* handle width (rotated) */
+    height: 10px;                /* handle width (rotated) */
     background: #04dd6d;
     cursor: pointer; 
     border: none;
