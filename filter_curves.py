@@ -33,17 +33,17 @@ def filter(filename, filter_factor=10.0, cut_time = 0.0):
     with open(filename) as f:
         df = pd.read_csv(f, header=None)
         t = df.iloc[:, 0].tolist()
-        t = [val/60.0 for val in t]          # Convert seconds -> minutes
+        t = [val/60.0 for val in t]              # Convert seconds -> minutes
         cut_num = int(cut_time/t[-1] * len(t))   # number of initial data points to drop
-        t = t[cut_num:]                   # Remove initial data points
-        t = [float(val-t[0]) for val in t]   # start time axis at t=0
+        t = t[cut_num:]                          # Remove initial data points
+        t = [float(val-t[0]) for val in t]       # start time axis at t=0
     
         cols = df.columns[1:]
     
         # Find TTP for each well:
         for idx in range(1,13):
             y = df.iloc[:,idx].tolist()
-            y = y[cut_number:]     # Remove initial data points
+            y = y[cut_num:]          # Remove initial data points
             y = [float(val) for val in y]
     
             # Remove spurious dropped data:
