@@ -34,6 +34,8 @@ def filter(filename, filter_factor=10.0, cut_time = 0.0):
         df = pd.read_csv(f, header=None)
         t = df.iloc[:, 0].tolist()
         t = [val/60.0 for val in t]              # Convert seconds -> minutes
+        print("t:", flush=True)
+        print(t, flush=True)
         cut_num = int(cut_time/t[-1] * len(t))   # number of initial data points to drop
         print(f'cut_time: {cut_time}, cut_num: {cut_num}', flush=True)
         print(f't[-1]: {t[-1]}', flush=True)
