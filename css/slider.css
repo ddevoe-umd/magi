@@ -83,5 +83,7 @@
 }
 
 .slider:disabled {
+  pointer-events: none;  /* Prevents interaction */
+  user-select: none;     /* Prevents text selection */
   opacity: 0.3;  
 }

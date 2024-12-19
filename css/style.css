@@ -30,6 +30,11 @@ html, body {
     vertical-align: sub;
 }
 
+/* simple vertical gap */
+.vertical-gap-10 {
+  height: 10px;
+}
+
 .main-container {
   display: flex;
   flex-direction: column;
@@ -46,7 +51,7 @@ html, body {
 .side-button-container {
   display: flex;
   flex-direction: column;
-  gap: 10px;                /* gap between buttons */
+  gap: 8px;                /* gap between buttons */
   width: 100px;
   margin: 10px auto;
 }
