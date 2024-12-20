@@ -1,7 +1,16 @@
+
+.canvasjs-chart-canvas {
+  border-radius: 12px;
+}
+
 /* Force position of canvasJS zoom/pan buttons */
 .canvasjs-chart-toolbar {
   left: 0 !important;
   right: auto !important;    
+}
+
+.canvasjs-chart-tooltip {  
+  bottom: auto !important;
 }
 
 /* Suppress window scroll bars */
@@ -78,7 +87,7 @@ html, body {
   outline: 2px solid gray;
   background-color: #ebebeb;
   border-radius: 6px;
-  overflow: hidden;   /* Ensures chart respects rounded corners */
+ /* overflow: hidden;   /* Ensures chart respects rounded div corners */
 }
 
 .log-image-container {

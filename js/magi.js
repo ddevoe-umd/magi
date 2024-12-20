@@ -537,13 +537,13 @@ function toggleGroupedSeries(e) {
 }
 
 
+// Set up charts for both the raw & filtered amplification curves:
 function setupAmplificationChart(targetContainer) {
+	// Set up empty array with length equal to the number of wells, see toggleGroupedSeries().
   // wellArray is a list to hold plot data with format:
   //   [ [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 1
   //     [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 2
   //      ... ]                                     <- etc
-
-  // Set up empty array with length equal to the number of wells, see toggleGroupedSeries():
   let wellArray = Array.from({ length: wellConfig.length }, () => []);
 	let plotInfo = [];
 	let g = 1;   // group number (for grouping target sets in charts)
@@ -572,6 +572,7 @@ function setupAmplificationChart(targetContainer) {
   }
 	let chart = new CanvasJS.Chart(targetContainer, {
 		zoomEnabled: true,
+		cornerRadius: 4,
  		title: {
 			text: "Fluorescence",
 			fontFamily: "tahoma",
@@ -581,15 +582,20 @@ function setupAmplificationChart(targetContainer) {
 			title: "Time (min)",
 			titleFontSize: 14
 		},
-		axisY:{
+		axisY: {
 			includeZero: true,
 			title: "Fluorescence (arb)",
 			titleFontSize: 14
 		}, 
-		toolTip: {
-			shared: true
-		},
-		legend: {
+    toolTip: {
+			shared: true,
+      cornerRadius: 6,
+      animationEnabled: true,
+      fontSize: 12,
+      borderThickness: 0,
+			borderColor: "#fff"
+    },
+    legend: {
 	    cursor:"pointer",
 	    verticalAlign: "top",
 	    fontSize: 12,
@@ -601,7 +607,6 @@ function setupAmplificationChart(targetContainer) {
 	  },
 		data: plotInfo
 	});
-
 	chart.render();
 	return [chart, wellArray]
 }
@@ -610,15 +615,13 @@ function setupAmplificationChart(targetContainer) {
 function setupTemperatureChart(targetContainer) {
 	let plotInfo = [];
 	let temperature = [];
-	plotInfo.push(
-	{ 	
+	plotInfo.push({ 	
 		type: "line",
     color: "#BB2222",
 		showInLegend: true,
 		name: "Temperature",
 		dataPoints: temperature
-	}
-	)
+	})
 	let chart = new CanvasJS.Chart(targetContainer, {
 		zoomEnabled: true,
 		title: {
@@ -636,7 +639,12 @@ function setupTemperatureChart(targetContainer) {
 			titleFontSize: 14
 		}, 
 		toolTip: {
-			shared: true
+			shared: false,
+      cornerRadius: 6,
+			animationEnabled: true,
+      fontSize: 12,
+      borderThickness: 0,
+			borderColor: "#fff"
 		},
 		legend: {
 			cursor:"pointer",
@@ -853,9 +861,13 @@ function displayTTPavgStdDev() {
 			title: "TTP (min)",
 			titleFontSize: 14
 		},		
-		animationEnabled: true,
-			toolTip: {
-			shared: true
+		toolTip: {
+			shared: true,
+      cornerRadius: 6,
+			animationEnabled: true,
+      fontSize: 12,
+      borderThickness: 0,
+			borderColor: "#fff"
 		},
 		axisX:{ interval: 1 },   // show all axis labels
 		data: [
