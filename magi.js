@@ -1,3 +1,6 @@
+/* 
+   Main MAGI Javascript code
+*/
 
 // Globals:
 
@@ -14,8 +17,6 @@ var wellConfig = [           // Well array configuration (start at upper left):
 	"MecA", "Nuc", "FemB", "POS",
 	"MecA",	"Nuc", "FemB", "NEG"
 ];
-
-var sampleInterval;          // image sampling period (msec), value assigned via slider
 
 var assayTimer;              // timer for running an assay
 var startTime;               // assay start time stamp
@@ -35,6 +36,15 @@ var ttpChartGrouped;          // chart to display avg & stdev TTP values
 
 var hasImageFirstLoaded = false;  // track when the first call to getImage() has run
 
+// Prevent zooming with Ctrl + or Ctrl -
+document.addEventListener('keydown', function(event) {
+  if ((event.ctrlKey || event.metaKey) && (event.key === '+' || event.key === '-' || event.key === '=')) {
+    event.preventDefault();
+  }
+  if ((event.ctrlKey || event.metaKey) && event.key === '0') {
+    event.preventDefault(); // Prevent resetting zoom with Ctrl + 0
+  }
+});
 
 // Custom log function:
 function log(message) {
@@ -111,7 +121,7 @@ function enableElements(elements) {
 }
 function disableAllElements() {
 	allButtons = ["start","stop","saveraw","period-slider","analyze","filter-slider",
-		            "toggleTTP","savefiltered",
+		            "cut-time-slider", "toggleTTP","savefiltered",
 							  "saveTTP","getImage","reboot","shutdown","getLog","clearLog"];
 	log(allButtons);
 	allButtons.forEach(e => document.getElementById(e).disabled = true);
@@ -119,14 +129,11 @@ function disableAllElements() {
 
 // Initial window loading:
 window.onload = function () {
-	// Disable buttons at start-up:
+	// Disable all buttons at start-up:
 	disableAllElements();
   // Set sampling period from default slider setting:
-  period = document.getElementById('period-slider').value;
-  sampleInterval = period * 1000;
+  var period = document.getElementById('period-slider').value;
   document.getElementById('period-slider-value').innerHTML = `Period: ${period}s`;
-  log(`Saving Python output (stdio, stderr) to magi_server.log`);
-  log(`sampleInterval updated (from slider): ${sampleInterval} msec`);
   // Display & dim initial empty charts:
   displayFilteredData([[]]);
   dimChart(filteredChart);
@@ -188,7 +195,6 @@ document.addEventListener("DOMContentLoaded", () => {
 // Event listener to update assay period value from slider:
 document.getElementById("period-slider").addEventListener('input', function() {
   document.getElementById('period-slider-value').innerHTML = `Period: ${this.value}s`;
-  sampleInterval = this.value * 1000;
 });
 
 // Event listener to update curve filter factor from slider:
@@ -196,6 +202,13 @@ document.getElementById("filter-slider").addEventListener('input', function() {
   const html = `f<sub class="sub75">c</sub> = f<sub class="sub75">nyq</sub>/${this.value}`;
   document.getElementById('filter-slider-value').innerHTML = html;
 });
+
+// Event listener to update filter cut time from slider:
+document.getElementById("cut-time-slider").addEventListener('input', function() {
+  const html = `t<sub class="sub75">cut</sub>: ${this.value} min`;
+  document.getElementById('cut-time-slider-value').innerHTML = html;
+});
+
 
 // Send POST message to server:
 async function queryServer(message) {
@@ -240,7 +253,8 @@ async function endAssay() {
 			log("Server response:")
 			log(results);
 			currentFileName = results;
-	   	enableElements(["saveraw","analyze","filter-slider","shutdown","reboot","clearLog"]);
+	   	enableElements(["saveraw","analyze","filter-slider","cut-time-slider",
+	   		              "shutdown","reboot","clearLog"]);
 	   	analyzeData();
 		}
 	}
@@ -365,7 +379,8 @@ async function analyzeData() {
 	let win = notification("Filtering data and extracting TTP values");
   let message = 'analyze';
   let filterFactor = document.getElementById('filter-slider').value;
-	let data = [currentFileName, filterFactor];
+  let cutTime = document.getElementById('cut-time-slider').value;
+	let data = [currentFileName, filterFactor, cutTime];
 	let response = await queryServer(JSON.stringify([message,data]));
 	if (response.ok) {
 		results = await response.text();
@@ -673,7 +688,8 @@ function dimChart(chart) {
 async function startAssay() {
 	log("startAssay() called");
 	enableElements(["stop"]);
-	disableElements(["start","period-slider","saveraw","analyze","filter-slider","savefiltered","saveTTP","toggleTTP","shutdown","reboot","clearLog"]);
+	disableElements(["start","period-slider","saveraw","analyze","filter-slider","cut-time-slider",
+		               "savefiltered","saveTTP","toggleTTP","shutdown","reboot","clearLog"]);
   document.getElementById("toggleTTP").innerHTML = "Show grouped";
   // Dim charts from previous run:
   if (filteredChart) {
@@ -704,8 +720,8 @@ async function startAssay() {
 		}
 		// extend the temperature array:
 		temperature.push({
-			x: minutes,
-			y: newData[wellArray.length]   // T is last element in newData
+				x: minutes,
+				y: newData[wellArray.length]   // T is last element in newData
 			});   
 		// Display the real-time amplification & temperature curves:
 		amplificationChart.render();
@@ -713,6 +729,7 @@ async function startAssay() {
 	}
 	// Start the assay:
 	updateChart();   // Initial update before starting timer
+  var sampleInterval = document.getElementById('period-slider').value * 1000;
 	assayTimer = setInterval(function(){updateChart()}, sampleInterval);
 	// Note: timer wont work if window is minimized...need to use
 	// a "web worker" instead to fix this, see 

@@ -34,18 +34,10 @@ def filter(filename, filter_factor=10.0, cut_time = 0.0):
         df = pd.read_csv(f, header=None)
         t = df.iloc[:, 0].tolist()
         t = [(val-t[0])/60.0 for val in t]       # Start at t=0 and convert sec -> min
-        print("t:", flush=True)
-        print(t, flush=True)
         cut_num = int(cut_time/t[-1] * len(t))   # number of initial data points to drop
-        print(f'cut_time: {cut_time}, cut_num: {cut_num}', flush=True)
-        print(f't[-1]: {t[-1]}', flush=True)
-        print(f'cut_time/t[-1]: {cut_time/t[-1]}', flush=True)
-        print(f'len(t): {len(t)}', flush=True)
-        print(f'cut_time/t[-1] * len(t): {cut_time/t[-1] * len(t)}', flush=True)
-        print(f'int(cut_time/t[-1] * len(t)): {int(cut_time/t[-1] * len(t))}', flush=True)
         
         t = t[cut_num:]                          # Remove initial data points
-        t = [float(val-t[0]) for val in t]       # start time axis at t=0
+        #t = [float(val-t[0]) for val in t]       # start time axis at t=0
     
         cols = df.columns[1:]
     

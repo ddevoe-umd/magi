@@ -688,7 +688,8 @@ function dimChart(chart) {
 async function startAssay() {
 	log("startAssay() called");
 	enableElements(["stop"]);
-	disableElements(["start","period-slider","saveraw","analyze","filter-slider","savefiltered","saveTTP","toggleTTP","shutdown","reboot","clearLog"]);
+	disableElements(["start","period-slider","saveraw","analyze","filter-slider","cut-time-slider",
+		               "savefiltered","saveTTP","toggleTTP","shutdown","reboot","clearLog"]);
   document.getElementById("toggleTTP").innerHTML = "Show grouped";
   // Dim charts from previous run:
   if (filteredChart) {
