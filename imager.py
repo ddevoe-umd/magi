@@ -127,8 +127,8 @@ def get_image(data):       # Return a PIL image with colored ROI boxes for displ
         image = cam.capture_image("main")   # capture as PIL image
         cam.stop()
         GPIO.output(LED_PIN, GPIO.HIGH)
-        # Add ROIs to image if the user has already defined the well configuration:
-        if len(wellConfig)>0:
+        # Add ROIs to image only if the well configuration has been defined:
+        if len(data[0])>0:   # make sure wellConfig is defined
             image = add_ROIs(image, data) 
         buffer = BytesIO()                   # create a buffer to hold the image
         image.save(buffer, format="PNG") # Convert image to PNG
