@@ -21,6 +21,8 @@
 	<div class="chart-container">
 		<div class="chart-row">
 			<div class="side-button-container"> 
+				<button id="load" class="button" role="button" onclick="loadCard()">Load Card</button>
+    				<input type="file" id="hidden-card-file-input" accept=".card" style="display: none;" />
 				<button id="start" class="button" role="button" onclick="startAssay()">Start</button>
 				<div class="slider-container">
 				    <div id="period-slider-value" class="slider-value">Period: 5s</div>
@@ -61,8 +63,12 @@
 				<button id="savefiltered" class="button" onclick="saveFiltered()"> Save Filtered </button>
 				<button id="saveTTP" class="button" onclick="saveTTP()">Save TTP</button>
 			</div>
-			<div class="chart" id="filteredDataChart"><b>Filtered Data</b></div>
-			<div class="chart" id="ttpChart"><b>Time to Positive</b></div>
+			<div class="chart" id="filteredDataChart">
+				<div class="text-center">Filtered Data</div>
+			</div>
+			<div class="chart" id="ttpChart">
+				<div class="text-center">Time to Positive</div>
+			</div>
 		</div>
 	</div>
 
@@ -76,7 +82,9 @@
 			  	<button id="shutdown" class="button" role="button" onclick="shutdown()"> Shutdown </button>
 			</div>
 			<div class="image-div"><img id="image"></div>
-			<div class="log" id="log"><b>Server Log</b><br><br></div>
+			<div class="log" id="log"><b>
+				<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+				Server Log</b><br><br></div>
 		</div>
 	</div>
 
