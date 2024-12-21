@@ -12,11 +12,10 @@ var targets = {          // Targets with chart display properties:
   "NEG": ["#555555", "dot"]
 };
 
-var wellConfig = [           // Well array configuration (start at upper left):
-	"MecA", "Nuc", "FemB", "POS",
-	"MecA", "Nuc", "FemB", "POS",
-	"MecA",	"Nuc", "FemB", "NEG"
-];
+// Assay info loaded from user's card file)
+var cardFilename;     // Assay card file name selected by user
+var wellConfig = [];  // Well array configuration, starting at upper left
+var positive = [];    // targets corresponding to a positive detection event (not yet used...)
 
 var assayTimer;              // timer for running an assay
 var startTime;               // assay start time stamp
@@ -34,8 +33,6 @@ var ttpChartAll;              // chart to display all TTP values
 var ttpChartGrouped;          // chart to display avg & stdev TTP values
 // Note: other charts do not currently use global variables...
 
-var hasImageFirstLoaded = false;  // track when the first call to getImage() has run
-
 // Prevent zooming with Ctrl + or Ctrl -
 document.addEventListener('keydown', function(event) {
   if ((event.ctrlKey || event.metaKey) && (event.key === '+' || event.key === '-' || event.key === '=')) {
@@ -52,7 +49,7 @@ function log(message) {
 	console.log(message);      // display message in Javascript console
 	const log = document.getElementById("log");
 	log.innerHTML += message + "<br />";      // display message in div
-	log.scroll({ top: log.scrollHeight, behavior: 'smooth' }); // pin scroll to bottom
+	log.scroll({top: log.scrollHeight, behavior: 'smooth'}); // pin scroll to bottom
 }
 
 
@@ -120,8 +117,8 @@ function enableElements(elements) {
 	elements.forEach(e => document.getElementById(e).disabled = false);
 }
 function disableAllElements() {
-	allButtons = ["start","stop","saveraw","period-slider","analyze","filter-slider",
-		            "cut-time-slider", "toggleTTP","savefiltered",
+	allButtons = ["load","start","stop","saveraw","period-slider","analyze",
+								"filter-slider","cut-time-slider", "toggleTTP","savefiltered",
 							  "saveTTP","getImage","reboot","shutdown","getLog","clearLog"];
 	log(allButtons);
 	allButtons.forEach(e => document.getElementById(e).disabled = true);
@@ -133,47 +130,24 @@ window.onload = function () {
   // Set sampling period from default slider setting:
   var period = document.getElementById('period-slider').value;
   document.getElementById('period-slider-value').innerHTML = `Period: ${period}s`;
-  // Display & dim initial empty charts:
-  displayFilteredData([[]]);
-  dimChart(filteredChart);
-  displayTTP();
-  dimChart(ttpChartAll);
   getFirstImage();          // Get initial image
-};
+  enableElements(["load","shutdown","reboot","getImage",
+  	 		          "getLog","clearLog"]);};
 
 
 
-// Try to get initial image from the server at code start or reboot:
+// Wait for initial image from the server at code start or reboot:
 async function getFirstImage() {
   win = notification("Searching for MAGI server");
   while (true) {
   	try {
       const awaitResult = await getImage();        // Get initial chip image
 	  	win.remove();   // close the notification window
-  	 	enableElements(["start","period-slider","shutdown","reboot","getImage",
-  	 		              "getLog","clearLog"]);
 	  	return;     
 	  } catch (error) {  // getImage() timed out
 	  	log("getImage() attempt failed, retrying...");
 	  }
 	}
-}
-
-
-
-// Re-display the filtered data & TTP charts after the 1st time the chip image
-// loads to prevent the charts from being clipped when the div size changes
-// on image load:
-img.addEventListener('load', onImageLoad);
-function onImageLoad() {
-  if (!hasImageFirstLoaded) {
-    log('Image loaded for the first time');
-    hasImageFirstLoaded = true; // Prevent further calls
-	  filteredChart.render();
-	  dimChart(filteredChart);
-	  ttpChartAll.render();
-	  dimChart(ttpChartAll);
-  }
 }
 
 
@@ -191,6 +165,45 @@ document.addEventListener("DOMContentLoaded", () => {
   buttons.forEach(button => {
 	  button.style.width = maxWidth + "px";
   });
+});
+
+
+// Load a user-defined JSON "card" containing the well configuration:
+function loadCard() {
+	document.getElementById('hidden-card-file-input').click();
+}
+// Use an HTML input element to handle local file loading:
+document.getElementById('hidden-card-file-input').addEventListener('change', function (event) {
+  const file = event.target.files[0];    // get filename from user dialog
+  if (file && file.name.endsWith('.card')) {
+    cardFilename = file.name;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        const cardJson = JSON.parse(e.target.result);
+        // Extract card information:
+        wellConfig = cardJson["well_config"];
+        positive = cardJson["positive"];
+			  // Display & dim initial empty charts:
+			  displayFilteredData([[]]);
+			  dimChart(filteredChart);
+			  displayTTP();
+			  dimChart(ttpChartAll);
+			  enableElements(["start","period-slider"]);		// Let user start the assay
+			  log("Assay card loaded:");
+			  log(wellConfig);
+			  getImage();
+      } catch (e) {
+        log(e);
+      }
+    };
+    reader.onerror = function () {
+      log('Read error (check assay card format)');
+    };
+    reader.readAsText(file);
+  } else {
+    log('Please select a valid .card file');
+  }
 });
 
 
@@ -246,7 +259,7 @@ async function endAssay() {
 	if (response) {
 		disableElements(["stop"]);
 		if (assayTimer) clearInterval(assayTimer);
-	  enableElements(["start","period-slider"]);
+	  enableElements(["load","start","period-slider"]);
 		let message = 'end';
 	  let data = '';
 		let response = await queryServer(JSON.stringify([message,data]));
@@ -285,7 +298,7 @@ async function getImage() {
 	log("getImage() called");
   document.getElementById('image').style.backgroundColor = 'white';
 	let message = 'getImage';
-	let data = [wellConfig, targets];  // use to color ROIs in image
+	let data = [cardFilename, wellConfig, targets];  // info for image ROIs etc.
 	let response = await queryServer(JSON.stringify([message,data]));
   if (response.ok) {
 		results = await response.text();
@@ -698,8 +711,10 @@ function dimChart(chart) {
 async function startAssay() {
 	log("startAssay() called");
 	enableElements(["stop"]);
-	disableElements(["start","period-slider","saveraw","analyze","filter-slider","cut-time-slider",
-		               "savefiltered","saveTTP","toggleTTP","shutdown","reboot","clearLog"]);
+	disableElements(["load","start","period-slider","saveraw","analyze",
+									 "filter-slider","cut-time-slider",
+		               "savefiltered","saveTTP","toggleTTP","shutdown",
+		               "reboot","clearLog"]);
   document.getElementById("toggleTTP").innerHTML = "Group TTP";
   // Dim charts from previous run:
   if (filteredChart) {
