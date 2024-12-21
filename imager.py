@@ -47,8 +47,9 @@ def hex_to_rgb(h):   # convert "#rrggbb" to [R,G,B]
 def add_ROIs(img, data):      # Add ROIs to a captured image
     try:
         # Extract well names & colors:
-        well_config = data[0]             # well configuration
-        target_dict = data[1]             # target colors
+        card_filename = data[0]       # user-selected card file name
+        well_config = data[1]        # well configuration
+        target_dict = data[2]        # target colors
         colors = [target_dict[t][0] for t in well_config]
         img = img.convert('RGBA')   # convert captured image to support an alpha channel
         img_roi = Image.new('RGBA', img.size, (255, 255, 255, 0))  # create new image with ROIs only
@@ -62,7 +63,7 @@ def add_ROIs(img, data):      # Add ROIs to a captured image
             text_position = (roi[0] + roi_width + 1, roi[1])
             draw.text(text_position, well_config[idx],'#ffffff',font=font)
         font_timestamp = ImageFont.truetype(font_path + "/" + "OpenSans.ttf", 12) 
-        draw.text((10,10), time.strftime("%Y%m%d_%Hh%Mm%Ss"), font=font_timestamp)  # add timestamp
+        draw.text((10,10), card_filename + ": " + time.strftime("%Y%m%d_%Hh%Mm%Ss"), font=font_timestamp)  # add filename + timestamp
         img_new = Image.alpha_composite(img, img_roi)  # composite captured & ROI images
         return(img_new)
     except Exception as e:
@@ -120,7 +121,7 @@ def get_image_data():    # Extract fluorescence measurements from ROIs in image
         print(f'Exception in get_image_data(): {e}')
 
 def get_image(data):       # Return a PIL image with colored ROI boxes for display
-    # data structure: [wellConfig, target_dict]
+    # data structure: [cardFilename, wellConfig, target_dict]
     try:
         cam.start()
         GPIO.output(LED_PIN, GPIO.LOW)
@@ -128,7 +129,8 @@ def get_image(data):       # Return a PIL image with colored ROI boxes for displ
         cam.stop()
         GPIO.output(LED_PIN, GPIO.HIGH)
         # Add ROIs to image only if the well configuration has been defined:
-        if len(data[0])>0:   # make sure wellConfig is defined
+        well_config = data[1]
+        if len(well_config)>0:   # make sure JS wellConfig is defined
             image = add_ROIs(image, data) 
         buffer = BytesIO()                   # create a buffer to hold the image
         image.save(buffer, format="PNG") # Convert image to PNG
