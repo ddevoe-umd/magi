@@ -127,9 +127,11 @@ def get_image(data):       # Return a PIL image with colored ROI boxes for displ
         image = cam.capture_image("main")   # capture as PIL image
         cam.stop()
         GPIO.output(LED_PIN, GPIO.HIGH)
-        pil_image = add_ROIs(image, data)  # Add ROIs to image
+        # Add ROIs to image if the user has already defined the well configuration:
+        if len(target_dict)>0:
+            image = add_ROIs(image, data) 
         buffer = BytesIO()                   # create a buffer to hold the image
-        pil_image.save(buffer, format="PNG") # Convert image to PNG
+        image.save(buffer, format="PNG") # Convert image to PNG
         png_image = buffer.getvalue()
         png_base64 = base64.b64encode(png_image).decode('utf-8')  # Encode as base64
         return(f"data:image/png;base64,{png_base64}")
