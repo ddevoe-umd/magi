@@ -32,8 +32,12 @@
 				<button id="saveraw" class="button" onclick="saveRaw()">Save Raw</button>
 		        <div class="vertical-gap-10"></div>
 			</div>
-			<div class="chart" id="rawDataChart"><b>Fluorescence Data</b></div>
-			<div class="chart" id="temperatureChart"><b>Chip Temperature</b></div>
+			<div class="chart" id="rawDataChart">
+				<div class="text-center">Fluorescence</div>
+			</div>
+			<div class="chart" id="temperatureChart">
+				<div class="text-center">Temperature</div>
+			</div>
 		</div>
 		<div class="chart-row">
 			<div class="side-button-container"> 
@@ -66,10 +70,10 @@
 		<div class="log-image-row">
 			<div class="side-button-container"> 
 				<button id="getImage" class="button" role="button" onclick="getImage()"> Get Image </button>
-			  	<button id="reboot" class="button" role="button" onclick="reboot()"> Reboot </button>
-			  	<button id="shutdown" class="button" role="button" onclick="shutdown()"> Shutdown </button>
 			  	<button id="getLog" class="button" role="button" onclick="getServerLog()"> Get log </button>
 			  	<button id="clearLog" class="button" role="button" onclick="clearServerLog()"> Clear log </button>
+			  	<button id="reboot" class="button" role="button" onclick="reboot()"> Reboot </button>
+			  	<button id="shutdown" class="button" role="button" onclick="shutdown()"> Shutdown </button>
 			</div>
 			<div class="image-div"><img id="image"></div>
 			<div class="log" id="log"><b>Server Log</b><br><br></div>

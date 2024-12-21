@@ -87,7 +87,14 @@ html, body {
   outline: 2px solid gray;
   background-color: #ebebeb;
   border-radius: 6px;
- /* overflow: hidden;   /* Ensures chart respects rounded div corners */
+  /* overflow: hidden;   /* Ensures chart respects rounded div corners */
+}
+
+/* div for centering text in a chart div */
+.text-center {
+  width: 100%;
+  text-align: center;
+  font-size: 15px;
 }
 
 .log-image-container {

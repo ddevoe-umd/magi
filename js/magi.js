@@ -129,7 +129,6 @@ function disableAllElements() {
 
 // Initial window loading:
 window.onload = function () {
-	// Disable all buttons at start-up:
 	disableAllElements();
   // Set sampling period from default slider setting:
   var period = document.getElementById('period-slider').value;
@@ -143,6 +142,7 @@ window.onload = function () {
 };
 
 
+
 // Try to get initial image from the server at code start or reboot:
 async function getFirstImage() {
   win = notification("Searching for MAGI server");
@@ -150,13 +150,15 @@ async function getFirstImage() {
   	try {
       const awaitResult = await getImage();        // Get initial chip image
 	  	win.remove();   // close the notification window
-  	 	enableElements(["start","period-slider","shutdown","reboot","getImage","getLog","clearLog"]);
+  	 	enableElements(["start","period-slider","shutdown","reboot","getImage",
+  	 		              "getLog","clearLog"]);
 	  	return;     
 	  } catch (error) {  // getImage() timed out
 	  	log("getImage() attempt failed, retrying...");
 	  }
 	}
 }
+
 
 
 // Re-display the filtered data & TTP charts after the 1st time the chip image
@@ -496,9 +498,9 @@ async function getServerLog() {
 		let responseText = await response.text();
 		responseText = responseText.replace(/\\n/g, "<br>");  // repace newline with html break
 		responseText = responseText.replace(/^"|"$/g, '');    // strip double quotes @ start and end
-		log("===================<br>Start Server Log<br>===================");
+		log("<br>=================== Start Server Log ===================");
 		log(responseText); 
-		log("===================<br>End Server Log<br>===================");
+		log("==================== End Server Log ====================<br>");
 	} 
 }
 
@@ -698,7 +700,7 @@ async function startAssay() {
 	enableElements(["stop"]);
 	disableElements(["start","period-slider","saveraw","analyze","filter-slider","cut-time-slider",
 		               "savefiltered","saveTTP","toggleTTP","shutdown","reboot","clearLog"]);
-  document.getElementById("toggleTTP").innerHTML = "Show grouped";
+  document.getElementById("toggleTTP").innerHTML = "Group TTP";
   // Dim charts from previous run:
   if (filteredChart) {
   	log("Hiding filtered data & TTP charts");
@@ -762,7 +764,7 @@ function displayFilteredData(data) {
 
 // Display TTP for all wells individually:
 function displayTTP() {
-  document.getElementById("toggleTTP").innerHTML = "Show grouped";
+  document.getElementById("toggleTTP").innerHTML = "Group TTP";
   ttpBars = [];
   for (const key in targets) {
 		for (let i=0; i<wellConfig.length; i++) {
@@ -824,7 +826,7 @@ function stdDevArray(arr) {
 
 // Display mean & std dev TTP for each target group:
 function displayTTPavgStdDev() {
-	document.getElementById("toggleTTP").innerHTML = "Show all wells";
+	document.getElementById("toggleTTP").innerHTML = "All TTP values";
 	// Calculate mean and standard deviation for each target:
   let dataPoints = [];
   let errorBars = [];
@@ -841,14 +843,17 @@ function displayTTPavgStdDev() {
 		dataPoints.push({ 
 			y: mean,
 			label: key,
+			mean: mean.toFixed(2),             // custom tooltip entry
 			color: targets[key][0]
 		});
 		errorBars.push({
 			y: [mean-stdev, mean+stdev],
+			stdev: stdev.toFixed(2),           // custom tooltip entry
+			rsd: (100*stdev/mean).toFixed(2),  // custom tooltip entry
 			label: key
 		});
   }
-
+  // Set up chart:
 	ttpChartGrouped = new CanvasJS.Chart("ttpChart", {
 		zoomEnabled: true,
 		title: {
@@ -874,12 +879,15 @@ function displayTTPavgStdDev() {
 			{        
 				type: "column",  
   			showInLegend: false, 
-				dataPoints: dataPoints
+				toolTipContent: "<span style='\"'color:{color};'\"'>{label}</span>: {mean}",				
+				dataPoints: dataPoints,
 			},
 			{ 
         type: "error",
         showInLegend: false,
         markerType: "none",
+				//toolTipContent: "\u03C3: {stdev}%",
+				toolTipContent: "RSD = {rsd}%",
         lineThickness: 1,
         dataPoints: errorBars
 			}
