@@ -23,7 +23,7 @@ def get_ttp(t,y):
             t_ = t[idx-npoints:idx+npoints]
             y_ = y[idx-npoints:idx+npoints]
             m,b = np.polyfit(t_, y_, 1)
-            ttp = (y[idx]-b)/m     # ttp is the x-axis intercept
+            ttp = -b/m     # define ttp as the x-axis intercept
     return ttp
 
 
