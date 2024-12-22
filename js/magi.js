@@ -4,7 +4,8 @@
 
 // Globals:
 
-var targets = {          // Targets with chart display properties:
+// All possible targets with chart display properties:
+var targets = {          
   "MecA": ["#4C4CEB", "solid"],   
   "FemB": ["#5ED649", "solid"],
   "Nuc": ["#DD4444", "solid"],
@@ -15,7 +16,7 @@ var targets = {          // Targets with chart display properties:
 // Assay info loaded from user's card file)
 var cardFilename;     // Assay card file name selected by user
 var wellConfig = [];  // Well array configuration, starting at upper left
-var positive = [];    // targets corresponding to a positive detection event (not yet used...)
+var positives = {};   // positive detection events (not yet used...)
 
 var assayTimer;              // timer for running an assay
 var startTime;               // assay start time stamp
@@ -44,11 +45,35 @@ document.addEventListener('keydown', function(event) {
 });
 
 // Custom log function:
-function log(message) {
+function log(message, color=null, fontSize=null, bold=false, lines=false) {
+	textToAdd = "";
   document.getElementById('log').style.backgroundColor = 'white';
-	console.log(message);      // display message in Javascript console
+  if (lines) {
+    textToAdd = `<span style="font-family: 'Courier New', Courier, monospace;">`;
+  	textToAdd += "\u2014".repeat(50) + "</span><br>";
+  }
+  let style = "";
+  if (color) {
+  	style += `color:${color};`;
+  }
+  if (fontSize) {
+  	style += `font-size:${fontSize}pt;`;
+  }
+  if (bold) {
+    style += "font-weight: bold;";
+  }
+  if (color || fontSize) {
+    textToAdd += `<span style="${style}">` + message + "</span>";
+  } else {
+    textToAdd += message;
+  }
+  if (lines) {
+    textToAdd += `<span style="font-family: 'Courier New', Courier, monospace;">`;
+    textToAdd += "<br>" + "\u2014".repeat(50) + "</span>";
+  }
+	console.log(textToAdd);      // display message in Javascript console
 	const log = document.getElementById("log");
-	log.innerHTML += message + "<br />";      // display message in div
+	log.innerHTML += textToAdd + "<br />";      // display message in div
 	log.scroll({top: log.scrollHeight, behavior: 'smooth'}); // pin scroll to bottom
 }
 
@@ -126,11 +151,14 @@ function disableAllElements() {
 
 // Initial window loading:
 window.onload = function () {
+
+  document.getElementById('start').style.height = '40px'; // double start button height
+
 	disableAllElements();
   // Set sampling period from default slider setting:
   var period = document.getElementById('period-slider').value;
   document.getElementById('period-slider-value').innerHTML = `Period: ${period}s`;
-  getFirstImage();          // Get initial image
+  getFirstImage();    // Get initial image w/o ROIs
   enableElements(["load","shutdown","reboot","getImage",
   	 		          "getLog","clearLog"]);};
 
@@ -183,15 +211,21 @@ document.getElementById('hidden-card-file-input').addEventListener('change', fun
         const cardJson = JSON.parse(e.target.result);
         // Extract card information:
         wellConfig = cardJson["well_config"];
-        positive = cardJson["positive"];
+        positives = cardJson["positives"];
 			  // Display & dim initial empty charts:
-			  displayFilteredData([[]]);
+        if (filteredChart == null) {   // filteredChart has not yet been displayed,
+          displayFilteredData([[]]);}  // so display chart with empty data
 			  dimChart(filteredChart);
 			  displayTTP();
 			  dimChart(ttpChartAll);
 			  enableElements(["start","period-slider"]);		// Let user start the assay
 			  log("Assay card loaded:");
-			  log(wellConfig);
+        log(wellConfig);
+        log(JSON.stringify(positives));
+        // Display the assay card name in the start button:
+        const html = `Run card:<br>${cardFilename.substring(0, cardFilename.length-5)}`;
+        document.getElementById('start').innerHTML = html;
+        // Get a new image with ROIs matched to the assay card:
 			  getImage();
       } catch (e) {
         log(e);
@@ -229,7 +263,7 @@ document.getElementById("cut-time-slider").addEventListener('input', function() 
 async function queryServer(message) {
 	let response = await fetch( serverURL, {
 		method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: {"Content-Type": "application/x-www-form-urlencoded"},
 		body: 'todo=' + message
 	});
 	return(response)
@@ -511,12 +545,11 @@ async function getServerLog() {
 		let responseText = await response.text();
 		responseText = responseText.replace(/\\n/g, "<br>");  // repace newline with html break
 		responseText = responseText.replace(/^"|"$/g, '');    // strip double quotes @ start and end
-		log("<br>=================== Start Server Log ===================");
-		log(responseText); 
-		log("==================== End Server Log ====================<br>");
+		log("Start Server Log", color="#fff", fontSize=10, bold=false, lines=true);
+		log(responseText, color="#fff", fontSize=8, bold=true); 
+    log("End Server Log", color="#fff", fontSize=10, bold=false, lines=true);
 	} 
 }
-
 
 // Clear server log:
 async function clearServerLog() {
@@ -710,6 +743,8 @@ function dimChart(chart) {
 // Start a new assay:
 async function startAssay() {
 	log("startAssay() called");
+	log(`Starting assay with ${cardFilename}`, color="#fff", 
+    fontSize=10, bold=false, lines=true);
 	enableElements(["stop"]);
 	disableElements(["load","start","period-slider","saveraw","analyze",
 									 "filter-slider","cut-time-slider",

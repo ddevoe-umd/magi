@@ -1,0 +1,21 @@
+{
+  "well_config": 
+    [ 
+      "MecA", "Nuc", "FemB", "POS",
+      "MecA", "Nuc", "FemB", "POS",
+      "MecA", "Nuc", "FemB", "NEG"
+    ],
+  "positives": 
+  { "MRSA":
+    [
+      "MecA",
+      "Nuc",
+      "FemB"
+    ],
+    "MSSA":
+    [
+      "Nuc",
+      "FemB"
+    ]
+  }
+}

@@ -57,6 +57,15 @@ html, body {
   transform: translate(-50%, -50%);
 }
 
+/*
+.cardname {
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  font-weight: bold;  
+}
+*/
+
 .side-button-container {
   display: flex;
   flex-direction: column;
