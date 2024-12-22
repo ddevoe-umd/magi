@@ -3,14 +3,9 @@
 # Will remove noise due to bubbles and spurious measurement errors
 
 import numpy as np
-print('numpy loaded')
 from scipy.signal import butter, filtfilt, sosfiltfilt
-print('scipy.signal loaded')
 import matplotlib.pyplot as plt
-print('matplotlib.pyplot loaded')
 import pandas as pd
-print('pandas loaded')
-
 
 def get_ttp(t,y):
     # Calculate slope at midpoint and project back to baseline to find TTP
@@ -26,7 +21,6 @@ def get_ttp(t,y):
             ttp = -b/m     # define ttp as the x-axis intercept
     return ttp
 
-
 def filter(filename, filter_factor=10.0, cut_time = 0.0):
     y_filtered_dict = []
     ttp = []
@@ -41,6 +35,17 @@ def filter(filename, filter_factor=10.0, cut_time = 0.0):
     
         cols = df.columns[1:]
     
+        # Set up Butterworth low-pass filter parameters:
+        T = t[-1]                # sample Period (min)
+        n = len(t)               # total number of samples
+        fs = n/T                 # sample rate (cycles/min)
+        f_nyquist = fs/2.0       # Nyquist frequency
+        Wn = f_nyquist/filter_factor    # Low pass cutoff (cycles/min)
+        if Wn >= f_nyquist:      # Wn < f_nyquist required
+            Wn = 0.999*f_nyquist
+        order = 6          # filter order       
+        print(f'filter parameters: n={n}, T={T}, fs={fs}, f_nyquist={f_nyquist}, Wn={Wn}', flush=True)
+
         # Find TTP for each well:
         for idx in range(1,13):
             y = df.iloc[:,idx].tolist()
@@ -51,16 +56,8 @@ def filter(filename, filter_factor=10.0, cut_time = 0.0):
             for i,val in enumerate(y):
                 if val < 2 and i>0:
                     y[i] = y[i-1]
-            
-            # Butterworth low-pass filter:
-            T = t[-1]                # sample Period (min)
-            n = len(t)               # total number of samples
-            fs = n/T                 # sample rate (cycles/min)
-            f_nyquist = fs/2.0       # Nyquist frequency
-            Wn = f_nyquist/filter_factor    # Low pass cutoff (cycles/min)
-            if Wn >= f_nyquist:      # Wn < f_nyquist required
-                Wn = 0.999*f_nyquist
-            order = 6          # filter order       
+
+            # Implement the Butterworth low-pass filter:
             #
             # Pre-SOS filter:
             # b, a = butter(order, Wn, btype='low', analog=False, fs=fs)
@@ -69,9 +66,7 @@ def filter(filename, filter_factor=10.0, cut_time = 0.0):
             # SOS filter is a better option:
             sos = butter(order, Wn, btype='low', analog=False, fs=fs, output='sos')
             yf = sosfiltfilt(sos, y)   # filtered data
-
-            print(f'filter parameters: n={n}, T={T}, fs={fs}, f_nyquist={f_nyquist}, Wn={Wn}', flush=True)
-            print(yf, flush=True)
+            # print(yf, flush=True)
 
             # shift curves to min value:
             y = [x-min(yf) for x in y]
