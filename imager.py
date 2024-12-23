@@ -22,7 +22,6 @@ h = int(3*w/4)  # native 4:3 aspect ratio
 res = (w,h)  
 
 cam = Picamera2() 
-print('Picamera2 declared')
 
 #data_directory = 'data'
 data_directory = '/path/to/ramdisk'

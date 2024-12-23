@@ -44,6 +44,7 @@ document.addEventListener('keydown', function(event) {
   }
 });
 
+
 // Custom log function:
 function log(message, color=null, fontSize=null, bold=false, lines=false) {
 	textToAdd = "";
@@ -164,7 +165,8 @@ window.onload = function () {
 
 
 
-// Wait for initial image from the server at code start or reboot:
+// Wait for initial image from the server at code start or reboot to make sure
+// camera is ready before allowing an assay to be run:
 async function getFirstImage() {
   win = notification("Searching for MAGI server");
   while (true) {
@@ -258,6 +260,12 @@ document.getElementById("cut-time-slider").addEventListener('input', function() 
   document.getElementById('cut-time-slider-value').innerHTML = html;
 });
 
+// Helper function to to trigger event listeners on sliders programatically
+// via "slider.dispatchEvent(inputEvent)":
+const inputEvent = new Event('input', {
+  bubbles: true, // Allow the event to bubble up the DOM
+  cancelable: true // Allow the event to be canceled
+});
 
 // Send POST message to server:
 async function queryServer(message) {
@@ -584,6 +592,15 @@ function toggleGroupedSeries(e) {
   }
 }
 
+// Helper regex function to (a) format an integer as a string with commas
+// and (b) limit floats to 3 digits of precision
+function addIntCommas(num) {
+  if (num>1) {
+    return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")
+  } else {
+    return num.toFixed(3).toString()
+  }
+}
 
 // Set up charts for both the raw & filtered amplification curves:
 function setupAmplificationChart(targetContainer) {
@@ -641,7 +658,18 @@ function setupAmplificationChart(targetContainer) {
       animationEnabled: true,
       fontSize: 12,
       borderThickness: 0,
-			borderColor: "#fff"
+			borderColor: "#fff",
+      // control display format of tooltip values:
+      contentFormatter: function(e) {
+        var content = "t = " + e.entries[0].dataPoint.x.toFixed(2) + " min<br/>";
+        for (var i = 0; i < e.entries.length; i++) {
+          var seriesColor = e.entries[i].dataSeries.color;
+          content += "<span style='color:" + seriesColor + ";'>" 
+              + e.entries[i].dataSeries.name + "</span>: " 
+              + addIntCommas(e.entries[i].dataPoint.y) + "<br/>";
+        }
+        return content;
+      }
     },
     legend: {
 	    cursor:"pointer",
@@ -692,7 +720,18 @@ function setupTemperatureChart(targetContainer) {
 			animationEnabled: true,
       fontSize: 12,
       borderThickness: 0,
-			borderColor: "#fff"
+			borderColor: "#fff",
+      // control display format of tooltip values:
+      contentFormatter: function(e) {
+        var content = "t = " + e.entries[0].dataPoint.x.toFixed(2) + " min<br/>";
+        for (var i = 0; i < e.entries.length; i++) {
+          var seriesColor = e.entries[i].dataSeries.color;
+          content += "<span style='color:" + seriesColor + ";'>" 
+              + e.entries[i].dataSeries.name + "</span>: " 
+              + e.entries[i].dataPoint.y.toFixed(2) + " \u00b0C<br/>";
+        }
+        return content;
+      }      
 		},
 		legend: {
 			cursor:"pointer",
@@ -787,6 +826,12 @@ async function startAssay() {
 		amplificationChart.render();
 		temperatureChart.render();
 	}
+  // Reset the analysis parameters to default values, and trigger
+  // input event to invoke event listeners:
+  document.getElementById('filter-slider').value = 10;
+  document.getElementById('filter-slider').dispatchEvent(inputEvent);
+  document.getElementById('cut-time-slider').value = 0;
+  document.getElementById('cut-time-slider').dispatchEvent(inputEvent);
 	// Start the assay:
 	updateChart();   // Initial update before starting timer
   var sampleInterval = document.getElementById('period-slider').value * 1000;
