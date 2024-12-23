@@ -33,6 +33,12 @@ pid = PID(Kp=13, Ki=0.17, Kd=1.2, setpoint=60)     # Can add sample_time, output
 pid.output_limits = (0,100)
 b_bias = 0.82                   # value for linear interpolation of temperature
 well_temp = 0                   # current well temperature
+set_temp = 60
+
+# Pre-Filter:
+a_val = 0.999949373
+b_val = 0.0000506268
+r_F_prev = 23.0
 
 # Start heater PWM:
 duty_cycle = 0
@@ -151,6 +157,9 @@ def run_pid(stop_event):
     start_time = time.time_ns()
     while not stop_event.is_set():
         try:
+            # Change setpoint based on Pre-Filter
+            pid.setpoint = Gp(set_temp)
+
             # Establish list that will store values from ADC and read the ADC
             value_raw = [const.value, Tb.value, Tt.value]
             values = [x*1023 for x in value_raw]
@@ -169,7 +178,6 @@ def run_pid(stop_event):
                 well += [well_temp]
         except Exception as e:
             print(f'Exception in run_pid: {e}')
-
 
 def start_pid():
     GPIO.output(FAN, GPIO.HIGH)   # Turn on system fan
