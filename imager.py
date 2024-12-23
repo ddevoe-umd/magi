@@ -12,7 +12,7 @@ from io import BytesIO
 
 font_path = "/home/pi/magi/fonts"
 
-LED_PIN = 14    # status LED - value must be the same as in magi_server.py
+LED_PIN = 13    # status LED - value must be the same as in magi_server.py
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(LED_PIN, GPIO.OUT) 
 

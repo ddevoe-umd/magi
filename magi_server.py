@@ -23,13 +23,13 @@ logfile = "magi_server.log"       # Log file for stdio + stderr (see setup.sh)
 # PID:
 PWM_PIN = 19
 FAN = 26
-LED_PIN = 14
+LED_PIN = 13
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(LED_PIN, GPIO.OUT)     # System status LED pin
 GPIO.setup(FAN, GPIO.OUT) 
 GPIO.setup(PWM_PIN, GPIO.OUT) 
 pwm = GPIO.PWM(PWM_PIN,490)
-pid = PID(Kp=13, Ki=0.17, Kd=1.2, setpoint=60)     # Can add sample_time, output_limits, etc.
+pid = PID(Kp=12.635, Ki=1.0063, Kd=0, setpoint=0)     # Can add sample_time, output_limits, etc.
 pid.output_limits = (0,100)
 b_bias = 0.82                   # value for linear interpolation of temperature
 well_temp = 0                   # current well temperature
@@ -146,6 +146,13 @@ def cali_fun(y_data):
         24.8772182731984000
         )
     return y_adj
+
+# Function for Pre-Filter Calculation:
+def Gp(des_temp):
+    global r_F_prev
+    r_F = a_val*r_F_prev + b_val*des_temp
+    r_F_prev = r_F
+    return r_F
 
 # Temperature control (run in separate thread):
 def run_pid(stop_event):
