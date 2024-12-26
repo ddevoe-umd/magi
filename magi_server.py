@@ -123,8 +123,13 @@ class S(BaseHTTPRequestHandler):
         elif action == 'reboot':         # Reboot the Pi
             reboot()
         elif action == 'getLog':         # Return the server log file contents
+            # Create a blank file if it doesn't exist:
+            if not os.path.isfile(logfile):
+                with open(logfile, 'w') as f:
+                    pass
             with open(logfile, 'r') as f:
                 results = f.read()
+            results += f"\n\nLog file size: {float(os.path.getsize(logfile))/1e6:.02f} MB"
             self.wfile.write(json.dumps(results).encode('utf-8'))
         elif action == 'clearLog':          # Clear the server log file
             open(logfile, 'w').close()
