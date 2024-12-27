@@ -1,7 +1,0 @@
-{  
-  "MecA": ["#4C4CEB", "solid"],   
-  "FemB": ["#5ED649", "solid"],
-  "Nuc": ["#DD4444", "solid"],
-  "POS": ["#222222", "dash"],
-  "NEG": ["#555555", "dot"]
-}
