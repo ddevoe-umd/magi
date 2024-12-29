@@ -18,8 +18,6 @@ var cardFilename;     // Assay card file name selected by user
 var wellConfig = [];  // Well array configuration, starting at upper left
 var positives = {};   // positive detection events (not yet used...)
 
-var isRunning = false;  // flag to track if assay is currently running
-
 var assayTimer;              // timer for running an assay
 var startTime;               // assay start time stamp
 var img = document.getElementById('image');      // chip image
@@ -340,8 +338,7 @@ async function endAssay() {
 	let response = confirm("End current assay?");
 	if (response) {
 		disableElements(["stop"]);
-    isRunning = false;
-		//if (assayTimer) clearInterval(assayTimer);
+		if (assayTimer) clearInterval(assayTimer);
 	  enableElements(["load","start","period-slider"]);
 		let message = 'end';
 	  let data = '';
@@ -819,7 +816,6 @@ function dimChart(chart) {
   chart.render();
 }
 
-
 // Start a new assay:
 async function startAssay() {
 	log("startAssay() called");
@@ -847,10 +843,7 @@ async function startAssay() {
   nullData = await startPID();    // Tell Python to start the PID controller
 
 	async function updateChart() {
-    if (!isRunning) {
-      log("Assay stopped");
-      return;
-    }
+		//let now = new Date();
 		let now = Date.now();		
 		minutes = (now - startTime)/1000/60;
 		newData = await getData();   		// Get data from Python
@@ -866,14 +859,10 @@ async function startAssay() {
 				x: minutes,
 				y: newData[wellArray.length]   // T is last element in newData
 			});   
-		// Update the real-time amplification & temperature curves:
+		// Display the real-time amplification & temperature curves:
 		amplificationChart.render();
 		temperatureChart.render();
-
-    var sampleInterval = document.getElementById('period-slider').value * 1000;
-    setTimeout(updateChart, sampleInterval);   // Execute again in sampleInterval sec
 	}
-
   // Reset the analysis parameters to default values, and trigger
   // an input event to programmatically invoke event listeners:
   const inputEvent = new Event('input', {
@@ -886,12 +875,12 @@ async function startAssay() {
   document.getElementById('cut-time-slider').dispatchEvent(inputEvent);
   log("Curve analysis parameters reset");
 	// Start the assay:
-  isRunning = true;
 	updateChart();   // Initial update before starting timer
-  // ^^^ previously used setInterval() but had trouble with timing being
-  // throttled when browser minimized or not focused:
-  //     var sampleInterval = document.getElementById('period-slider').value * 1000;
-	//     assayTimer = setInterval(function(){updateChart()}, sampleInterval);
+  var sampleInterval = document.getElementById('period-slider').value * 1000;
+	assayTimer = setInterval(function(){updateChart()}, sampleInterval);
+	// Note: timer wont work if window is minimized...use
+	// a web worker instead to fix this (web workers run in a separate 
+  // thread and are less likely to be throttled)
 }
 
 function displayFilteredData(data) {

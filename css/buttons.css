@@ -4,6 +4,7 @@
   background-image: linear-gradient(#464d55, #25292e);
   border-radius: 8px;
   border-width: 0;
+  border-color: #000;
   height: 20px;
   /* box shadow parameters are: x offset, y offset, blur, spread, color */
   /* with multiple box shadows overlaid on element */

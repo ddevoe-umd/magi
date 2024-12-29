@@ -29,9 +29,10 @@
     position: absolute;
     height: auto;
     align: left;
-    /* top: 5px;                  /* Distance from the top */
+    /* top: 5px;       /* Distance from the top */
     font-size: 12px;
     font-weight: bold;
+    cursor: default;   /* prevent cursor from changing to bar on hover */
 }
 
 /* Mouse-over effects */
