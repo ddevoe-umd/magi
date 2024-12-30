@@ -95,6 +95,7 @@ class S(BaseHTTPRequestHandler):
         data = info[1]
         #print(f'{action}: {data}')
         if action == 'start':            # Start the PID loop for temp control
+            imager.clear_temp_file()     # Clear temp data file (if "end assay" not hit last run)
             start_pid()
             results = "PID thread started";
             self.wfile.write(results.encode('utf-8'))

@@ -140,12 +140,16 @@ def get_image(data):       # Return a PIL image with colored ROI boxes for displ
     except Exception as e:
         print(f'Exception in get_image(): {e}')
 
+# Delete contents of the temp data file:
+def clear_temp_file():
+    with open(data_directory + '/temp_data.csv', 'w') as f:
+        pass     
+
 def end_imaging():
-    # Rename temp data file:
+    # move temp data contents to time-stamped file:
     output_filename = time.strftime("%Y%m%d_%Hh%Mm%Ss")
     os.rename(data_directory + '/temp_data.csv', data_directory + '/' + output_filename + '.csv')
-    with open(data_directory + '/temp_data.csv', 'w') as f:
-        pass      # Delete contents of the temp data file
+    clear_temp_file()
     return(output_filename)
 
 def analyze_data(filename, filter_factor, cut_time):
