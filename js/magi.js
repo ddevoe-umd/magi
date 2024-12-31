@@ -5,7 +5,7 @@
 // Globals:
 
 // All possible targets with chart display properties:
-var targets = {          
+const targets = {          
   "MecA": ["#4C4CEB", "solid"],   
   "FemB": ["#5ED649", "solid"],
   "Nuc": ["#DD4444", "solid"],
@@ -13,36 +13,42 @@ var targets = {
   "NEG": ["#555555", "dot"]
 };
 
-// Assay info loaded from user-defined card file
 var cardFilename;     // Assay card file name selected by user
 var wellConfig = [];  // Well array configuration, starting at upper left
 var positives = {};   // positive detection events (not yet used...)
 
 var isRunning = false;  // flag to track if assay is currently running
 
-var assayTimer;              // timer for running an assay
-var startTime;               // assay start time stamp
-var img = document.getElementById('image');      // chip image
-var imgCaptureTime;                              // time stamp for image
-var serverURL = "http://raspberrypi.local:8080";
-var serverFilePath = "/path/to/ramdisk/"
-var currentFileName;          // base data file name for most recent assay
-var showTTPallWells = false;  // select TTP display mode (all wells vs. grouped)
-var ttpData = [];             // array to hold TTP results
 var wakeLock;
 
+var assayTimer;              // timer for running an assay
+var startTime;               // assay start time stamp
+const img = document.getElementById('image');      // chip image
+var imgCaptureTime;                              // time stamp for image
+
+const serverURL = "http://raspberrypi.local:8080";
+const serverFilePath = "/path/to/ramdisk/"
+var currentFileName;          // base data file name for most recent assay
+
+const startColor = "#3d8f13";   // start button color when active
+const stopColor = "#a82c25";    // stop button color when active
+
+var showTTPallWells = false;  // select TTP display mode (all wells vs. grouped)
+var ttpData = [];             // array to hold TTP results
 var filteredChart;            // chart to display filtered curves
 var ttpChartAll;              // chart to display all TTP values
 var ttpChartGrouped;          // chart to display avg & stdev TTP values
 // Note: other charts do not currently use global variables...
 
-// Prevent zooming with Ctrl + or Ctrl -
+
+// Prevent zooming with Ctrl +/-
 document.addEventListener('keydown', function(event) {
-  if ((event.ctrlKey || event.metaKey) && (event.key === '+' || event.key === '-' || event.key === '=')) {
+  let k = event.key;
+  if ((event.ctrlKey || event.metaKey) && (k === '+' || k === '-' || k === '=')) {
     event.preventDefault();
   }
-  if ((event.ctrlKey || event.metaKey) && event.key === '0') {
-    event.preventDefault(); // Prevent resetting zoom with Ctrl + 0
+  if ((event.ctrlKey || event.metaKey) && k === '0') {
+    event.preventDefault();  // Prevent resetting zoom with Ctrl + 0
   }
 });
 
@@ -126,7 +132,6 @@ function makeDraggable(element) {
     }
 }
 
-
 // Get wake lock to prevent system from sleeping:
 async function getWakeLock() {
 	try {
@@ -137,7 +142,7 @@ async function getWakeLock() {
 	}
 }
 
-// Disable / Enable / Disable All HTML elements in a list of IDs:
+// Disable / Enable / Disable All HTML elements (buttons, sliders) in a list of IDs:
 function disableElements(elements) {
 	elements.forEach(e => document.getElementById(e).disabled = true);
 }
@@ -145,28 +150,24 @@ function enableElements(elements) {
 	elements.forEach(e => document.getElementById(e).disabled = false);
 }
 function disableAllElements() {
-	allButtons = ["load","start","stop","saveraw","period-slider","analyze",
+	allElements = ["load","start","stop","saveraw","period-slider","analyze",
 								"filter-slider","cut-time-slider", "toggleTTP","savefiltered",
 							  "saveTTP","getImage","reboot","shutdown","getLog","clearLog"];
-	log(allButtons);
-	allButtons.forEach(e => document.getElementById(e).disabled = true);
+	log(allElements);
+	allElements.forEach(e => document.getElementById(e).disabled = true);
 }
 
 // Initial window loading:
 window.onload = function () {
-
   document.getElementById('start').style.height = '40px'; // double start button height
-
 	disableAllElements();
-  // Set sampling period from default slider setting:
-  var period = document.getElementById('period-slider').value;
-  document.getElementById('period-slider-value').innerHTML = `Period: ${period}s`;
+  var period = document.getElementById('period-slider').value;  // Get sampling period
+  document.getElementById('period-slider-text').innerHTML = `Period: ${period}s`;
   getFirstImage();    // Get initial image w/o ROIs
-  enableElements(["load","shutdown","reboot","getImage",
-  	 		          "getLog","clearLog"]);};
+  enableElements(["load","shutdown","reboot","getImage","getLog","clearLog"]);};
 
 
-// Wait for initial image from the server at code start or reboot to make sure
+// Wait for initial image from the server at code start to make sure
 // camera is ready before allowing an assay to be run:
 async function getFirstImage() {
   win = notification("Searching for MAGI server");
@@ -231,8 +232,8 @@ document.getElementById('hidden-card-file-input').addEventListener('change', fun
         // Get a new image with ROIs matched to the assay card:
 			  getImage();
         // Highlight start button after card loading:
-        document.getElementById('start').style.backgroundImage = "linear-gradient(#66aa66, #77aa77)";
-        document.getElementById('start').style.borderWidth = "2px";
+        document.getElementById('start').style.backgroundImage = `linear-gradient(${startColor}, ${startColor})`;
+        document.getElementById('start').style.borderWidth = "1px";
       } catch (e) {
         log(e);
       }
@@ -247,21 +248,20 @@ document.getElementById('hidden-card-file-input').addEventListener('change', fun
 });
 
 
-
 // Event listener to update assay period value from slider:
 document.getElementById("period-slider").addEventListener('input', function() {
-  document.getElementById('period-slider-value').innerHTML = `Period: ${this.value}s`;
+  document.getElementById('period-slider-text').innerHTML = `Period: ${this.value}s`;
 });
 
 // Event listener to update curve filter factor from slider:
 document.getElementById("filter-slider").addEventListener('input', function() {
   const html = `f<sub class="sub75">c</sub> = f<sub class="sub75">nyq</sub>/${this.value}`;
-  document.getElementById('filter-slider-value').innerHTML = html;
+  document.getElementById('filter-slider-text').innerHTML = html;
 });
 
 // Helper function to update cut time slider text:
 function updateCutTimeSlider() {
-  var sliderText = document.getElementById('cut-time-slider-value')
+  var sliderText = document.getElementById('cut-time-slider-text')
   const html = `t<sub class="sub75">cut</sub>: ${slider.value} min`;
   sliderText.innerHTML = html;
 }
@@ -271,7 +271,7 @@ document.getElementById("cut-time-slider").addEventListener('input', updateCutTi
 
 // Enable cut time slider to be adjusted using left/right arrow keys:
 const slider = document.getElementById('cut-time-slider');
-const sliderText = document.getElementById('cut-time-slider-value');
+const sliderText = document.getElementById('cut-time-slider-text');
 let isHovered = false; // Tracks whether the mouse is hovering over the slider
 slider.addEventListener('mouseenter', () => {
   isHovered = true;
@@ -328,7 +328,7 @@ async function startPID() {
 		log(results);
 		let results_array = results.split(",");
 		newData = [];
-		results_array.forEach( ele => newData.push(+ele))   // strings to numbers
+		results_array.forEach(ele => newData.push(+ele))   // strings to numbers
 		return(newData);
 	}
 }
@@ -340,19 +340,22 @@ async function endAssay() {
 	let response = confirm("End current assay?");
 	if (response) {
 		disableElements(["stop"]);
-    isRunning = false;
+    isRunning = false;    // flip the flag to stop the assay
 		//if (assayTimer) clearInterval(assayTimer);
 	  enableElements(["load","start","period-slider"]);
 		let message = 'end';
 	  let data = '';
 		let response = await queryServer(JSON.stringify([message,data]));
 		if (response.ok) {
-			results = await response.text();
+			// Update interface elements appropriately:
+      document.getElementById('stop').style.backgroundImage = "linear-gradient(#464d55, #25292e)";
+      document.getElementById('stop').style.borderWidth = "0px";
+      enableElements(["saveraw","analyze","filter-slider","cut-time-slider",
+                      "shutdown","reboot","getLog","clearLog"]);
+      results = await response.text();
 			log("Server response:")
 			log(results);
 			currentFileName = results;
-	   	enableElements(["saveraw","analyze","filter-slider","cut-time-slider",
-	   		              "shutdown","reboot","getLog","clearLog"]);
 	   	analyzeData();
 		}
 	}
@@ -362,18 +365,24 @@ async function endAssay() {
 }
 
 async function getData() {
-	log(`getData() called @ t = ${((Date.now()-startTime)/1000/60).toFixed(2)} min`);
-	let message = 'getData';
-	let data = '';
-	let response = await queryServer(JSON.stringify([message,data]));
-  if (response.ok) {
-		results = await response.text();
-		log(`Server response: JSON data length = ${results.length}`);
-		let results_array = results.split(",");
-		newData = [];
-		results_array.forEach( e => newData.push(+e))   // strings to numbers
-		return(newData);
-	}
+  while (true) {   // repeat indefinitely in case of timeout error in server
+  	log(`getData() called @ t = ${((Date.now()-startTime)/1000/60).toFixed(2)} min`);
+    try {
+    	let message = 'getData';
+    	let data = '';
+    	let response = await queryServer(JSON.stringify([message,data]));
+      if (response.ok) {
+    		results = await response.text();
+    		log(`Server response: JSON data length = ${results.length}`);
+    		let results_array = results.split(",");
+    		newData = [];
+    		results_array.forEach( e => newData.push(+e))   // strings to numbers
+    		return(newData);
+    	}
+    } catch(e) {
+      log(`Error in getData: ${e}`);
+    }
+  }
 }
 
 async function getImage() {
@@ -823,14 +832,16 @@ function dimChart(chart) {
 // Start a new assay:
 async function startAssay() {
 	log("startAssay() called");
-	log(`Starting assay with ${cardFilename}`, color="#fff", 
-    fontSize=10, bold=false, lines=true);
+	log(`Starting assay with ${cardFilename}`, color="#fff", fontSize=10, bold=false, lines=true);
+  // Update interface elements appropriately:
+  document.getElementById("toggleTTP").innerHTML = "Group wells";
+  document.getElementById('stop').style.backgroundImage = `linear-gradient(${stopColor}, ${stopColor})`;
+  document.getElementById('stop').style.borderWidth = "1px";
 	enableElements(["stop"]);
 	disableElements(["load","start","period-slider","saveraw","analyze",
 									 "filter-slider","cut-time-slider",
 		               "savefiltered","saveTTP","toggleTTP","shutdown",
 		               "reboot","getLog","clearLog"]);
-  document.getElementById("toggleTTP").innerHTML = "Group TTP";
   // Dim charts from previous run:
   if (filteredChart) {
   	log("Hiding filtered data & TTP charts");
@@ -853,8 +864,8 @@ async function startAssay() {
     }
 		let now = Date.now();		
 		minutes = (now - startTime)/1000/60;
-		newData = await getData();   		// Get data from Python
-		// extend the amplification curve data:
+  	newData = await getData();   		// Get data from Python
+  		// extend the amplification curve data:
 		for (let j=0; j<wellArray.length; j++) {
 			wellArray[j].push({
 				x: minutes,
@@ -887,7 +898,7 @@ async function startAssay() {
   log("Curve analysis parameters reset");
 	// Start the assay:
   isRunning = true;
-	updateChart();   // Initial update before starting timer
+	updateChart();
   // ^^^ previously used setInterval() but had trouble with timing being
   // throttled when browser minimized or not focused:
   //     var sampleInterval = document.getElementById('period-slider').value * 1000;
@@ -973,7 +984,7 @@ function stdDevArray(arr) {
 
 // Display mean & std dev TTP for each target group:
 function displayTTPavgStdDev() {
-	document.getElementById("toggleTTP").innerHTML = "All TTP values";
+	document.getElementById("toggleTTP").innerHTML = "Show all wells";
 	// Calculate mean and standard deviation for each target:
   let dataPoints = [];
   let errorBars = [];

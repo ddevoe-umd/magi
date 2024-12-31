@@ -24,14 +24,14 @@
     border-radius: 8px;
 }
 
-/* Slider value display */
-.slider-value {
+/* Slider text for value display */
+.slider-text {
     position: absolute;
     height: auto;
     align: left;
     /* top: 5px;       /* Distance from the top */
-    font-size: 12px;
-    font-weight: bold;
+    font-size: 10px;
+    /* font-weight: bold; */
     cursor: default;   /* prevent cursor from changing to bar on hover */
 }
 
