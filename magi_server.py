@@ -62,7 +62,7 @@ class S(BaseHTTPRequestHandler):
     # File download requests come as GET requests:
     def do_GET(self):
         if os.path.isfile(self.path):
-            print(f'accessing {self.path}')
+            print(f'accessing {self.path}', flush=True)
             file_size = os.path.getsize(self.path)
             if self.path.endswith(".csv"):
                 content_type = "text/csv"
@@ -77,7 +77,7 @@ class S(BaseHTTPRequestHandler):
             with open(self.path, "rb") as file:    
                 self.wfile.write(file.read())       # Send the file
         else:
-            print(f'File not found (204 = no operation)')
+            print(f'File not found (204 = no operation)', flush=True)
             self.send_response(204)
             self.send_header("Content-Length", "0")
             self.end_headers()
@@ -93,7 +93,7 @@ class S(BaseHTTPRequestHandler):
         info = json.loads(post_dict['todo'])
         action = info[0]
         data = info[1]
-        #print(f'{action}: {data}')
+        #print(f'{action}: {data}', flush=True)
         if action == 'start':            # Start the PID loop for temp control
             imager.clear_temp_file()     # Clear temp data file (if "end assay" not hit last run)
             start_pid()
@@ -115,7 +115,7 @@ class S(BaseHTTPRequestHandler):
             filename = data[0]
             filter_factor = data[1]
             cut_time = data[2]
-            print(f"filter_factor = {filter_factor}, cut_time = {cut_time}")
+            print(f"filter_factor = {filter_factor}, cut_time = {cut_time}", flush=True)
             results = imager.analyze_data(filename, filter_factor, cut_time)
             self.wfile.write(json.dumps(results).encode('utf-8'))
             #self.wfile.write(results.encode('utf-8'))
@@ -190,7 +190,7 @@ def run_pid(stop_event):
                 well_temp = b_bias*cali_fun(values[1] -  values[0]) + (1-b_bias)*cali_fun(values[2] -  values[0])
                 well += [well_temp]
         except Exception as e:
-            print(f'Exception in run_pid: {e}')
+            print(f'Exception in run_pid: {e}', flush=True)
 
 def start_pid():
     GPIO.output(FAN, GPIO.HIGH)   # Turn on system fan
@@ -206,10 +206,10 @@ def run(port):
     handler_class=S
     server_address = ('', port)
     httpd = HTTPServer(server_address, handler_class)
-    print("MAGI server started")
+    print("MAGI server started", flush=True)
     imager.setup_camera()
-    print("Camera setup done")
-    print("System ready")
+    print("Camera setup done", flush=True)
+    print("System ready", flush=True)
     GPIO.output(LED_PIN, GPIO.HIGH)  # turn LED on to indicate system is ready
     try:
         httpd.serve_forever()     # blocking call
@@ -217,7 +217,7 @@ def run(port):
         pass
     httpd.server_close()
     GPIO.cleanup()
-    print('\n\nGPIO cleaned up')
+    print('\n\nGPIO cleaned up', flush=True)
 
 def shutdown():
     GPIO.cleanup()
@@ -231,6 +231,7 @@ def reboot():
 
 
 if __name__ == "__main__":
+    print("MAGI server starting...", flush=True)
     run(8080)
 
 

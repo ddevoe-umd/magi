@@ -33,7 +33,7 @@ var currentFileName;          // base data file name for most recent assay
 const startColor = "#3d8f13";   // start button color when active
 const stopColor = "#a82c25";    // stop button color when active
 
-var showTTPallWells = false;  // select TTP display mode (all wells vs. grouped)
+var showAllWells = false;  // select TTP display mode (all wells vs. grouped)
 var ttpData = [];             // array to hold TTP results
 var filteredChart;            // chart to display filtered curves
 var ttpChartAll;              // chart to display all TTP values
@@ -158,13 +158,14 @@ function disableAllElements() {
 }
 
 // Initial window loading:
-window.onload = function () {
+window.onload = async function () {
   document.getElementById('start').style.height = '40px'; // double start button height
 	disableAllElements();
   var period = document.getElementById('period-slider').value;  // Get sampling period
   document.getElementById('period-slider-text').innerHTML = `Period: ${period}s`;
-  getFirstImage();    // Get initial image w/o ROIs
-  enableElements(["load","shutdown","reboot","getImage","getLog","clearLog"]);};
+  await getFirstImage();    // Get initial image w/o ROIs
+  enableElements(["load","shutdown","reboot","getImage","getLog","clearLog"]);
+};
 
 
 // Wait for initial image from the server at code start to make sure
@@ -173,11 +174,18 @@ async function getFirstImage() {
   win = notification("Searching for MAGI server");
   while (true) {
   	try {
-      const awaitResult = await getImage();        // Get initial chip image
-	  	win.remove();   // close the notification window
+      const awaitResult = await getImage();
+	  	win.remove();    // close notification window
 	  	return;     
-	  } catch (error) {  // getImage() timed out
-	  	log("getImage() attempt failed, retrying...");
+	  } catch (e) {  // getImage() timed out
+      log(e)
+      if (e.message=="Load failed") {   // timeout error
+      	log("getImage() attempt failed, retrying...");
+      }
+      else {   // some other kind of error, wait 5 sec before retrying
+        log("getImage() load error (not timeout), retrying in 5 sec...");
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      }
 	  }
 	}
 }
@@ -455,17 +463,20 @@ img.addEventListener('click', () => {
 
   // keep window aspect ratio on resizing:
   imgWindow.addEventListener('resize', () => {  
-    const width = imgWindow.innerWidth;
-    const height = imgWindow.innerHeight;
-    const aspectRatio = 640/480;
-    const newHeight = width / aspectRatio;
-    imgWindow.resizeTo(width, Math.round(newHeight));
+    const w = imgWindow.innerWidth;
+    const h = imgWindow.innerHeight;
+    const AR = 640/480;
+    if (h < w/AR) {
+      imgWindow.resizeTo(w, Math.round(w/AR));
+    }
+    else {
+      imgWindow.resizeTo(Math.round(h*AR), h);
+    }
   });
   // toggle 2x window zoom on user click:
   imgWindow.addEventListener('click', () => {
-  	const width = imgWindow.innerWidth;
-    const height = imgWindow.innerHeight;
-    if (width == 640) { 
+  	const w = imgWindow.innerWidth;
+    if (w == 640) { 
     	imgWindow.resizeTo(1280,960);
       imgWindow.document.getElementById('chipImg').style.cursor = "zoom-out";
       log("zoomed in")
@@ -851,7 +862,7 @@ async function startAssay() {
       dimChart(ttpChartGrouped);
     }
   }
-  showTTPallWells = false;
+  showAllWells = false;
 	let [amplificationChart, wellArray] = setupAmplificationChart('rawDataChart')
 	let [temperatureChart, temperature] = setupTemperatureChart('temperatureChart')
 	startTime = Date.now();
@@ -922,7 +933,7 @@ function displayFilteredData(data) {
 
 // Display TTP for all wells individually:
 function displayTTP() {
-  document.getElementById("toggleTTP").innerHTML = "Group TTP";
+  document.getElementById("toggleTTP").innerHTML = "Group Wells";
   ttpBars = [];
   for (const key in targets) {
 		for (let i=0; i<wellConfig.length; i++) {
@@ -984,7 +995,7 @@ function stdDevArray(arr) {
 
 // Display mean & std dev TTP for each target group:
 function displayTTPavgStdDev() {
-	document.getElementById("toggleTTP").innerHTML = "Show all wells";
+	document.getElementById("toggleTTP").innerHTML = "Show All Wells";
 	// Calculate mean and standard deviation for each target:
   let dataPoints = [];
   let errorBars = [];
@@ -1067,15 +1078,15 @@ function displayTTPavgStdDev() {
 }
 
 
-// Switch between TTP display modes (all wells vs. mean & std dev):
+// Switch between TTP display modes (all wells vs. grouped wells):
 function toggleTTP() {
-	if (showTTPallWells) { 
+	if (showAllWells) { 
 		displayTTP(); 
 	}
 	else {
 		displayTTPavgStdDev();
 	}
-	showTTPallWells = !showTTPallWells;
+	showAllWells = !showAllWells;
 }
 
 
