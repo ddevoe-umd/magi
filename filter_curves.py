@@ -69,12 +69,12 @@ def filter(filename, filter_factor=10.0, cut_time=0.0, threshold=0):
             # print(yf, flush=True)
 
             # shift curves to min value:
-            y = [x-min(yf) for x in y]
-            yf = [x-min(yf) for x in yf]
+            y_shifted = [x-min(yf) for x in y]
+            yf_shifted = [x-min(yf) for x in yf]
     
             # normalize to max value:
-            y_norm = [x/max(yf) for x in y]
-            yf_norm = [x/max(yf) for x in yf]
+            y_norm = [x/max(yf) for x in y_shifted]
+            yf_norm = [x/max(yf) for x in yf_shifted]
 
             # If original data is below the given threshold value (noise background),
             # set all normed values to zero:
