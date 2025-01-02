@@ -115,8 +115,9 @@ class S(BaseHTTPRequestHandler):
             filename = data[0]
             filter_factor = data[1]
             cut_time = data[2]
-            print(f"filter_factor = {filter_factor}, cut_time = {cut_time}", flush=True)
-            results = imager.analyze_data(filename, filter_factor, cut_time)
+            threshold = data[3]
+            print(f"filter_factor = {filter_factor}, cut_time = {cut_time}, threshold = {threshold}", flush=True)
+            results = imager.analyze_data(filename, filter_factor, cut_time, threshold)
             self.wfile.write(json.dumps(results).encode('utf-8'))
             #self.wfile.write(results.encode('utf-8'))
         elif action == 'shutdown':       # Power down the Pi

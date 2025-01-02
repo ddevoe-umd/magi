@@ -21,7 +21,7 @@ def get_ttp(t,y):
             ttp = -b/m     # define ttp as the x-axis intercept
     return ttp
 
-def filter(filename, filter_factor=10.0, cut_time = 0.0):
+def filter(filename, filter_factor=10.0, cut_time=0.0, threshold=0):
     y_filtered_dict = []
     ttp = []
     with open(filename) as f:
@@ -75,6 +75,11 @@ def filter(filename, filter_factor=10.0, cut_time = 0.0):
             # normalize to max value:
             y_norm = [x/max(yf) for x in y]
             yf_norm = [x/max(yf) for x in yf]
+
+            # If original data is below the given threshold value (noise background),
+            # set all normed values to zero:
+            if max(y) < threshold:
+                yf_norm = [0 for _ in yf_norm]
 
             yf_dict = [{'x':t[i], 'y':yf_norm[i]} for i in range(len(t))]
             y_filtered_dict.append(yf_dict)

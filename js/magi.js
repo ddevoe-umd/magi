@@ -33,12 +33,14 @@ var currentFileName;          // base data file name for most recent assay
 const startColor = "#3d8f13";   // start button color when active
 const stopColor = "#a82c25";    // stop button color when active
 
-var showAllWells = false;  // select TTP display mode (all wells vs. grouped)
+var showAllWells = false;     // select TTP display mode (all wells vs. grouped)
 var ttpData = [];             // array to hold TTP results
 var filteredChart;            // chart to display filtered curves
 var ttpChartAll;              // chart to display all TTP values
 var ttpChartGrouped;          // chart to display avg & stdev TTP values
 // Note: other charts do not currently use global variables...
+
+var resizeTimer;           // set delay between image window resizing detection
 
 
 // Prevent zooming with Ctrl +/-
@@ -151,11 +153,13 @@ function enableElements(elements) {
 }
 function disableAllElements() {
 	allElements = ["load","start","stop","saveraw","period-slider","analyze",
-								"filter-slider","cut-time-slider", "toggleTTP","savefiltered",
-							  "saveTTP","getImage","reboot","shutdown","getLog","clearLog"];
+								"filter-slider","cut-time-slider", "threshold-slider", 
+                "toggleTTP","savefiltered","saveTTP","getImage","reboot",
+                "shutdown","getLog","clearLog"];
 	log(allElements);
 	allElements.forEach(e => document.getElementById(e).disabled = true);
 }
+
 
 // Initial window loading:
 window.onload = async function () {
@@ -165,7 +169,12 @@ window.onload = async function () {
   document.getElementById('period-slider-text').innerHTML = `Period: ${period}s`;
   await getFirstImage();    // Get initial image w/o ROIs
   enableElements(["load","shutdown","reboot","getImage","getLog","clearLog"]);
+  // set up arrow key adjustments for sliders:
+  sliderKeySetup('cut-time-slider','cut-time-slider-text');    
+  sliderKeySetup('threshold-slider','threshold-slider-text'); 
 };
+
+
 
 
 // Wait for initial image from the server at code start to make sure
@@ -267,52 +276,70 @@ document.getElementById("filter-slider").addEventListener('input', function() {
   document.getElementById('filter-slider-text').innerHTML = html;
 });
 
+
 // Helper function to update cut time slider text:
 function updateCutTimeSlider() {
+  const slider = document.getElementById('cut-time-slider');
   var sliderText = document.getElementById('cut-time-slider-text')
   const html = `t<sub class="sub75">cut</sub>: ${slider.value} min`;
+  sliderText.innerHTML = html;
+}
+
+// Helper function to update threshold slider text:
+function updateThresholdSlider() {
+  const slider = document.getElementById('threshold-slider');
+  var sliderText = document.getElementById('threshold-slider-text')
+  const html = `threshold: ${slider.value}`;
   sliderText.innerHTML = html;
 }
 
 // Event listener to update filter cut time from slider:
 document.getElementById("cut-time-slider").addEventListener('input', updateCutTimeSlider);
 
-// Enable cut time slider to be adjusted using left/right arrow keys:
-const slider = document.getElementById('cut-time-slider');
-const sliderText = document.getElementById('cut-time-slider-text');
-let isHovered = false; // Tracks whether the mouse is hovering over the slider
-slider.addEventListener('mouseenter', () => {
-  isHovered = true;
-});
-sliderText.addEventListener('mouseenter', () => {
-  isHovered = true;
-});
-slider.addEventListener('mouseleave', () => {
-  isHovered = false;
-});
-sliderText.addEventListener('mouseleave', () => {
-  isHovered = false;
-});
-document.addEventListener('keydown', (event) => {
-  if (!isHovered) return;   // Only respond to key events if the slider is hovered
-  const step = parseFloat(slider.step);
-  let currentValue = parseFloat(slider.value);
-  if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
-    event.preventDefault(); // Prevent default browser behavior
-    if (currentValue + step <= slider.max) {
-      slider.value = (currentValue + step).toFixed(1);
-      updateCutTimeSlider();
-    }
-  }
-  else if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
-    event.preventDefault(); // Prevent default browser behavior
-    if (currentValue - step >= slider.min) {
-      slider.value = (currentValue - step).toFixed(1);
-      updateCutTimeSlider();
-    }
-  }
-});
+// Event listener to update filter threshold from slider:
+document.getElementById("threshold-slider").addEventListener('input', updateThresholdSlider);
 
+// Enable sliders to be adjusted using left/right arrow keys:
+function sliderKeySetup(sliderName, sliderTextName) {
+  const slider = document.getElementById(sliderName);
+  const sliderText = document.getElementById(sliderTextName);
+  let isHovered = false; // Tracks whether the mouse is hovering over the slider
+  slider.addEventListener('mouseenter', () => {
+    isHovered = true;
+  });
+  sliderText.addEventListener('mouseenter', () => {
+    isHovered = true;
+  });
+  slider.addEventListener('mouseleave', () => {
+    isHovered = false;
+  });
+  sliderText.addEventListener('mouseleave', () => {
+    isHovered = false;
+  });
+  document.addEventListener('keydown', (event) => {
+    if (!isHovered) return;   // Only respond to key events if the slider is hovered
+    const step = parseFloat(slider.step);
+    let currentValue = parseFloat(slider.value);
+    if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
+      event.preventDefault(); // Prevent default browser behavior
+      if (currentValue + step <= slider.max) {
+        slider.value = (currentValue + step).toFixed(1);
+        // Update all sliders:
+        updateCutTimeSlider();
+        updateThresholdSlider();
+      }
+    }
+    else if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
+      event.preventDefault(); // Prevent default browser behavior
+      if (currentValue - step >= slider.min) {
+        slider.value = (currentValue - step).toFixed(1);
+        // Update all sliders:
+        updateCutTimeSlider();
+        updateThresholdSlider();
+      }
+    }
+  });
+}
 
 
 // Send POST message to server:
@@ -358,7 +385,7 @@ async function endAssay() {
 			// Update interface elements appropriately:
       document.getElementById('stop').style.backgroundImage = "linear-gradient(#464d55, #25292e)";
       document.getElementById('stop').style.borderWidth = "0px";
-      enableElements(["saveraw","analyze","filter-slider","cut-time-slider",
+      enableElements(["saveraw","analyze","filter-slider","cut-time-slider","threshold-slider",
                       "shutdown","reboot","getLog","clearLog"]);
       results = await response.text();
 			log("Server response:")
@@ -463,15 +490,18 @@ img.addEventListener('click', () => {
 
   // keep window aspect ratio on resizing:
   imgWindow.addEventListener('resize', () => {  
-    const w = imgWindow.innerWidth;
-    const h = imgWindow.innerHeight;
-    const AR = 640/480;
-    if (h < w/AR) {
-      imgWindow.resizeTo(w, Math.round(w/AR));
-    }
-    else {
-      imgWindow.resizeTo(Math.round(h*AR), h);
-    }
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function() {  // limit time between resizing events
+      const w = imgWindow.innerWidth;
+      const h = imgWindow.innerHeight;
+      const AR = 640/480;
+      if (h < w/AR) {
+        imgWindow.resizeTo(w, Math.round(w/AR));
+      }
+      else {
+        imgWindow.resizeTo(Math.round(h*AR), h);
+      }
+    }, 100);
   });
   // toggle 2x window zoom on user click:
   imgWindow.addEventListener('click', () => {
@@ -497,7 +527,7 @@ async function analyzeData() {
   let message = 'analyze';
   let filterFactor = document.getElementById('filter-slider').value;
   let cutTime = document.getElementById('cut-time-slider').value;
-	let data = [currentFileName, filterFactor, cutTime];
+	let data = [currentFileName, filterFactor, cutTime, threshold];  // package data for server
 	let response = await queryServer(JSON.stringify([message,data]));
 	if (response.ok) {
 		results = await response.text();
@@ -850,7 +880,7 @@ async function startAssay() {
   document.getElementById('stop').style.borderWidth = "1px";
 	enableElements(["stop"]);
 	disableElements(["load","start","period-slider","saveraw","analyze",
-									 "filter-slider","cut-time-slider",
+									 "filter-slider","cut-time-slider","threshold-slider",
 		               "savefiltered","saveTTP","toggleTTP","shutdown",
 		               "reboot","getLog","clearLog"]);
   // Dim charts from previous run:
