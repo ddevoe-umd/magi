@@ -527,6 +527,7 @@ async function analyzeData() {
   let message = 'analyze';
   let filterFactor = document.getElementById('filter-slider').value;
   let cutTime = document.getElementById('cut-time-slider').value;
+  let threshold = document.getElementById('threshold-slider').value;
 	let data = [currentFileName, filterFactor, cutTime, threshold];  // package data for server
 	let response = await queryServer(JSON.stringify([message,data]));
 	if (response.ok) {
