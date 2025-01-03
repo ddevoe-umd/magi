@@ -76,6 +76,8 @@ def adjust_settings(exposure_time, analogue_gain, color_gains):
         print(f"exposure_time={exposure_time}", flush=True)
         print(f"analogue_gain={analogue_gain}", flush=True)
         print(f"color_gains={color_gains}", flush=True)
+        print(f"math={exposure_time + analogue_gain + color_gains[0] + color_gains[1]}", flush=True)
+
         cam.set_controls({
             "AeEnable": False,                 # auto update of gain & exposure settings
             "AwbEnable": False,                # auto white balance
