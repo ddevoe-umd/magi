@@ -112,11 +112,11 @@ class S(BaseHTTPRequestHandler):
             end_pid()
             self.wfile.write(results.encode('utf-8'))
         elif action == 'adjust':            # Turn off PID loop and rename final data file
-            print(data, flush=True)
-            exposure_time = int(data[0]);
+            print(f'adjust action with data = {data}', flush=True)
+            exposure_time_ms = int(data[0]);
             analogue_gain = float(data[1]);
             colour_gains = (float(data[2]), float(data[3]));
-            results = imager.adjust_settings(exposure_time, analogue_gain, colour_gains)
+            results = imager.adjust_settings(exposure_time_ms, analogue_gain, colour_gains)
             self.wfile.write(results.encode('utf-8'))
         elif action == 'analyze':        # Filter curves & extract TTP values
             filename = data[0]
@@ -216,7 +216,7 @@ def run(port):
     httpd = HTTPServer(server_address, handler_class)
     print("MAGI server started", flush=True)
     print("Setting up camera...", flush=True)
-    imager.setup_camera(exposure_time=5e4, analogue_gain=0.5, color_gains=(1.2,1.0))
+    imager.setup_camera(exposure_time_ms=50, analogue_gain=0.5, color_gains=(1.2,1.0))
     print("Camera setup done", flush=True)
     print("System ready", flush=True)
     GPIO.output(LED_PIN, GPIO.HIGH)  # turn LED on to indicate system is ready

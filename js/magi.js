@@ -267,25 +267,25 @@ document.getElementById('hidden-card-file-input').addEventListener('change', fun
 
 // Recieve values from the adjustImager modal dialog, and make changes
 // through the server:
-function receiveAdjustImagerValues(values) {
+async function receiveAdjustImagerValues(values) {
   exposureTime = values["exposure-time"];
   analogueGain = values["analogue-gain"];
-  ColourGains = ()values["red-gain"],values["blue-gain"];
+  redGain = values["red-gain"];
+  blueGain = values["blue-gain"];
   log(`New imager settings:<br>
     Exposure time: ${exposureTime}<br>
     Analog gain: ${values["analogue-gain"]}<br>
-    Red channel gain: ${ColourGains[0]}<br>
-    Blue channel gain: ${ColourGains[1]}`,
+    Red channel gain: ${redGain}<br>
+    Blue channel gain: ${blueGain}`,
     color='#00ff00',
     fontsize=7,
     bold=false,
     lines=true
     );
-
-  // Tell server to adjust the settings:
+  // Ask server to adjust camera settings:
   log("Adjusting imager settings...");
   let message = 'adjust';
-  let data = [exposureTime, analogueGain, ColourGains];
+  let data = [exposureTime, analogueGain, redGain, blueGain];
   let response = await queryServer(JSON.stringify([message,data]));
   if (response.ok) {
     results = await response.text();
@@ -295,7 +295,7 @@ function receiveAdjustImagerValues(values) {
 }
 
 // Open a modal dialog to allow user to change imager settings:
-function adjustImager() {
+async function adjustImager() {
   const modalWindow = window.open('', 'ModalWindow', 'width=400,height=300');
   modalWindow.document.write(`
     <!DOCTYPE html>
@@ -307,10 +307,14 @@ function adjustImager() {
     </head>
       <body>
         <div class="modal">
-            <label>Exposure time (µs): <input id="exposure-time" type="range" min="0" max="100" value="50" class="slider"></label><br>
-            <label>Analog gain: <input id="analogue-gain" type="range" min="0" max="100" value="50" class="slider"></label><br>
-            <label>Red gain: <input id="red-gain" type="range" min="0" max="100" value="50" class="slider"></label><br>
-            <label>Blue gain: <input id="blue-gain" type="range" min="0" max="100" value="50" class="slider"></label><br><br>
+            Exposure time (ms): <input id="exposure-time" type="range" 
+              min="0" max="500" value="50" class="slider"><br>
+            Analog gain: <input id="analogue-gain" type="range" 
+              min="0" max="6" value="1" step="0.1" class="slider"><br>
+            Red gain: <input id="red-gain" type="range" 
+              min="0" max="32" value="1" step="0.1" class="slider"><br>
+            Blue gain: <input id="blue-gain" type="range" 
+              min="0" max="32" value="1" step="0.1" class="slider"><br><br>
             <button id="adjust" class="button">Adjust</button>
         </div>
         <script>
