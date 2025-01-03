@@ -15,7 +15,7 @@
     appearance: none;
     background: linear-gradient(#464d55, #25292e);
     width: 100%;
-    height: auto;
+    height: 6px;
     outline: none;  
     border: none;
     -webkit-transition: .2s;     /* transition time on hover */
@@ -46,7 +46,7 @@
     -webkit-appearance: none;    /* Override default look */
     width: 10px;                 /* handle height (rotated) */
     height: 10px;                /* handle width (rotated) */
-    background: #04dd6d;
+    background: #ffcc00;
     cursor: pointer; 
     border: none;
     border-radius: 25%;

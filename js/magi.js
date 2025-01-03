@@ -152,7 +152,7 @@ function enableElements(elements) {
 	elements.forEach(e => document.getElementById(e).disabled = false);
 }
 function disableAllElements() {
-	allElements = ["load","start","stop","saveraw","period-slider","analyze",
+	allElements = ["load","start","stop","saveraw","adjust","period-slider","analyze",
 								"filter-slider","cut-time-slider", "threshold-slider", 
                 "toggleTTP","savefiltered","saveTTP","getImage","reboot",
                 "shutdown","getLog","clearLog"];
@@ -168,7 +168,7 @@ window.onload = async function () {
   var period = document.getElementById('period-slider').value;  // Get sampling period
   document.getElementById('period-slider-text').innerHTML = `Period: ${period}s`;
   await getFirstImage();    // Get initial image w/o ROIs
-  enableElements(["load","shutdown","reboot","getImage","getLog","clearLog"]);
+  enableElements(["load","adjust","shutdown","reboot","getImage","getLog","clearLog"]);
   // set up arrow key adjustments for sliders:
   sliderKeySetup('cut-time-slider','cut-time-slider-text');    
   sliderKeySetup('threshold-slider','threshold-slider-text'); 
@@ -263,6 +263,78 @@ document.getElementById('hidden-card-file-input').addEventListener('change', fun
     log('Please select a valid .card file');
   }
 });
+
+
+// Recieve values from the adjustImager modal dialog, and make changes
+// through the server:
+function receiveAdjustImagerValues(values) {
+  exposureTime = values["exposure-time"];
+  analogueGain = values["analogue-gain"];
+  ColourGains = ()values["red-gain"],values["blue-gain"];
+  log(`New imager settings:<br>
+    Exposure time: ${exposureTime}<br>
+    Analog gain: ${values["analogue-gain"]}<br>
+    Red channel gain: ${ColourGains[0]}<br>
+    Blue channel gain: ${ColourGains[1]}`,
+    color='#00ff00',
+    fontsize=7,
+    bold=false,
+    lines=true
+    );
+
+  // Tell server to adjust the settings:
+  log("Adjusting imager settings...");
+  let message = 'adjust';
+  let data = [exposureTime, analogueGain, ColourGains];
+  let response = await queryServer(JSON.stringify([message,data]));
+  if (response.ok) {
+    results = await response.text();
+    log(results);
+    log("Imager settings updated");
+  }
+}
+
+// Open a modal dialog to allow user to change imager settings:
+function adjustImager() {
+  const modalWindow = window.open('', 'ModalWindow', 'width=400,height=300');
+  modalWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <link rel="stylesheet" type="text/css" href="css/slider.css">
+      <link rel="stylesheet" href="css/style.css">
+      <link rel="stylesheet" href="css/buttons.css">
+    </head>
+      <body>
+        <div class="modal">
+            <label>Exposure time (µs): <input id="exposure-time" type="range" min="0" max="100" value="50" class="slider"></label><br>
+            <label>Analog gain: <input id="analogue-gain" type="range" min="0" max="100" value="50" class="slider"></label><br>
+            <label>Red gain: <input id="red-gain" type="range" min="0" max="100" value="50" class="slider"></label><br>
+            <label>Blue gain: <input id="blue-gain" type="range" min="0" max="100" value="50" class="slider"></label><br><br>
+            <button id="adjust" class="button">Adjust</button>
+        </div>
+        <script>
+          // Send values back to main window:
+          document.getElementById('adjust').addEventListener('click', function() {
+            window.opener.receiveAdjustImagerValues({
+              'exposure-time': document.getElementById('exposure-time').value,
+              'analogue-gain': document.getElementById('analogue-gain').value,
+              'red-gain': document.getElementById('red-gain').value,
+              'blue-gain': document.getElementById('blue-gain').value
+            });
+          });
+        </script>
+      </body>
+    </html> `);
+
+  // Trigger the modal dialog window:
+  const openModalButton = document.createElement('button');
+  openModalButton.textContent = 'Open Modal';
+  openModalButton.className = 'open-modal-button';
+  openModalButton.addEventListener('click', openModal);
+  document.body.appendChild(openModalButton);
+}
+
 
 
 // Event listener to update assay period value from slider:
@@ -372,7 +444,7 @@ async function endAssay() {
 	log("endAssay() called");
 	await wakeLock.release();          // Release the wake lock when assay ends
 	log("wake lock released");
-	let response = confirm("End current assay?");
+	let response = confirm(`End current assay for ${cardFilename}?`);
 	if (response) {
 		disableElements(["stop"]);
     isRunning = false;    // flip the flag to stop the assay
@@ -732,22 +804,22 @@ function setupAmplificationChart(targetContainer) {
  		title: {
 			text: "Fluorescence",
 			fontFamily: "tahoma",
-			fontSize: 15
+			fontSize: 14
 		},
 		axisX: {
 			title: "Time (min)",
-			titleFontSize: 14
+			titleFontSize: 13
 		},
 		axisY: {
 			includeZero: true,
 			title: "Fluorescence (arb)",
-			titleFontSize: 14
+			titleFontSize: 13
 		}, 
     toolTip: {
 			shared: true,
       cornerRadius: 6,
       animationEnabled: true,
-      fontSize: 12,
+      fontSize: 10,
       borderThickness: 0,
 			borderColor: "#fff",
       // control display format of tooltip values:
@@ -765,7 +837,7 @@ function setupAmplificationChart(targetContainer) {
     legend: {
 	    cursor:"pointer",
 	    verticalAlign: "top",
-	    fontSize: 12,
+	    fontSize: 10,
 			fontColor: "dimGrey",
 	    itemclick: function(e) {
 	      toggleGroupedSeries(e);
@@ -794,22 +866,22 @@ function setupTemperatureChart(targetContainer) {
 		title: {
 			text: "Temperature",
 			fontFamily: "tahoma",
-			fontSize: 15
+			fontSize: 14
 		},
 		axisX: {
 			title: "Time (min)",
-			titleFontSize: 14
+			titleFontSize: 13
 		},
 		axisY:{
 			includeZero: true,
 			title: "Temperature (\u00B0C)",
-			titleFontSize: 14
+			titleFontSize: 13
 		}, 
 		toolTip: {
 			shared: false,
       cornerRadius: 6,
 			animationEnabled: true,
-      fontSize: 12,
+      fontSize: 10,
       borderThickness: 0,
 			borderColor: "#fff",
       // control display format of tooltip values:
@@ -827,7 +899,7 @@ function setupTemperatureChart(targetContainer) {
 		legend: {
 			cursor:"pointer",
 			verticalAlign: "top",
-			fontSize: 12,
+			fontSize: 10,
 			fontColor: "dimGrey",
 			itemclick : toggleDataSeries
 		},

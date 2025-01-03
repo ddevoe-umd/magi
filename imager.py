@@ -70,17 +70,19 @@ def add_ROIs(img, data):      # Add ROIs to a captured image
         print('Exception in get_image():')
         print(f'{type(e)}: {e}')
 
+def adjust_settings(exposure_time, analogue_gain, color_gains):
+    cam.set_controls({
+        "AeEnable": False,                 # auto update of gain & exposure settings
+        "AwbEnable": False,                # auto white balance
+        "ExposureTime": exposure_time,     # units of microseconds
+        "AnalogueGain": analogue_gain,     # range [0,6.0] ???
+        "ColourGains": color_gains         # (red,blue) gains in range [0,32.0]
+    })
 
-def setup_camera():    # Set up camera
+def setup_camera(exposure_time=5e4, analogue_gain=0.5, color_gains=(1.2,1.0)):    # Set up camera
     config = cam.create_still_configuration(main={"size": res})
     cam.configure(config)
-    cam.set_controls({
-        "AeEnable": False,
-        "ExposureTime": int(5 * 1e4),
-        "AnalogueGain": 0.5,
-        "AwbEnable": False,
-        "ColourGains": (1.2,1.0)
-        })
+    adjust_settings(exposure_time, analogue_gain, color_gains)
     print('Picamera2 setup complete')
     os.makedirs(data_directory, exist_ok=True)
     time.sleep(3)   # time to stabilize settings

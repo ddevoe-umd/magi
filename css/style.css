@@ -28,7 +28,7 @@
 *:not(i, code, button, span, a) {
   /* font-family: expo-brand-demi,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";*/
   font-family: MagiOpenSans;   /* use custom font*/
-  font-size: 16px;
+  font-size: 12px;
   line-height: 1.4;
 }
 
@@ -110,7 +110,7 @@ html, body {
 .text-center {
   width: 100%;
   text-align: center;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .log-image-container {
