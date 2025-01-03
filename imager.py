@@ -73,13 +73,13 @@ def add_ROIs(img, data):      # Add ROIs to a captured image
 def adjust_settings(exposure_time_ms, analogue_gain, color_gains):
     try:
         print("adjust_settings() called with", flush=True)
-        print(f"exposure_time={int(exposure_time*1e3)} us", flush=True)
+        print(f"exposure_time={int(exposure_time_ms*1e3)} us", flush=True)
         print(f"analogue_gain={float(analogue_gain)}", flush=True)
         print(f"color_gains={color_gains}", flush=True)
         cam.set_controls({
             "AeEnable": False,                 # auto update of gain & exposure settings
             "AwbEnable": False,                # auto white balance
-            "ExposureTime": int(exposure_time*1e3),     # units of microseconds
+            "ExposureTime": int(exposure_time_ms*1e3),     # units of microseconds
             "AnalogueGain": float(analogue_gain),   # range [0,6.0] ?
             "ColourGains": color_gains              # (red,blue) gains, range [0,32.0]
         })
