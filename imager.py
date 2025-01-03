@@ -77,11 +77,11 @@ def setup_camera(exposure_time=5e4, analogue_gain=0.5, color_gains=(1.2,1.0)):  
     config = cam.create_still_configuration(main={"size": res})
     cam.configure(config)
     cam.set_controls({
-        "AeEnable": False,                 # auto update of gain & exposure settings
-        "AwbEnable": False,                # auto white balance
-        "ExposureTime": exposure_time,     # units of microseconds
-        "AnalogueGain": analogue_gain,     # range [0,6.0] ???
-        "ColourGains": color_gains         # (red,blue) gains in range [0,32.0]
+        "AeEnable": False,
+        "ExposureTime": int(5 * 1e4),
+        "AnalogueGain": 0.5,
+        "AwbEnable": False,
+        "ColourGains": (1.2,1.0)
         })
     print('Picamera2 setup complete')
     os.makedirs(data_directory, exist_ok=True)
