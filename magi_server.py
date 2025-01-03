@@ -112,9 +112,10 @@ class S(BaseHTTPRequestHandler):
             end_pid()
             self.wfile.write(results.encode('utf-8'))
         elif action == 'adjust':            # Turn off PID loop and rename final data file
-            exposure_time = data[0];
-            analogue_gain = data[1];
-            colour_gains = data[2];
+            print(data, flush=True)
+            exposure_time = int(data[0]);
+            analogue_gain = float(data[1]);
+            colour_gains = (float(data[2]), float(data[3]));
             results = imager.adjust_settings(exposure_time, analogue_gain, colour_gains)
             self.wfile.write(results.encode('utf-8'))
         elif action == 'analyze':        # Filter curves & extract TTP values
