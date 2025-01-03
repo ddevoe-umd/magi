@@ -42,6 +42,10 @@ var ttpChartGrouped;          // chart to display avg & stdev TTP values
 
 var resizeTimer;           // set delay between image window resizing detection
 
+var exposureTime = 50;     // imager parameters, initial vals must match server vals
+var analogueGain = 0.5;
+var redGain = 1.2;
+var blueGain = 1.0;
 
 // Prevent zooming with Ctrl +/-
 document.addEventListener('keydown', function(event) {
@@ -167,6 +171,13 @@ window.onload = async function () {
 	disableAllElements();
   var period = document.getElementById('period-slider').value;  // Get sampling period
   document.getElementById('period-slider-text').innerHTML = `Period: ${period}s`;
+  // reset imager parameters in case they were previously changed without Pi restart:
+  imagerValuesToServer({
+    'exposure-time': exposureTime,
+    'analogue-gain': analogueGain,
+    'red-gain': redGain,
+    'blue-gain': blueGain
+  });
   await getFirstImage();    // Get initial image w/o ROIs
   enableElements(["load","adjust","shutdown","reboot","getImage","getLog","clearLog"]);
   // set up arrow key adjustments for sliders:
@@ -265,9 +276,9 @@ document.getElementById('hidden-card-file-input').addEventListener('change', fun
 });
 
 
-// Recieve values from the adjustImager modal dialog, and make changes
-// through the server:
-async function receiveAdjustImagerValues(values) {
+// Recieve values either programmatically or from the adjustImager modal dialog, 
+// and make changes through the server:
+async function imagerValuesToServer(values) {
   exposureTime = values["exposure-time"];
   analogueGain = values["analogue-gain"];
   redGain = values["red-gain"];
@@ -296,7 +307,7 @@ async function receiveAdjustImagerValues(values) {
 
 // Open a modal dialog to allow user to change imager settings:
 async function adjustImager() {
-  const modalWindow = window.open('', 'ModalWindow', 'width=400,height=300');
+  const modalWindow = window.open('', 'ModalWindow', 'width=300,height=170');
   modalWindow.document.write(`
     <!DOCTYPE html>
     <html>
@@ -307,36 +318,55 @@ async function adjustImager() {
     </head>
       <body>
         <div class="modal">
-            Exposure time (ms): <input id="exposure-time" type="range" 
-              min="0" max="500" value="50" class="slider"><br>
-            Analog gain: <input id="analogue-gain" type="range" 
-              min="0" max="6" value="1" step="0.1" class="slider"><br>
-            Red gain: <input id="red-gain" type="range" 
-              min="0" max="32" value="1" step="0.1" class="slider"><br>
-            Blue gain: <input id="blue-gain" type="range" 
-              min="0" max="32" value="1" step="0.1" class="slider"><br><br>
-            <button id="adjust" class="button">Adjust</button>
+            <div class="slider-container">
+              <div id="exposure-time-text" class="slider-text">Exposure time: ${exposureTime} ms</div>
+              <input id="exposure-time" type="range" min="0" max="500" value="${exposureTime}" class="slider">
+            </div>
+            <div class="slider-container">
+              <div id="analogue-gain-text" class="slider-text">Analog gain: ${analogueGain}</div>
+              <input id="analogue-gain" type="range" min="0" max="6" value="${analogueGain}" step="0.1" class="slider">
+            </div>
+            <div class="slider-container">
+              <div id="red-gain-text" class="slider-text">Red gain: ${redGain}</div>
+              <input id="red-gain" type="range" min="0" max="32" value="${redGain}" step="0.1" class="slider">
+            </div>
+            <div class="slider-container">
+              <div id="blue-gain-text" class="slider-text">Blue gain: ${blueGain}</div>
+              <input id="blue-gain" type="range" min="0" max="32" value="${blueGain}" step="0.1" class="slider">
+            </div>
+            <div class="text-center"><button id="adjust" class="button">Adjust</button></div>
         </div>
         <script>
-          // Send values back to main window:
+          // Event listeners to update slider texts:
+          slider1 = document.getElementById("exposure-time");
+          slider1.addEventListener('input', function() {
+            document.getElementById('exposure-time-text').innerHTML = "Exposure time: " + slider1.value + "ms";
+          });
+          slider2 = document.getElementById("analogue-gain");
+          slider2.addEventListener('input', function() {
+            document.getElementById('analogue-gain-text').innerHTML = "Analog gain: " + slider2.value;
+          });
+          slider3 = document.getElementById("red-gain");
+          slider3.addEventListener('input', function() {
+            document.getElementById('red-gain-text').innerHTML = "Red gain: " + slider3.value;
+          });
+          slider4 = document.getElementById("blue-gain");
+          slider4.addEventListener('input', function() {
+            document.getElementById('blue-gain-text').innerHTML = "Blue gain: " + slider4.value;
+          });          
+          // Send values back to main window on button click:
           document.getElementById('adjust').addEventListener('click', function() {
-            window.opener.receiveAdjustImagerValues({
+            window.opener.imagerValuesToServer({
               'exposure-time': document.getElementById('exposure-time').value,
               'analogue-gain': document.getElementById('analogue-gain').value,
               'red-gain': document.getElementById('red-gain').value,
               'blue-gain': document.getElementById('blue-gain').value
             });
+            window.close();
           });
         </script>
       </body>
     </html> `);
-
-  // Trigger the modal dialog window:
-  const openModalButton = document.createElement('button');
-  openModalButton.textContent = 'Open Modal';
-  openModalButton.className = 'open-modal-button';
-  openModalButton.addEventListener('click', openModal);
-  document.body.appendChild(openModalButton);
 }
 
 

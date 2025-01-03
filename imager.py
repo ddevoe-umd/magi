@@ -79,14 +79,14 @@ def adjust_settings(exposure_time_ms, analogue_gain, color_gains):
         cam.set_controls({
             "AeEnable": False,                 # auto update of gain & exposure settings
             "AwbEnable": False,                # auto white balance
-            "ExposureTime": int(exposure_time_ms*1e3),     # units of microseconds
+            "ExposureTime": int(exposure_time_ms*1e3),   # units of microseconds
             "AnalogueGain": float(analogue_gain),   # range [0,6.0] ?
             "ColourGains": color_gains              # (red,blue) gains, range [0,32.0]
         })
         time.sleep(3)   # time to stabilize settings
         return('adjust_settings() done')
     except Exception as e:
-        print(e, flush=True)
+        print(f'error in adjust_settings(): {e}', flush=True)
         return('error in adjust_settings()')
 
 def setup_camera(exposure_time_ms=50, analogue_gain=0.5, color_gains=(1.2,1.0)):    # Set up camera

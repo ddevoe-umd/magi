@@ -23,10 +23,9 @@
     				<input type="file" id="hidden-card-file-input" accept=".card" style="display: none;" />
 				<button id="start" class="button" role="button" onclick="startAssay()">No Card<br>Loaded</button>
 				<div class="slider-container">
-					<!-- periods below ~5 s can sometimes crash the camera -->
 				    <div id="period-slider-text" class="slider-text">Period: 15s</div>
 				    <input type="range" id="period-slider" class="slider" 
-				           min="5" max="30" value="15">
+				           min="2" max="30" value="15">
 		        </div>
 		        <div class="vertical-gap-10"></div>
 				<button id="stop" class="button" onclick="endAssay()">End</button>
