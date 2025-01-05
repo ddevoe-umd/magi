@@ -1,7 +1,19 @@
+
+/* Prevent interactive elements from breaking drag */
+button, input, a {
+  -webkit-app-region: no-drag;
+}
+
+/* Suppress window scroll bars */
+#content {
+  overflow:hidden;
+  user-scalable:no;  /* prevent scaling on mobile devices */
+}  
+
 /* Define custom font */
 @font-face {
-    font-family: MagiOpenSans;
-    src: url("../fonts/OpenSans.ttf");
+  font-family: MagiOpenSans;
+  src: url("../fonts/OpenSans.ttf");
 }
   
 .canvasjs-chart-canvas {
@@ -18,12 +30,6 @@
   bottom: auto !important;
 }
 
-/* Suppress window scroll bars */
-.content {
-  overflow:hidden;
-  user-scalable:no;  /* prevent scaling on mobile devices */
-}  
-
 /* Select font properties for all but specified element types */
 *:not(i, code, button, span, a) {
   /* font-family: expo-brand-demi,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";*/
@@ -33,16 +39,17 @@
 }
 
 html, body {
+  margin: 0;
+  padding: 0;
   height: 100%;
   overflow-y:hidden;
   background-image: linear-gradient(90deg, #939ca3, #999999);
 }
 
-
 /* subscript style */
 .sub75 {
-    font-size: 75%;
-    vertical-align: sub;
+  font-size: 75%;
+  vertical-align: sub;
 }
 
 /* simple vertical gap */
@@ -56,6 +63,7 @@ html, body {
   /* Nearly full viewport height to leave border: */
   height: 98vh;   
   width: 98vw; 
+  margin-top: 28px; /* Push content below the title bar */
   /* Center content in window: */
   position: fixed;
   top: 50%;
@@ -128,6 +136,7 @@ html, body {
   min-height: 180px;   /* adjust as needed to keep buttons & sliders visible */
   max-height: 30vh;
   gap: 10px;   /* Space between columns */
+  margin-bottom: 28px; /* Account for title bar height */
 }
 
 .image-div {

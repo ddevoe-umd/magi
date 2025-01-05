@@ -27,8 +27,8 @@
 }
 
 .notification-content .spinner {
-    display: block;         /* Ensures the <div> behaves like a block element */
-    margin-top: 10px;       /* Adds spacing above the div content */
-    margin: auto;           /* center in div */
+    display: block;
+    margin-top: 10px;
+    margin: auto;       /* center in div */
 }
 

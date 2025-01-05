@@ -58,6 +58,20 @@ document.addEventListener('keydown', function(event) {
   }
 });
 
+// Query user before closing window or quitting application:
+document.addEventListener('keydown', (event) => {
+    const isCtrlOrCmd = event.ctrlKey || event.metaKey; // MetaKey is Mac Command key
+    const isCloseKey = event.key === 'w' || event.key === 'q';
+    if (isCtrlOrCmd && isCloseKey) {
+        event.preventDefault(); // Prevent default behavior
+        const confirmMessage = 'Are you sure you want to quit?';
+        if (confirm(confirmMessage)) {
+            if (isCloseKey) {
+                window.close();
+            }
+        }
+    }
+});
 
 // Custom log function:
 function log(message, color=null, fontSize=null, bold=false, lines=false) {
@@ -186,8 +200,6 @@ window.onload = async function () {
 };
 
 
-
-
 // Wait for initial image from the server at code start to make sure
 // camera is ready before allowing an assay to be run:
 async function getFirstImage() {
@@ -288,10 +300,7 @@ async function imagerValuesToServer(values) {
     Analog gain: ${values["analogue-gain"]}<br>
     Red channel gain: ${redGain}<br>
     Blue channel gain: ${blueGain}`,
-    color='#00ff00',
-    fontsize=7,
-    bold=false,
-    lines=true
+    color='#FFDE21', fontsize=7, bold=false, lines=true
     );
   // Ask server to adjust camera settings:
   log("Adjusting imager settings...");
@@ -300,8 +309,7 @@ async function imagerValuesToServer(values) {
   let response = await queryServer(JSON.stringify([message,data]));
   if (response.ok) {
     results = await response.text();
-    log(results);
-    log("Imager settings updated");
+    log(results, color='#00ff00', fontsize=7, bold=false, lines=false);
   }
 }
 
@@ -395,7 +403,7 @@ function updateCutTimeSlider() {
 function updateThresholdSlider() {
   const slider = document.getElementById('threshold-slider');
   var sliderText = document.getElementById('threshold-slider-text')
-  const html = `threshold: ${slider.value}`;
+  const html = `Threshold: ${slider.value}`;
   sliderText.innerHTML = html;
 }
 
@@ -482,6 +490,7 @@ async function endAssay() {
 	if (response) {
 		disableElements(["stop"]);
     isRunning = false;    // flip the flag to stop the assay
+    toggleDisplayStatusDots();  // turn off title bar dots animation
 		//if (assayTimer) clearInterval(assayTimer);
 	  enableElements(["load","start","period-slider"]);
 		let message = 'end';
@@ -644,9 +653,8 @@ async function analyzeData() {
 		  // Check for NaN in filter results, which seems to happen when the
 		  // raw image data contains too many zero values:
 		  if (results.includes("NaN")) {
-		  	log("Anlysis incomplete:");
-		  	log("- NaN found in filter data");
-		    log("- check if camera brightness values == 0");
+		  	log("NaN in filter data (check if too many zero brightness values)",
+          color="#dd0000", fontSize=null, bold=false, lines=false);
 		  }
 		  else {
 				let data = JSON.parse(results);
@@ -658,9 +666,8 @@ async function analyzeData() {
 			}
 		}
 		else { 
-			log("Anlysis incomplete:");
-			log("- check # data points, >21 required");
-			log("- ensure Wn < f_nyquist");
+			log("No filter data returned: check # data points (>21 required)",
+        color="#dd0000", fontSize=null, bold=false, lines=false);
 		}
 	}
   win.remove();    // Remove the notification window
@@ -1046,11 +1053,23 @@ async function startAssay() {
   log("Curve analysis parameters reset");
 	// Start the assay:
   isRunning = true;
+  toggleDisplayStatusDots();  // turn on title bar dots animation
 	updateChart();
   // ^^^ previously used setInterval() but had trouble with timing being
   // throttled when browser minimized or not focused:
   //     var sampleInterval = document.getElementById('period-slider').value * 1000;
 	//     assayTimer = setInterval(function(){updateChart()}, sampleInterval);
+}
+
+// Turn "assay running" title bar dots animation on/off:
+function toggleDisplayStatusDots() {
+  statusRegion = document.getElementById('title-bar-status-region');
+  if (isRunning) {
+    html = `<div class="dots"><div></div><div></div><div></div><div></div></div>`;
+  } else {
+    html = "";
+  }
+  statusRegion.innerHTML = html;
 }
 
 function displayFilteredData(data) {

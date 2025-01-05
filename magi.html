@@ -9,13 +9,25 @@
 	<link rel="stylesheet" href="css/notification-window.css">
 	<link rel="stylesheet" href="css/slider.css">
 	<link rel="stylesheet" href="css/spinner.css">
+	<link rel="stylesheet" href="css/title-bar.css">
+	<link rel="stylesheet" href="css/dots.css">
 	<script src="js/canvasjs.unbadged.js"></script>
 	<script src="js/magi.js" defer></script>
 	<title>MAGI</title>
 </head>
 
-<div class="main-container">
+<body>
 
+<!-- custom title bar for electron -->
+<div class="title-bar"> 
+  	<!-- <img id="title-bar-dummy-image" src="img/mml.png"> -->
+  	<div id="title-bar-status-region"> 
+  	</div>
+  	<p id="title-bar-text">MAGI - Multiplexed Array Gene Imager</p>
+  	<img id="title-bar-image" src="img/mml.png">
+</div>  
+
+<div class="main-container">
 	<div class="chart-container">
 		<div class="chart-row">
 			<div class="side-button-container"> 
@@ -30,7 +42,6 @@
 		        <div class="vertical-gap-10"></div>
 				<button id="stop" class="button" onclick="endAssay()">End</button>
 				<button id="saveraw" class="button" onclick="saveRaw()">Save Raw</button>
-				<button id="adjust" class="button" onclick="adjustImager()">Adjust Imager</button>
 		        <div class="vertical-gap-10"></div>
 			</div>
 			<div class="chart" id="rawDataChart">
@@ -58,7 +69,7 @@
 				           min="0" max="20" step="0.1" value="0">
 				</div>
 				<div class="slider-container">
-				    <div id="threshold-slider-text" class="slider-text"> threshold: 0</div>
+				    <div id="threshold-slider-text" class="slider-text"> Threshold: 0</div>
 				    <input type="range" id="threshold-slider" class="slider" 
 				           min="0" max="25500" step="100" value="0">
 				</div>
@@ -80,6 +91,7 @@
 		<div class="log-image-row">
 			<div class="side-button-container"> 
 				<button id="getImage" class="button" role="button" onclick="getImage()"> Get Image </button>
+				<button id="adjust" class="button" onclick="adjustImager()">Adjust Imager</button>
 			  	<button id="getLog" class="button" role="button" onclick="getServerLog()"> Get Log </button>
 			  	<button id="clearLog" class="button" role="button" onclick="clearServerLog()"> Clear Log </button>
 			  	<button id="reboot" class="button" role="button" onclick="reboot()"> Reboot </button>
