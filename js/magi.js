@@ -6,16 +6,25 @@
 
 // All possible targets with chart display properties:
 const targets = {          
-  "MecA": ["#4C4CEB", "solid"],   
-  "FemB": ["#5ED649", "solid"],
-  "Nuc": ["#DD4444", "solid"],
+  "mecA": ["#4C4CEB", "solid"],   
+  "femB": ["#5ED649", "solid"],
+  "ermB": ["#FFC0CB", "solid"],
+  "ermF": ["#33CCFF", "solid"],
+  "ermT": ["#FF8C00", "solid"],
+  "ermX": ["#FFFF00", "solid"],
+  "tetA/C": ["#FF0000 ", "solid"],
+  "sul1": ["#000080", "solid"],
+  "sul2": ["#C0C0C0", "solid"],
+  "nuc": ["#DD4444", "solid"],
   "POS": ["#222222", "dash"],
   "NEG": ["#555555", "dot"]
 };
 
 var cardFilename;     // Assay card file name selected by user
-var wellConfig = [];  // Well array configuration, starting at upper left
-var positives = {};   // positive detection events (not yet used...)
+
+var wellConfig = [];  // Well array configuration. Unlike the Python well_config
+                      // global, which is a 2D array, wellConfig is converted to
+                      // a 1D array starting at upper left to simplify canvasJS plotting
 
 var isRunning = false;  // flag to track if assay is currently running
 
@@ -24,7 +33,7 @@ var wakeLock;
 var assayTimer;              // timer for running an assay
 var startTime;               // assay start time stamp
 const img = document.getElementById('image');      // chip image
-var imgCaptureTime;                              // time stamp for image
+var imgCaptureTime;                                // time stamp for image
 
 const serverURL = "http://raspberrypi.local:8080";
 const serverFilePath = "/path/to/ramdisk/"
@@ -46,6 +55,7 @@ var exposureTime = 50;     // imager parameters, initial vals must match server 
 var analogueGain = 0.5;
 var redGain = 1.2;
 var blueGain = 1.0;
+
 
 // Prevent zooming with Ctrl +/-
 document.addEventListener('keydown', function(event) {
@@ -75,7 +85,7 @@ document.addEventListener('keydown', (event) => {
 
 // Custom log function:
 function log(message, color=null, fontSize=null, bold=false, lines=false) {
-	textToAdd = "";
+	let textToAdd = "";
   document.getElementById('log').style.backgroundColor = 'white';
   if (lines) {
     textToAdd = `<span style="font-family: 'Courier New', Courier, monospace;">`;
@@ -170,7 +180,7 @@ function enableElements(elements) {
 	elements.forEach(e => document.getElementById(e).disabled = false);
 }
 function disableAllElements() {
-	allElements = ["load","start","stop","saveraw","adjust","period-slider","analyze",
+	const allElements = ["load","start","stop","saveraw","adjust","period-slider","analyze",
 								"filter-slider","cut-time-slider", "threshold-slider", 
                 "toggleTTP","savefiltered","saveTTP","getImage","reboot",
                 "shutdown","getLog","clearLog"];
@@ -179,9 +189,21 @@ function disableAllElements() {
 }
 
 
+// Toggle title-bar animation on/off with color change
+function toggleTitleBarAnimation() {
+  const blinkArray = document.getElementById('blink-array');
+  for (let i=0; i<12; i++) {
+    const isRunning = blinkArray.children[i].style.animationPlayState !== 'paused';
+    blinkArray.children[i].style.animationPlayState = isRunning ? 'paused' : 'running';
+    blinkArray.children[i].style.background = isRunning ? '#aaaaaa' : '#00ff00';
+  }
+}
+
+
 // Initial window loading:
 window.onload = async function () {
   document.getElementById('start').style.height = '40px'; // double start button height
+  toggleTitleBarAnimation();      // turn title-bar animation off
 	disableAllElements();
   var period = document.getElementById('period-slider').value;  // Get sampling period
   document.getElementById('period-slider-text').innerHTML = `Period: ${period}s`;
@@ -192,6 +214,7 @@ window.onload = async function () {
     'red-gain': redGain,
     'blue-gain': blueGain
   });
+  await onLoad();           // Do initial Python server housekeeping
   await getFirstImage();    // Get initial image w/o ROIs
   enableElements(["load","adjust","shutdown","reboot","getImage","getLog","clearLog"]);
   // set up arrow key adjustments for sliders:
@@ -199,11 +222,25 @@ window.onload = async function () {
   sliderKeySetup('threshold-slider','threshold-slider-text'); 
 };
 
+// Tell the server to do initial housekeeping on application startup:
+async function onLoad() {
+    let message = 'onLoad';
+    let data = '';
+    let response = await queryServer(JSON.stringify([message,data]));
+    if (response.ok) {
+      results = await response.text();
+      log("Server response:")
+      log(results);
+    } else {
+      log("Server response error in onLoad()");
+    }
+}
+
 
 // Wait for initial image from the server at code start to make sure
 // camera is ready before allowing an assay to be run:
 async function getFirstImage() {
-  win = notification("Searching for MAGI server");
+  let win = notification("Searching for MAGI server");
   while (true) {
   	try {
       const awaitResult = await getImage();
@@ -240,40 +277,66 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+// Send POST message to server:
+async function queryServer(message) {
+  let response = await fetch( serverURL, {
+    method: "POST",
+    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+    body: 'todo=' + message
+  });
+  return(response)
+}
+
+
 // Load a user-defined JSON card file defining the well configuration:
 function loadCard() {
-	document.getElementById('hidden-card-file-input').click();
+	document.getElementById('hidden-card-file-input').click();  // programmatically click the button
 }
 // Use an HTML input element to handle local file loading:
-document.getElementById('hidden-card-file-input').addEventListener('change', function (event) {
+document.getElementById('hidden-card-file-input').addEventListener('change', async function (event) {
   const file = event.target.files[0];    // get filename from user dialog
   if (file && file.name.endsWith('.card')) {
     cardFilename = file.name;
     const reader = new FileReader();
-    reader.onload = function (e) {
+    reader.onload = async function (e) {
       try {
         const cardJson = JSON.parse(e.target.result);
-        // Extract card information:
-        wellConfig = cardJson["well_config"];
-        positives = cardJson["positives"];
+        
+        // Contact the server to set up remote assay info (ROIs, well config etc.):
+        let message = "setupAssay";
+        let data = [cardFilename, cardJson];
+        console.log(JSON.stringify(data));
+        let response = await queryServer(JSON.stringify([message,data]));
+        if (response.ok) {
+          results = await response.text();
+          log("Server response:");
+          log(results);
+        } else {
+          log("Server response error in loadCard()");
+        }
+        // Convert 2D array format of well_config from assay card to a
+        // 1D array for ease of plotting with CanvasJS:
+        wellConfig = [];
+        for (row of cardJson["well_config"]) for (ele of row) wellConfig.push(ele);
+        log(`wellConfig.length = ${wellConfig.length}`);
 			  // Display & dim initial empty charts:
         if (filteredChart == null) {   // filteredChart has not yet been displayed,
           displayFilteredData([[]]);}  // so display chart with empty data
 			  dimChart(filteredChart);
 			  displayTTP();
 			  dimChart(ttpChartAll);
-			  enableElements(["start","period-slider"]);		// Let user start the assay
+			  enableElements(["start","period-slider"]);	// Let user start the assay
 			  log("Assay card loaded:");
         log(wellConfig);
-        log(JSON.stringify(positives));
         // Display the assay card name in the start button:
         const html = `Run card:<br>${cardFilename.substring(0, cardFilename.length-5)}`;
         document.getElementById('start').innerHTML = html;
-        // Get a new image with ROIs matched to the assay card:
-			  getImage();
         // Highlight start button after card loading:
         document.getElementById('start').style.backgroundImage = `linear-gradient(${startColor}, ${startColor})`;
         document.getElementById('start').style.borderWidth = "1px";
+        // Get a new image with ROIs matched to the assay card:
+        getImage();
+
       } catch (e) {
         log(e);
       }
@@ -456,16 +519,6 @@ function sliderKeySetup(sliderName, sliderTextName) {
 }
 
 
-// Send POST message to server:
-async function queryServer(message) {
-	let response = await fetch( serverURL, {
-		method: "POST",
-    headers: {"Content-Type": "application/x-www-form-urlencoded"},
-		body: 'todo=' + message
-	});
-	return(response)
-}
-
 async function startPID() {
 	log("startPID() called");
 	wakeLock = getWakeLock();     // Acquire wake lock when assay starts
@@ -482,16 +535,18 @@ async function startPID() {
 	}
 }
 
+
+
 async function endAssay() {
 	log("endAssay() called");
-	await wakeLock.release();          // Release the wake lock when assay ends
+	await wakeLock.release();      // Release the wake lock when assay ends
 	log("wake lock released");
 	let response = confirm(`End current assay for ${cardFilename}?`);
 	if (response) {
 		disableElements(["stop"]);
-    isRunning = false;    // flip the flag to stop the assay
-    toggleDisplayStatusDots();  // turn off title bar dots animation
-		//if (assayTimer) clearInterval(assayTimer);
+    isRunning = false;             // flip the flag to stop the assay
+    toggleTitleBarAnimation();     // turn off title bar animation
+		// if (assayTimer) clearInterval(assayTimer);
 	  enableElements(["load","start","period-slider"]);
 		let message = 'end';
 	  let data = '';
@@ -514,11 +569,11 @@ async function endAssay() {
 	}
 }
 
-async function getData() {
+async function getImageData() {
   while (true) {   // repeat indefinitely in case of timeout error in server
-  	log(`getData() called @ t = ${((Date.now()-startTime)/1000/60).toFixed(2)} min`);
+  	log(`getImageData() called @ t = ${((Date.now()-startTime)/1000/60).toFixed(2)} min`);
     try {
-    	let message = 'getData';
+    	let message = 'getImageData';
     	let data = '';
     	let response = await queryServer(JSON.stringify([message,data]));
       if (response.ok) {
@@ -530,7 +585,7 @@ async function getData() {
     		return(newData);
     	}
     } catch(e) {
-      log(`Error in getData: ${e}`);
+      log(`Error in getImageData: ${e}`);
     }
   }
 }
@@ -539,8 +594,9 @@ async function getImage() {
 	log("getImage() called");
   document.getElementById('image').style.backgroundColor = 'white';
 	let message = 'getImage';
-	let data = [cardFilename, wellConfig, targets];  // info for image ROIs etc.
-	let response = await queryServer(JSON.stringify([message,data]));
+	//let data = [cardFilename, wellConfig, targets];  // info for image ROIs etc.
+  let data = "";
+  let response = await queryServer(JSON.stringify([message,data]));
   if (response.ok) {
 		results = await response.text();
 		log("Image data received")
@@ -660,6 +716,7 @@ async function analyzeData() {
 				let data = JSON.parse(results);
 		    ttpData = data[0];  // ttpData is global
 		    let xy = data[1];
+        log(`xy.length = ${xy.length}`);
 		    displayFilteredData(xy);
 				displayTTP();
 			  enableElements(["savefiltered","toggleTTP","saveTTP"]);
@@ -1009,36 +1066,6 @@ async function startAssay() {
   showAllWells = false;
 	let [amplificationChart, wellArray] = setupAmplificationChart('rawDataChart')
 	let [temperatureChart, temperature] = setupTemperatureChart('temperatureChart')
-	startTime = Date.now();
-  nullData = await startPID();    // Tell Python to start the PID controller
-
-	async function updateChart() {
-    if (!isRunning) {
-      log("Assay stopped");
-      return;
-    }
-		let now = Date.now();		
-		minutes = (now - startTime)/1000/60;
-  	newData = await getData();   		// Get data from Python
-  		// extend the amplification curve data:
-		for (let j=0; j<wellArray.length; j++) {
-			wellArray[j].push({
-				x: minutes,
-				y: newData[j]
-			});
-		}
-		// extend the temperature array:
-		temperature.push({
-				x: minutes,
-				y: newData[wellArray.length]   // T is last element in newData
-			});   
-		// Update the real-time amplification & temperature curves:
-		amplificationChart.render();
-		temperatureChart.render();
-
-    var sampleInterval = document.getElementById('period-slider').value * 1000;
-    setTimeout(updateChart, sampleInterval);   // Execute again in sampleInterval sec
-	}
 
   // Reset the analysis parameters to default values, and trigger
   // an input event to programmatically invoke event listeners:
@@ -1051,33 +1078,54 @@ async function startAssay() {
   document.getElementById('cut-time-slider').value = 0;
   document.getElementById('cut-time-slider').dispatchEvent(inputEvent);
   log("Curve analysis parameters reset");
+
 	// Start the assay:
   isRunning = true;
-  toggleDisplayStatusDots();  // turn on title bar dots animation
+  startTime = Date.now();
+  nullData = await startPID();    // Tell Python to start the PID controller
+  toggleTitleBarAnimation();      // turn on title bar animation once PID starts
+
+  async function updateChart() {
+    if (!isRunning) {
+      log("Assay stopped");
+      return;
+    }
+    let now = Date.now();   
+    minutes = (now - startTime)/1000/60;
+    newData = await getImageData();      // Get data from Python
+      // extend the amplification curve data:
+    for (let j=0; j<wellArray.length; j++) {
+      wellArray[j].push({
+        x: minutes,
+        y: newData[j]
+      });
+    }
+    temperature.push({
+        x: minutes,
+        y: newData[wellArray.length]   // T is last element in newData
+      });   
+    // Update the real-time amplification & temperature curves:
+    amplificationChart.render();
+    temperatureChart.render();
+    var sampleInterval = document.getElementById('period-slider').value * 1000;
+    setTimeout(updateChart, sampleInterval);   // Execute again in sampleInterval sec
+  }
 	updateChart();
   // ^^^ previously used setInterval() but had trouble with timing being
-  // throttled when browser minimized or not focused:
+  //     throttled when browser minimized or not focused:
   //     var sampleInterval = document.getElementById('period-slider').value * 1000;
 	//     assayTimer = setInterval(function(){updateChart()}, sampleInterval);
 }
 
-// Turn "assay running" title bar dots animation on/off:
-function toggleDisplayStatusDots() {
-  statusRegion = document.getElementById('title-bar-status-region');
-  if (isRunning) {
-    html = `<div class="dots"><div></div><div></div><div></div><div></div></div>`;
-  } else {
-    html = "";
-  }
-  statusRegion.innerHTML = html;
-}
 
-function displayFilteredData(data) {
+
+async function displayFilteredData(data) {
 	let wellArray;
 	[filteredChart, wellArray] = setupAmplificationChart('filteredDataChart');
 	filteredChart.options.title.text = "Fluorescence (filtered)";
 	for (let i=0; i<wellArray.length; i++) {
 		for (let j=0; j<data[0].length; j++) {
+      log(`${i}, ${j}`);
 			wellArray[i].push(data[i][j]);
 		}
 	}
@@ -1114,7 +1162,9 @@ function displayTTP() {
 			title: "TTP (min)",
 			titleFontSize: 14
 		},		
-		axisX:{ interval: 1 },   // show all axis labels
+		axisX:{ 
+      interval: 1      // show all axis labels
+    },   
 		data: [{        
 			type: "column",  
 			showInLegend: false, 

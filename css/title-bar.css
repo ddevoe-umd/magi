@@ -41,5 +41,5 @@
     display: inline-block;
     width: 50px;         /* adjust as needed based on title-bar-image size
     min-height: 1px;     /* force fixed width when no div content */
-    margin-left: 10px;   /* adjust to align with button column */
+    margin-left: 8px;   /* adjust to align as desired relative to button column */
 }

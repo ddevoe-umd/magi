@@ -7,6 +7,8 @@ from scipy.signal import butter, filtfilt, sosfiltfilt
 import matplotlib.pyplot as plt
 import pandas as pd
 
+import config   # Cross-module global variables for all Python codes
+
 def get_ttp(t,y):
     # Calculate slope at midpoint and project back to baseline to find TTP
     npoints = 2    # number of points before and after midpoint for linear fit
@@ -47,7 +49,8 @@ def filter(filename, filter_factor=10.0, cut_time=0.0, threshold=0):
         print(f'filter parameters: n={n}, T={T}, fs={fs}, f_nyquist={f_nyquist}, Wn={Wn}', flush=True)
 
         # Find TTP for each well:
-        for idx in range(1,13):
+        num_wells = len(config.well_config) * len(config.well_config[0])  # rows * cols
+        for idx in range(1,num_wells+1):
             y = df.iloc[:,idx].tolist()
             y = y[cut_num:]          # Remove initial data points
             y = [float(val) for val in y]

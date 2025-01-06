@@ -44,6 +44,11 @@ html, body {
   height: 100%;
   overflow-y:hidden;
   background-image: linear-gradient(90deg, #939ca3, #999999);
+
+  /* prevent text selection: */
+  user-select: none;         /* Standard syntax */
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10 and IE 11 */
 }
 
 /* subscript style */
@@ -60,10 +65,12 @@ html, body {
 .main-container {
   display: flex;
   flex-direction: column;
-  /* Nearly full viewport height to leave border: */
-  height: 98vh;   
-  width: 98vw; 
-  margin-top: 28px; /* Push content below the title bar */
+  height: 100%;   
+  width: 100%; 
+  margin-top: 26px; /* Push content below the title bar */
+  margin-left: 6px;
+  margin-right: 120px;
+  margin-bottom: 6px;
   /* Center content in window: */
   position: fixed;
   top: 50%;
@@ -92,6 +99,8 @@ html, body {
   display: flex;
   flex-grow: 1;
   flex-direction: column;
+  margin-top: 6px;
+  margin-right: 14px;
   gap: 10px;                /* gap between rows */
 }
 
@@ -126,6 +135,8 @@ html, body {
   flex-direction: column;
   max-height: 50%;
   margin-top: 10px;     /* gap between rows */
+  margin-bottom: 6px;
+  margin-right: 14px;
 }
 
 .log-image-row {
@@ -135,7 +146,7 @@ html, body {
   width: 100%;
   min-height: 180px;   /* adjust as needed to keep buttons & sliders visible */
   max-height: 30vh;
-  gap: 10px;   /* Space between columns */
+  gap: 8px;           /* Space between columns */
   margin-bottom: 28px; /* Account for title bar height */
 }
 

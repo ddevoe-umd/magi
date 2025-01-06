@@ -10,7 +10,11 @@
 	<link rel="stylesheet" href="css/slider.css">
 	<link rel="stylesheet" href="css/spinner.css">
 	<link rel="stylesheet" href="css/title-bar.css">
-	<link rel="stylesheet" href="css/dots.css">
+
+	<!-- "assay running" animation options: -->
+	<link rel="stylesheet" href="css/dots.css"> <!-- not currently used -->
+	<link rel="stylesheet" href="css/blink-array.css">
+
 	<script src="js/canvasjs.unbadged.js"></script>
 	<script src="js/magi.js" defer></script>
 	<title>MAGI</title>
@@ -20,10 +24,23 @@
 
 <!-- custom title bar for electron -->
 <div class="title-bar"> 
-  	<!-- <img id="title-bar-dummy-image" src="img/mml.png"> -->
   	<div id="title-bar-status-region"> 
+  		<div class="blink-array" id="blink-array">
+  			<div></div>
+  			<div></div>
+  			<div></div>
+  			<div></div>
+  			<div></div>
+  			<div></div>
+  			<div></div>
+  			<div></div>
+  			<div></div>
+  			<div></div>
+  			<div></div>
+  			<div></div>
+  		</div>
   	</div>
-  	<p id="title-bar-text">MAGI - Multiplexed Array Gene Imager</p>
+  	<p id="title-bar-text">Multiplexed Array Gene Imager</p>
   	<img id="title-bar-image" src="img/mml.png">
 </div>  
 
