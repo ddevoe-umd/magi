@@ -4,6 +4,9 @@
       ["mecA", "nuc", "femB", "ermB", "ermF", "ermT", "ermX", "tetA/C", "sul1", "sul2", "POS"],
       ["mecA", "nuc", "femB", "ermB", "ermF", "ermT", "ermX", "tetA/C", "sul1", "sul2", "POS"],
       ["mecA", "nuc", "femB", "ermB", "ermF", "ermT", "ermX", "tetA/C", "sul1", "sul2", "POS"],
+      ["mecA", "nuc", "femB", "ermB", "ermF", "ermT", "ermX", "tetA/C", "sul1", "sul2", "POS"],
+      ["mecA", "nuc", "femB", "ermB", "ermF", "ermT", "ermX", "tetA/C", "sul1", "sul2", "NEG"],
+      ["mecA", "nuc", "femB", "ermB", "ermF", "ermT", "ermX", "tetA/C", "sul1", "sul2", "NEG"],
       ["mecA", "nuc", "femB", "ermB", "ermF", "ermT", "ermX", "tetA/C", "sul1", "sul2", "NEG"],
       ["mecA", "nuc", "femB", "ermB", "ermF", "ermT", "ermX", "tetA/C", "sul1", "sul2", "NEG"]
     ],

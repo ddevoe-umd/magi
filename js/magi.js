@@ -5,6 +5,7 @@
 // Globals:
 
 // All possible targets with chart display properties:
+/*
 const targets = {          
   "mecA": ["#4C4CEB", "solid"],   
   "femB": ["#5ED649", "solid"],
@@ -19,6 +20,10 @@ const targets = {
   "POS": ["#222222", "dash"],
   "NEG": ["#555555", "dot"]
 };
+*/
+
+var targetNames = [];      // Unique gene target names 
+var targetColors = [];     // Plot colors for each element in targetNames
 
 var cardFilename;     // Assay card file name selected by user
 
@@ -85,11 +90,11 @@ document.addEventListener('keydown', (event) => {
 
 // Custom log function:
 function log(message, color=null, fontSize=null, bold=false, lines=false) {
-	let textToAdd = "";
+	let newText = "";
   document.getElementById('log').style.backgroundColor = 'white';
   if (lines) {
-    textToAdd = `<span style="font-family: 'Courier New', Courier, monospace;">`;
-  	textToAdd += "\u2014".repeat(50) + "</span><br>";
+    newText = `<span style="font-family: 'Courier New', Courier, monospace;">`;
+  	newText += "\u2014".repeat(50) + "</span><br>";
   }
   let style = "";
   if (color) {
@@ -102,17 +107,17 @@ function log(message, color=null, fontSize=null, bold=false, lines=false) {
     style += "font-weight: bold;";
   }
   if (color || fontSize) {
-    textToAdd += `<span style="${style}">` + message + "</span>";
+    newText += `<span style="${style}">` + message + "</span>";
   } else {
-    textToAdd += message;
+    newText += message;
   }
   if (lines) {
-    textToAdd += `<span style="font-family: 'Courier New', Courier, monospace;">`;
-    textToAdd += "<br>" + "\u2014".repeat(50) + "</span>";
+    newText += `<span style="font-family: 'Courier New', Courier, monospace;">`;
+    newText += "<br>" + "\u2014".repeat(50) + "</span>";
   }
-	console.log(textToAdd);      // display message in Javascript console
 	const log = document.getElementById("log");
-	log.innerHTML += textToAdd + "<br />";      // display message in div
+	let allText = log.innerHTML + newText + "<br />";
+  log.innerHTML = allText;
 	log.scroll({top: log.scrollHeight, behavior: 'smooth'}); // pin scroll to bottom
 }
 
@@ -288,6 +293,48 @@ async function queryServer(message) {
 }
 
 
+// Helper function, convert HSL to HEX color format:
+function hslToHex(h, s, l) {
+    s /= 100;
+    l /= 100;
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = l - c / 2;
+    let r = 0, g = 0, b = 0;
+    if (0 <= h && h < 60) {
+        r = c; g = x; b = 0;
+    } else if (60 <= h && h < 120) {
+        r = x; g = c; b = 0;
+    } else if (120 <= h && h < 180) {
+        r = 0; g = c; b = x;
+    } else if (180 <= h && h < 240) {
+        r = 0; g = x; b = c;
+    } else if (240 <= h && h < 300) {
+        r = x; g = 0; b = c;
+    } else if (300 <= h && h < 360) {
+        r = c; g = 0; b = x;
+    }
+    const toHex = (value) => {
+        const hex = Math.round((value + m) * 255).toString(16);
+        return hex.padStart(2, "0");
+    };
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+// Generate an array of distinct web colors optimized for plotting:
+function generatePlotColors(n) {    
+  const colors = [];
+  const saturation = 70; // Adjust saturation for vibrant colors
+  const lightness = 50;  // Adjust lightness for readability
+  for (let i = 0; i < n; i++) {
+    const hue = Math.round((360 / n) * i); // Evenly distribute hues
+    //colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
+    colors.push(hslToHex(hue, saturation, lightness));
+  }
+  return colors;
+}
+
+
 // Load a user-defined JSON card file defining the well configuration:
 function loadCard() {
 	document.getElementById('hidden-card-file-input').click();  // programmatically click the button
@@ -296,44 +343,57 @@ function loadCard() {
 document.getElementById('hidden-card-file-input').addEventListener('change', async function (event) {
   const file = event.target.files[0];    // get filename from user dialog
   if (file && file.name.endsWith('.card')) {
+    disableElements(["start","period-slider"]);
     cardFilename = file.name;
     const reader = new FileReader();
     reader.onload = async function (e) {
       try {
         const cardJson = JSON.parse(e.target.result);
         
+        // Convert 2D array format of well_config from assay card to a
+        // 1D array for ease of plotting with CanvasJS:
+        wellConfig = [];
+        for (row of cardJson["well_config"]) for (ele of row) wellConfig.push(ele);
+
+        // Extract an array with all unique targets:
+        const uniqueTargetSet = new Set(wellConfig);
+        targetNames = Array.from(uniqueTargetSet);
+        log(targetNames);
+        // Set up plot colors for unique targets:
+        targetColors = generatePlotColors(targetNames.length);
+        log(targetColors);
+        
         // Contact the server to set up remote assay info (ROIs, well config etc.):
         let message = "setupAssay";
-        let data = [cardFilename, cardJson];
+        let data = [cardFilename, cardJson, targetNames, targetColors];
         console.log(JSON.stringify(data));
         let response = await queryServer(JSON.stringify([message,data]));
         if (response.ok) {
           results = await response.text();
           log("Server response:");
           log(results);
+          // Display & dim initial empty charts:
+          if (filteredChart == null) {   // filteredChart has not yet been displayed,
+            displayFilteredData([[]]);}  // so display chart with empty data
+          dimChart(filteredChart);
+          displayTTP();
+          dimChart(ttpChartAll);
+          
+          // Get a new image with ROIs matched to the assay card:
+          await getImage();
+
+          enableElements(["start","period-slider"]);  // Let user start the assay
+          log("Assay card loaded");
+          // Display the assay card name in the start button:
+          const html = `Run card:<br>${cardFilename.substring(0, cardFilename.length-5)}`;
+          document.getElementById('start').innerHTML = html;
+          // Highlight start button after card loading:
+          document.getElementById('start').style.backgroundImage = `linear-gradient(${startColor}, ${startColor})`;
+          document.getElementById('start').style.borderWidth = "1px";
+
         } else {
           log("Server response error in loadCard()");
         }
-        // Convert 2D array format of well_config from assay card to a
-        // 1D array for ease of plotting with CanvasJS:
-        wellConfig = [];
-        for (row of cardJson["well_config"]) for (ele of row) wellConfig.push(ele);
-			  // Display & dim initial empty charts:
-        if (filteredChart == null) {   // filteredChart has not yet been displayed,
-          displayFilteredData([[]]);}  // so display chart with empty data
-			  dimChart(filteredChart);
-			  displayTTP();
-			  dimChart(ttpChartAll);
-			  enableElements(["start","period-slider"]);	// Let user start the assay
-			  log("Assay card loaded");
-        // Display the assay card name in the start button:
-        const html = `Run card:<br>${cardFilename.substring(0, cardFilename.length-5)}`;
-        document.getElementById('start').innerHTML = html;
-        // Highlight start button after card loading:
-        document.getElementById('start').style.backgroundImage = `linear-gradient(${startColor}, ${startColor})`;
-        document.getElementById('start').style.borderWidth = "1px";
-        // Get a new image with ROIs matched to the assay card:
-        getImage();
 
       } catch (e) {
         log(e);
@@ -860,6 +920,7 @@ function addIntCommas(num) {
   }
 }
 
+
 // Set up charts for both the raw & filtered amplification curves:
 function setupAmplificationChart(targetContainer) {
 	// Set up empty array with length equal to the number of wells, see toggleGroupedSeries().
@@ -870,23 +931,23 @@ function setupAmplificationChart(targetContainer) {
   let wellArray = Array.from({ length: wellConfig.length }, () => []);
 	let plotInfo = [];
 	let g = 1;   // group number (for grouping target sets in charts)
-	for (const key in targets) {
-		let key_found = false;
+  for (let idx=0; idx<targetNames.length; idx++) {
+		let wasTargetNameFound = false;
 		for (let i=0; i<wellConfig.length; i++) {
-      if (wellConfig[i] == key) {
+      if (wellConfig[i] == targetNames[idx]) {
       	// Set up plot data & shared plot attributes:
 				data_dict = {	
-					name: key,
+					name: targetNames[idx],
 					type: "line",
 					group: g,
 					dataPoints: wellArray[i],
-		      color: targets[wellConfig[i]][0],
-					lineDashType: targets[wellConfig[i]][1]
+		      color: targetColors[idx],
+					lineDashType: "solid"
 				};
 				// Only show each gene target in the legend once:
-				if (!key_found) {
+				if (!wasTargetNameFound) {
 					data_dict.showInLegend = true;
-					key_found = true;
+					wasTargetNameFound = true;
 				}
 				plotInfo.push(data_dict);
       }
@@ -1135,13 +1196,13 @@ async function displayFilteredData(data) {
 function displayTTP() {
   document.getElementById("toggleTTP").innerHTML = "Group Wells";
   ttpBars = [];
-  for (const key in targets) {
+  for (let idx=0; idx<targetNames.length; idx++) {
 		for (let i=0; i<wellConfig.length; i++) {
-			if (wellConfig[i] == key) {
+			if (wellConfig[i] == targetNames[idx]) {
 				ttpBars.push({
 					y: ttpData[i],
-					label: key,
-					color: targets[key][0]
+					label: targetNames[idx],
+					color: targetColors[idx]
 				});
 			}
 		}
@@ -1201,11 +1262,11 @@ function displayTTPavgStdDev() {
 	// Calculate mean and standard deviation for each target:
   let dataPoints = [];
   let errorBars = [];
-  for (const key in targets) {
+  for (let idx=0; idx<targetNames.length; idx++) {
   	let vals = [];
   	let sum = 0;
 		for (let i=0; i<wellConfig.length; i++) {
-			if (wellConfig[i] == key) {
+			if (wellConfig[i] == targetNames[idx]) {
 				vals.push(ttpData[i]);
 			}
 		}
@@ -1213,9 +1274,9 @@ function displayTTPavgStdDev() {
 		stdev = stdDevArray(vals);
 		dataPoints.push({ 
 			y: mean,
-			label: key,
+			label: targetNames[idx],
 			mean: mean.toFixed(2),             // custom tooltip entry
-			color: targets[key][0]
+			color: targetColors[idx]
 		});
 		errorBars.push({
 			y: [mean-stdev, mean+stdev],
