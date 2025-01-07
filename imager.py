@@ -62,7 +62,9 @@ def add_ROIs(img):      # Add ROIs to a captured image
             print(roi['target'], roi['x'], roi['y'], flush=True)
             sys.stdout.flush()
             roi_lower_right = (roi['x'] + config.roi_width, roi['y'] + config.roi_height)
-            fill_color = hex_to_rgb(config.target_dict[roi['target']][0])  # convert "#rrggbb" to [R,G,B]
+            idx = config.target_names.find(roi['target'])
+            fill_color = hex_to_rgb(config.target_colors[idx])  # convert "#rrggbb" to [R,G,B]
+            # fill_color = hex_to_rgb(config.target_dict[roi['target']][0])  # convert "#rrggbb" to [R,G,B]
             fill_color.append(64)  # Add alpha channel for transparency
             draw.rectangle([(roi['x'],roi['y']), roi_lower_right], outline='#ffffff', fill=tuple(fill_color))   # Draw ROI
             font = ImageFont.truetype(font_path + "/" + "OpenSans.ttf", 9)         # Add well target text
