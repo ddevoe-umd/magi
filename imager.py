@@ -60,6 +60,10 @@ def add_ROIs(img):      # Add ROIs to a captured image
             # print(roi['target'], roi['x'], roi['y'], flush=True)
             # sys.stdout.flush()
             roi_lower_right = (roi['x'] + config.roi_width, roi['y'] + config.roi_height)
+
+            print(config.target_names, roi['target'], flush=True) )
+            sys.stdout.flush()
+
             idx = config.target_names.index(roi['target'])      # find index in target_names matching current ROI target
             
             print(config.target_names, roi['target'], config.target_names.index(roi['target'], flush=True) )
