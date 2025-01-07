@@ -47,7 +47,6 @@ var currentFileName;          // base data file name for most recent assay
 const startColor = "#3d8f13";   // start button color when active
 const stopColor = "#a82c25";    // stop button color when active
 
-var showAllWells = false;     // select TTP display mode (all wells vs. grouped)
 var ttpData = [];             // array to hold TTP results
 var filteredChart;            // chart to display filtered curves
 var ttpChartAll;              // chart to display all TTP values
@@ -213,14 +212,14 @@ window.onload = async function () {
   var period = document.getElementById('period-slider').value;  // Get sampling period
   document.getElementById('period-slider-text').innerHTML = `Period: ${period}s`;
   // reset imager parameters in case they were previously changed without Pi restart:
+  await onLoad();           // Do initial Python server housekeeping
+  await getFirstImage();    // Get initial image w/o ROIs
   imagerValuesToServer({
     'exposure-time': exposureTime,
     'analogue-gain': analogueGain,
     'red-gain': redGain,
     'blue-gain': blueGain
   });
-  await onLoad();           // Do initial Python server housekeeping
-  await getFirstImage();    // Get initial image w/o ROIs
   enableElements(["load","adjust","shutdown","reboot","getImage","getLog","clearLog"]);
   // set up arrow key adjustments for sliders:
   sliderKeySetup('cut-time-slider','cut-time-slider-text');    
@@ -376,8 +375,8 @@ document.getElementById('hidden-card-file-input').addEventListener('change', asy
           if (filteredChart == null) {   // filteredChart has not yet been displayed,
             displayFilteredData([[]]);}  // so display chart with empty data
           dimChart(filteredChart);
-          displayTTP();
-          dimChart(ttpChartAll);
+          displayTTPGrouped();
+          dimChart(ttpChartGrouped);
           
           // Get a new image with ROIs matched to the assay card:
           await getImage();
@@ -437,6 +436,11 @@ async function imagerValuesToServer(values) {
 // Open a modal dialog to allow user to change imager settings:
 async function adjustImager() {
   const modalWindow = window.open('', 'ModalWindow', 'width=300,height=170');
+  // Check if window is already open:
+  if (modalWindow.document.getElementById('exposure-time')) {
+    modalWindow.focus();
+    return;   
+  }
   modalWindow.document.write(`
     <!DOCTYPE html>
     <html>
@@ -775,7 +779,7 @@ async function analyzeData() {
 		    ttpData = data[0];  // ttpData is global
 		    let xy = data[1];
 		    displayFilteredData(xy);
-				displayTTP();
+				displayTTPGrouped();
 			  enableElements(["savefiltered","toggleTTP","saveTTP"]);
 			}
 		}
@@ -1104,7 +1108,7 @@ async function startAssay() {
 	log("startAssay() called");
 	log(`Starting assay with ${cardFilename}`, color="#fff", fontSize=10, bold=false, lines=true);
   // Update interface elements appropriately:
-  document.getElementById("toggleTTP").innerHTML = "Group wells";
+  document.getElementById("toggleTTP").innerHTML = "Show All Wells";  // Always start with grouped TTP values
   document.getElementById('stop').style.backgroundImage = `linear-gradient(${stopColor}, ${stopColor})`;
   document.getElementById('stop').style.borderWidth = "1px";
 	enableElements(["stop"]);
@@ -1116,8 +1120,11 @@ async function startAssay() {
   if (filteredChart) {
   	log("Hiding filtered data & TTP charts");
     dimChart(filteredChart);
-    dimChart(ttpChartAll);
-    if (ttpChartGrouped) {
+    // Dim TTP chart based on which chart option (if any) was displayed from previous assay:
+    const nextTTPMode = document.getElementById("toggleTTP").innerHTML; // "Show All Wells" or "Show Grouped"
+    if (nextTTPMode=="Show Grouped" && ttpChartAll) {
+      dimChart(ttpChartAll);
+    } else if (nextTTPMode=="Show All Wells" && ttpChartGrouped) {
       dimChart(ttpChartGrouped);
     }
   }
@@ -1194,7 +1201,6 @@ async function displayFilteredData(data) {
 
 // Display TTP for all wells individually:
 function displayTTP() {
-  document.getElementById("toggleTTP").innerHTML = "Group Wells";
   ttpBars = [];
   for (let idx=0; idx<targetNames.length; idx++) {
 		for (let i=0; i<wellConfig.length; i++) {
@@ -1257,8 +1263,7 @@ function stdDevArray(arr) {
 
 
 // Display mean & std dev TTP for each target group:
-function displayTTPavgStdDev() {
-	document.getElementById("toggleTTP").innerHTML = "Show All Wells";
+function displayTTPGrouped() {
 	// Calculate mean and standard deviation for each target:
   let dataPoints = [];
   let errorBars = [];
@@ -1282,7 +1287,7 @@ function displayTTPavgStdDev() {
 			y: [mean-stdev, mean+stdev],
 			stdev: stdev.toFixed(2),           // custom tooltip entry
 			rsd: (100*stdev/mean).toFixed(2),  // custom tooltip entry
-			label: key
+			label: targetNames[idx]
 		});
   }
   // Set up chart:
@@ -1343,13 +1348,15 @@ function displayTTPavgStdDev() {
 
 // Switch between TTP display modes (all wells vs. grouped wells):
 function toggleTTP() {
-	if (showAllWells) { 
-		displayTTP(); 
-	}
-	else {
-		displayTTPavgStdDev();
-	}
-	showAllWells = !showAllWells;
+  nextTTPMode = document.getElementById("toggleTTP").innerHTML;
+
+  if (nextTTPMode=="Show Grouped") {
+    displayTTPGrouped();
+    document.getElementById("toggleTTP").innerHTML = "Show All Wells";
+  } else if (nextTTPMode=="Show All Wells" && ttpChartGrouped) {
+    displayTTP(); 
+    document.getElementById("toggleTTP").innerHTML = "Show Grouped";
+  }
 }
 
 
