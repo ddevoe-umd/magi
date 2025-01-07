@@ -119,7 +119,7 @@ function log(message, color=null, fontSize=null, bold=false, lines=false) {
 
 // Custom notification window:
 function notification(message) {
-    const win = document.createElement('div');        // create the window container
+    let win = document.createElement('div');        // create the window container
     win.className = 'notification-window';
     win.style.opacity = '0.9';
     const content = document.createElement('div');    // create the content container
@@ -318,7 +318,6 @@ document.getElementById('hidden-card-file-input').addEventListener('change', asy
         // 1D array for ease of plotting with CanvasJS:
         wellConfig = [];
         for (row of cardJson["well_config"]) for (ele of row) wellConfig.push(ele);
-        log(`wellConfig.length = ${wellConfig.length}`);
 			  // Display & dim initial empty charts:
         if (filteredChart == null) {   // filteredChart has not yet been displayed,
           displayFilteredData([[]]);}  // so display chart with empty data
@@ -326,8 +325,7 @@ document.getElementById('hidden-card-file-input').addEventListener('change', asy
 			  displayTTP();
 			  dimChart(ttpChartAll);
 			  enableElements(["start","period-slider"]);	// Let user start the assay
-			  log("Assay card loaded:");
-        log(wellConfig);
+			  log("Assay card loaded");
         // Display the assay card name in the start button:
         const html = `Run card:<br>${cardFilename.substring(0, cardFilename.length-5)}`;
         document.getElementById('start').innerHTML = html;
@@ -716,7 +714,6 @@ async function analyzeData() {
 				let data = JSON.parse(results);
 		    ttpData = data[0];  // ttpData is global
 		    let xy = data[1];
-        log(`xy.length = ${xy.length}`);
 		    displayFilteredData(xy);
 				displayTTP();
 			  enableElements(["savefiltered","toggleTTP","saveTTP"]);
@@ -1125,7 +1122,6 @@ async function displayFilteredData(data) {
 	filteredChart.options.title.text = "Fluorescence (filtered)";
 	for (let i=0; i<wellArray.length; i++) {
 		for (let j=0; j<data[0].length; j++) {
-      log(`${i}, ${j}`);
 			wellArray[i].push(data[i][j]);
 		}
 	}
