@@ -37,7 +37,7 @@ def setup_ROIs():
         cols = config.well_cols = len(config.well_config[0])
         for c in range(cols):
             config.ROIs.append( {
-                "target": config.well_config[r][c],
+                "target": str(config.well_config[r][c]),
                 "x": config.roi_upper_left[0] + config.roi_spacing_x * c,
                 "y": config.roi_upper_left[1] + config.roi_spacing_y * r
                 } )
@@ -59,13 +59,13 @@ def add_ROIs(img):      # Add ROIs to a captured image
         for roi in config.ROIs:
             roi_lower_right = (roi['x'] + config.roi_width, roi['y'] + config.roi_height)
 
-            idx = config.target_names.index(str(roi['target']))      # find index in target_names matching current ROI target
+            idx = config.target_names.index(roi['target'])      # find index in target_names matching current ROI target
 
             print(config.target_names, roi['target'], type(roi['target']), str(roi['target']), idx, config.target_colors[idx], flush=True) 
             sys.stdout.flush()
 
             
-            fill_color = hex_to_rgb(config.target_colors[idx])  # convert "#rrggbb" to [R,G,B]
+            fill_color = hex_to_rgb(str(config.target_colors[idx]))  # convert "#rrggbb" to [R,G,B]
             # fill_color = hex_to_rgb(config.target_dict[roi['target']][0])  # convert "#rrggbb" to [R,G,B]
             fill_color.append(64)  # Add alpha channel for transparency
             draw.rectangle([(roi['x'],roi['y']), roi_lower_right], outline='#ffffff', fill=tuple(fill_color))   # Draw ROI
