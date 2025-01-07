@@ -64,7 +64,7 @@ def add_ROIs(img):      # Add ROIs to a captured image
             print(config.target_names, roi['target'], type(roi['target']), str(roi['target']), flush=True) 
             sys.stdout.flush()
 
-            idx = config.target_names.index(string(roi['target']))      # find index in target_names matching current ROI target
+            idx = config.target_names.index(str(roi['target']))      # find index in target_names matching current ROI target
             
             fill_color = hex_to_rgb(config.target_colors[idx])  # convert "#rrggbb" to [R,G,B]
             # fill_color = hex_to_rgb(config.target_dict[roi['target']][0])  # convert "#rrggbb" to [R,G,B]
