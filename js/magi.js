@@ -212,7 +212,6 @@ window.onload = async function () {
   var period = document.getElementById('period-slider').value;  // Get sampling period
   document.getElementById('period-slider-text').innerHTML = `Period: ${period}s`;
   // reset imager parameters in case they were previously changed without Pi restart:
-  await onLoad();           // Do initial Python server housekeeping
   await getFirstImage();    // Get initial image w/o ROIs
   imagerValuesToServer({
     'exposure-time': exposureTime,
@@ -247,16 +246,17 @@ async function getFirstImage() {
   let win = notification("Searching for MAGI server");
   while (true) {
   	try {
+      await onLoad();  // Do initial Python server housekeeping
       const awaitResult = await getImage();
 	  	win.remove();    // close notification window
 	  	return;     
-	  } catch (e) {  // getImage() timed out
+	  } catch (e) {  // timed out...
       log(e)
       if (e.message=="Load failed") {   // timeout error
-      	log("getImage() attempt failed, retrying...");
+      	log("onLoad() / getImage() attempt failed, retrying...");
       }
       else {   // some other kind of error, wait 5 sec before retrying
-        log("getImage() load error (not timeout), retrying in 5 sec...");
+        log("onLoad() / getImage() load error (not timeout), retrying in 5 sec...");
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
 	  }
@@ -613,15 +613,15 @@ async function endAssay() {
 		let message = 'end';
 	  let data = '';
 		let response = await queryServer(JSON.stringify([message,data]));
+    results = await response.text();
+    log("Server response:")
+    log(results);
 		if (response.ok) {
 			// Update interface elements appropriately:
       document.getElementById('stop').style.backgroundImage = "linear-gradient(#464d55, #25292e)";
       document.getElementById('stop').style.borderWidth = "0px";
       enableElements(["saveraw","analyze","filter-slider","cut-time-slider","threshold-slider",
                       "shutdown","reboot","getLog","clearLog"]);
-      results = await response.text();
-			log("Server response:")
-			log(results);
 			currentFileName = results;
 	   	analyzeData();
 		}

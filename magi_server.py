@@ -95,7 +95,7 @@ class S(BaseHTTPRequestHandler):
         info = json.loads(post_dict['todo'])
         action = info[0]
         data = info[1]
-        print(f'{action}: {data}', flush=True)
+        #print(f'{action}: {data}', flush=True)
         
         if action == 'setupAssay':       # Update global variables from the assay card data
             config.card_filename = data[0]
