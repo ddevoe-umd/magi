@@ -13,3 +13,9 @@ card_filename = ""
 
 target_names = []       # list of all unique target names
 target_colors = []      # list of colors for each unique target
+
+# GPIO pins:
+PWM_PIN = 19			# Heater PWM
+FAN = 26				# Case fan power
+STATUS_LED_PIN = 4		# System status LED
+IMAGER_LED_PIN = 13		# Fluorescence LED

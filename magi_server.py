@@ -23,9 +23,6 @@ sys.path.append('/home/pi/magi')  # Add application path to the Python search pa
 logfile = "magi_server.log"       # Log file for stdio + stderr (see setup.sh)
 
 # PID:
-PWM_PIN = 19
-FAN = 26
-STATUS_LED_PIN = 13
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(STATUS_LED_PIN, GPIO.OUT)     # System status LED pin
 GPIO.setup(FAN, GPIO.OUT) 

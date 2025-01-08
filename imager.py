@@ -15,7 +15,6 @@ import config   # Cross-module global variables for all Python codes
 
 font_path = "/home/pi/magi/fonts"
 
-IMAGER_LED_PIN = 13    # status LED - value must be the same as in magi_server.py
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(IMAGER_LED_PIN, GPIO.OUT) 
 
