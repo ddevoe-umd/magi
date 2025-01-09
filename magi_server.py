@@ -24,10 +24,10 @@ logfile = "magi_server.log"       # Log file for stdio + stderr (see setup.sh)
 
 # PID:
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(STATUS_LED_PIN, GPIO.OUT)     # System status LED pin
-GPIO.setup(FAN, GPIO.OUT) 
-GPIO.setup(PWM_PIN, GPIO.OUT) 
-pwm = GPIO.PWM(PWM_PIN,490)
+GPIO.setup(config.STATUS_LED_PIN, GPIO.OUT)     # System status LED pin
+GPIO.setup(config.FAN, GPIO.OUT) 
+GPIO.setup(config.PWM_PIN, GPIO.OUT) 
+pwm = GPIO.PWM(config.PWM_PIN,490)
 pid = PID(Kp=12.635, Ki=1.0063, Kd=0, setpoint=0)     # Can add sample_time, output_limits, etc.
 pid.output_limits = (0,100)
 b_bias = 0.82                   # value for linear interpolation of temperature
@@ -233,7 +233,7 @@ def run_pid(stop_event):
             print(f'Exception in run_pid: {e}', flush=True)
 
 def start_pid():
-    GPIO.output(FAN, GPIO.HIGH)   # Turn on system fan
+    GPIO.output(config.FAN, GPIO.HIGH)   # Turn on system fan
     t = threading.Thread(target=run_pid, args=(stop_event,))    # Start the PID loop
     t.daemon = True
     t.start()
@@ -251,7 +251,7 @@ def run(port):
     imager.setup_camera(exposure_time_ms=50, analogue_gain=0.5, color_gains=(1.2,1.0))
     print("Camera setup done", flush=True)
     print("System ready", flush=True)
-    GPIO.output(STATUS_LED_PIN, GPIO.HIGH)  # turn LED on to indicate system is ready
+    GPIO.output(config.STATUS_LED_PIN, GPIO.HIGH)  # turn LED on to indicate system is ready
     try:
         httpd.serve_forever()     # blocking call
     except KeyboardInterrupt:

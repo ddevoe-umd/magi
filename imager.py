@@ -16,7 +16,7 @@ import config   # Cross-module global variables for all Python codes
 font_path = "/home/pi/magi/fonts"
 
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(IMAGER_LED_PIN, GPIO.OUT) 
+GPIO.setup(config.IMAGER_LED_PIN, GPIO.OUT) 
 
 # Image size:
 w = 640         # min of 64, max of 2592 for 5MP camera
@@ -121,10 +121,10 @@ def get_image_data():    # Extract fluorescence measurements from ROIs in image
     sys.stdout.flush()
     try:
         cam.start()
-        GPIO.output(IMAGER_LED_PIN, GPIO.LOW)     # Turn on LED
+        GPIO.output(config.IMAGER_LED_PIN, GPIO.HIGH)     # Turn on LED
         image = cam.capture_image("main")   # capture as PIL image
         cam.stop()
-        GPIO.output(IMAGER_LED_PIN, GPIO.HIGH)      # Turn off LED
+        GPIO.output(config.IMAGER_LED_PIN, GPIO.LOW)     # Turn off LED
         # Get average pixel value for each ROI:
         roi_avgs = []
         for roi in config.ROIs: 
@@ -142,10 +142,10 @@ def get_image_data():    # Extract fluorescence measurements from ROIs in image
 def get_image():       # Return a PIL image with colored ROI boxes for display
     try:
         cam.start()
-        GPIO.output(IMAGER_LED_PIN, GPIO.LOW)
+        GPIO.output(config.IMAGER_LED_PIN, GPIO.HIGH)
         image = cam.capture_image("main")   # capture as PIL image
         cam.stop()
-        GPIO.output(IMAGER_LED_PIN, GPIO.HIGH)
+        GPIO.output(config.IMAGER_LED_PIN, GPIO.LOW)
         # Add ROIs to image only if an assay card has been loaded:
         if len(config.well_config)>0:
             print(f'calling add_ROIs() for {config.well_config}', flush=True)
