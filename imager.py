@@ -168,7 +168,7 @@ def end_imaging():
     # move temp data contents to time-stamped file:
     output_filename = time.strftime("%Y%m%d_%Hh%Mm%Ss")
     os.rename(config.data_directory + '/temp_data.csv', config.data_directory + '/' + output_filename + '.csv')
-    clear_temp_file()
+    # clear_temp_file()  # This now happens in magi_server.py
     print(f'end_imaging() called, output_filename={output_filename}', flush=True)
     sys.stdout.flush()
     return(output_filename)
