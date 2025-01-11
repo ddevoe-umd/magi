@@ -66,8 +66,8 @@ def annotate_image(img, add_roi=False):      # Add timestamp and ROIs to image
 
         if add_roi:
 
-        print('C', flush=True)
-        sys.stdout.flush()
+            print('C', flush=True)
+            sys.stdout.flush()
 
             for roi in config.ROIs:
 
