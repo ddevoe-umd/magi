@@ -50,6 +50,8 @@ def annotate_image(img, add_roi=False):      # Add timestamp and ROIs to image
     print('annotate_image() called', flush=True)
     sys.stdout.flush()
     try:
+        print('A', flush=True)
+        sys.stdout.flush()
         img = img.convert('RGBA')   # convert captured image to support an alpha channel
         img_tmp = Image.new('RGBA', img.size, (255, 255, 255, 0))  # create new image with ROIs only
         draw = ImageDraw.Draw(img_tmp)
@@ -58,8 +60,20 @@ def annotate_image(img, add_roi=False):      # Add timestamp and ROIs to image
         draw.text((10,10), config.card_filename, font=font_timestamp)  
         draw.text((10,20), time.strftime("%Y%m%d_%Hh%Mm%Ss"), font=font_timestamp)
         # add ROIs:
+
+        print('B', flush=True)
+        sys.stdout.flush()
+
         if add_roi:
+
+        print('C', flush=True)
+        sys.stdout.flush()
+
             for roi in config.ROIs:
+
+                print('D...', flush=True)
+                sys.stdout.flush()
+
                 roi_lower_right = (roi['x'] + config.roi_width, roi['y'] + config.roi_height)
                 idx = config.target_names.index(roi['target'])      # find index in target_names matching current ROI targe
                 fill_color = hex_to_rgb(config.target_colors[idx])  # convert "#rrggbb" to [R,G,B]
@@ -68,12 +82,16 @@ def annotate_image(img, add_roi=False):      # Add timestamp and ROIs to image
                 font = ImageFont.truetype(font_path + "/" + "OpenSans.ttf", 9)         # Add well target text
                 text_position = (roi['x'] + config.roi_width + 1, roi['y'])
                 draw.text(text_position, roi['target'],'#ffffff',font=font)
+        
+        print('E', flush=True)
+        sys.stdout.flush()
+
         img_new = Image.alpha_composite(img, img_tmp)  # composite captured & ROI images
         img = None
         img_tmp = None
         return(img_new)
     except Exception as e:
-        print('Exception in get_image():', flush=True)
+        print('Exception in annotate_image():', flush=True)
         print(f'{type(e)}: {e}', flush=True)
 
 
