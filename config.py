@@ -9,6 +9,8 @@ roi_spacing_x = 0        # spacing between ROI centers
 roi_spacing_y = 0        
 ROIs = []                # list of upper left corners for all ROIs
 
+# File information:
+data_directory = '/path/to/ramdisk'
 card_filename = ""
 
 target_names = []       # list of all unique target names

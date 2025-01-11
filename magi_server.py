@@ -19,6 +19,8 @@ from gpiozero import MCP3008
 
 import config   # Cross-module global variables for all Python codes
 
+# import objgraph # temp module for tracking memory leaks
+
 sys.path.append('/home/pi/magi')  # Add application path to the Python search path
 logfile = "magi_server.log"       # Log file for stdio + stderr (see setup.sh)
 
@@ -94,6 +96,9 @@ class S(BaseHTTPRequestHandler):
         data = info[1]
         #print(f'{action}: {data}', flush=True)
         
+        # objgraph.show_most_common_types()  # check memory use
+        # sys.stdout.flush()
+
         if action == 'setupAssay':       # Update global variables from the assay card data
             config.card_filename = data[0]
             card_data = data[1]
@@ -114,13 +119,14 @@ class S(BaseHTTPRequestHandler):
         if action == 'onLoad':           # Housekeeping on starting application
             results = clear_globals()              # clear all global variables
             self.wfile.write(results.encode('utf-8'))
-        if action == 'start':            # Start the PID loop for temp control
-            imager.clear_temp_file()     # Clear temp data file (if "end assay" not hit last run)
+        if action == 'start':    # Start the PID loop for temp control
+            clear_temp_file()    # Clear temp data file (if "end assay" not hit last run)
             start_pid()
             results = "PID thread started"
             self.wfile.write(results.encode('utf-8'))
         if action == 'getImage':         # Get an image of the chip with colored ROIs
-            results = imager.get_image()
+            add_ROIs = data
+            results = imager.get_image(add_ROIs)
             self.wfile.write(results.encode('utf-8'))
         if action == 'getImageData':          # Capture & analyze single camera image
             results = imager.get_image_data()
@@ -165,6 +171,11 @@ class S(BaseHTTPRequestHandler):
 
     def log_message(self, format, *args):  # Suppress server output
         return
+
+# Delete contents of the temp data file:
+def clear_temp_file():
+    with open(config.data_directory + '/temp_data.csv', 'w') as f:
+        pass     
 
 # Clear globals in config.py:
 def clear_globals():
@@ -218,7 +229,7 @@ def run_pid(stop_event):
             values = [x*1023 for x in value_raw]
                 
             # Change the duty cycle based on the ADC reading    
-            duty_cycle = pid(b_bias*cali_fun(values[1] -  values[0]) + (1-b_bias)*cali_fun(values[2] -  values[0]))
+            duty_cycle = pid(b_bias*cali_fun(values[1] - values[0]) + (1-b_bias)*cali_fun(values[2] - values[0]))
             pwm.ChangeDutyCycle(duty_cycle)
     
             # Store values every 50ms to use for plotting
@@ -227,7 +238,7 @@ def run_pid(stop_event):
                 times += [(ptrd - start_time)/60e9]
                 board += [cali_fun(values[1] -  values[0])]
                 chip += [cali_fun(values[2] -  values[0])]
-                well_temp = b_bias*cali_fun(values[1] -  values[0]) + (1-b_bias)*cali_fun(values[2] -  values[0])
+                well_temp = b_bias*cali_fun(values[1] - values[0]) + (1-b_bias)*cali_fun(values[2] - values[0])
                 well += [well_temp]
         except Exception as e:
             print(f'Exception in run_pid: {e}', flush=True)

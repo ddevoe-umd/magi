@@ -47,6 +47,10 @@ var currentFileName;          // base data file name for most recent assay
 const startColor = "#3d8f13";   // start button color when active
 const stopColor = "#a82c25";    // stop button color when active
 
+const logErrorColor = "#FF0000";
+const logInfoColor = "#FFDE21";
+const logOkColor = "#00FF00";
+
 var ttpData = [];             // array to hold TTP results
 var filteredChart;            // chart to display filtered curves
 var ttpChartAll;              // chart to display all TTP values
@@ -172,7 +176,7 @@ async function getWakeLock() {
 		wakeLock = await navigator.wakeLock.request('screen');
 		log('Wake Lock acquired');
 	} catch(err) {
-		log(`Error acquiring wake lock: ${err}`);
+		log(`Error acquiring wake lock: ${err}`, color=logErrorColor, fontsize=null, bold=false, lines=false);
 	}
 }
 
@@ -186,9 +190,8 @@ function enableElements(elements) {
 function disableAllElements() {
 	const allElements = ["load","start","stop","saveraw","adjust","period-slider","analyze",
 								"filter-slider","cut-time-slider", "threshold-slider", 
-                "toggleTTP","savefiltered","saveTTP","getImage","reboot",
+                "toggleTTP","savefiltered","saveTTP","getImage","add-rois","reboot",
                 "shutdown","getLog","clearLog"];
-	log(allElements);
 	allElements.forEach(e => document.getElementById(e).disabled = true);
 }
 
@@ -235,7 +238,7 @@ async function onLoad() {
       log("Server response:")
       log(results);
     } else {
-      log("Server response error in onLoad()");
+      log("Server response error in onLoad()", color=logInfoColor, fontsize=null, bold=false, lines=false);
     }
 }
 
@@ -255,9 +258,9 @@ async function getFirstImage() {
       if (e.message=="Load failed") {   // timeout error
       	log("onLoad() / getImage() attempt failed, retrying...");
       }
-      else {   // some other kind of error, wait 5 sec before retrying
-        log("onLoad() / getImage() load error (not timeout), retrying in 5 sec...");
-        await new Promise(resolve => setTimeout(resolve, 5000));
+      else {   // some other kind of error, wait before retrying
+        log("onLoad() / getImage() attempt failed, retrying...");
+        await new Promise(resolve => setTimeout(resolve, 10000));
       }
 	  }
 	}
@@ -357,10 +360,8 @@ document.getElementById('hidden-card-file-input').addEventListener('change', asy
         // Extract an array with all unique targets:
         const uniqueTargetSet = new Set(wellConfig);
         targetNames = Array.from(uniqueTargetSet);
-        log(targetNames);
         // Set up plot colors for unique targets:
         targetColors = generatePlotColors(targetNames.length);
-        log(targetColors);
         
         // Contact the server to set up remote assay info (ROIs, well config etc.):
         let message = "setupAssay";
@@ -378,7 +379,8 @@ document.getElementById('hidden-card-file-input').addEventListener('change', asy
           displayTTPGrouped();
           dimChart(ttpChartGrouped);
           
-          // Get a new image with ROIs matched to the assay card:
+          // Get a new image (with ROIs matched to the assay card if ROI checkbox selected):
+          enableElements(["add-rois"]);
           await getImage();
 
           enableElements(["start","period-slider"]);  // Let user start the assay
@@ -399,11 +401,11 @@ document.getElementById('hidden-card-file-input').addEventListener('change', asy
       }
     };
     reader.onerror = function () {
-      log('Read error (check assay card format)');
+      log('Read error (check assay card format)', color=logErrorColor, fontsize=7, bold=false, lines=false);
     };
     reader.readAsText(file);
   } else {
-    log('Please select a valid .card file');
+    log('Select a valid .card file', color=logErrorColor, fontsize=7, bold=false, lines=false);
   }
 });
 
@@ -420,8 +422,8 @@ async function imagerValuesToServer(values) {
     Analog gain: ${values["analogue-gain"]}<br>
     Red channel gain: ${redGain}<br>
     Blue channel gain: ${blueGain}`,
-    color='#FFDE21', fontsize=7, bold=false, lines=true
-    );
+    color=logInfoColor, fontsize=7, bold=false, lines=true
+  );
   // Ask server to adjust camera settings:
   log("Adjusting imager settings...");
   let message = 'adjust';
@@ -429,7 +431,7 @@ async function imagerValuesToServer(values) {
   let response = await queryServer(JSON.stringify([message,data]));
   if (response.ok) {
     results = await response.text();
-    log(results, color='#00ff00', fontsize=7, bold=false, lines=false);
+    log(results, color=logOkColor, fontsize=7, bold=false, lines=false);
   }
 }
 
@@ -627,7 +629,7 @@ async function endAssay() {
 		}
 	}
 	else {
-			log("endAssay() cancelled");
+			log("endAssay() cancelled", color=logInfoColor, fontsize=7, bold=false, lines=true);
 	}
 }
 
@@ -647,21 +649,23 @@ async function getImageData() {
     		return(newData);
     	}
     } catch(e) {
-      log(`Error in getImageData: ${e}`);
+      log(`Error in getImageData: ${e}`, color=logErrorColor, fontsize=7, bold=false, lines=true
+);
     }
   }
 }
 
+
+// Get an image, optionally with ROIs added (if checkbox selected):
 async function getImage() {
 	log("getImage() called");
   document.getElementById('image').style.backgroundColor = 'white';
 	let message = 'getImage';
-	//let data = [cardFilename, wellConfig, targets];  // info for image ROIs etc.
-  let data = "";
+  let data = document.getElementById('add-rois').checked;  // status of checkbox to show ROIs in image
   let response = await queryServer(JSON.stringify([message,data]));
   if (response.ok) {
 		results = await response.text();
-		log("Image data received")
+		log("Image data received", color=logOkColor, fontsize=null, bold=false, lines=false);
 		const base64Image = results;
 		// Display the image:
 		img.src = base64Image;
@@ -772,7 +776,8 @@ async function analyzeData() {
 		  // raw image data contains too many zero values:
 		  if (results.includes("NaN")) {
 		  	log("NaN in filter data (check if too many zero brightness values)",
-          color="#dd0000", fontSize=null, bold=false, lines=false);
+          color=logErrorColor, fontSize=null, bold=false, lines=false
+        );
 		  }
 		  else {
 				let data = JSON.parse(results);
@@ -781,11 +786,15 @@ async function analyzeData() {
 		    displayFilteredData(xy);
 				displayTTPGrouped();
 			  enableElements(["savefiltered","toggleTTP","saveTTP"]);
+        log("Analysis complete",
+          color=logOkColor, fontSize=null, bold=false, lines=false
+        );
 			}
 		}
 		else { 
 			log("No filter data returned: check # data points (>21 required)",
-        color="#dd0000", fontSize=null, bold=false, lines=false);
+        color=logErrorColor, fontSize=null, bold=false, lines=false
+      );
 		}
 	}
   win.remove();    // Remove the notification window
@@ -840,7 +849,8 @@ async function shutdown() {
 		if (response.ok) {} // Pi should shut down, so no response
 	}
 	else {
-		log("shutdown cancelled");
+		log("shutdown cancelled", color=logInfoColor, fontsize=null, bold=false, lines=false
+);
 	}
 }
 
@@ -860,7 +870,8 @@ async function reboot() {
 		getFirstImage(); 
 	}
 	else {
-		log("reboot cancelled");
+		log("reboot cancelled", color=logInfoColor, fontsize=null, bold=false, lines=false
+);
 	}
 }
 
@@ -875,9 +886,9 @@ async function getServerLog() {
 		let responseText = await response.text();
 		responseText = responseText.replace(/\\n/g, "<br>");  // repace newline with html break
 		responseText = responseText.replace(/^"|"$/g, '');    // strip double quotes @ start and end
-		log("Start Server Log", color="#fff", fontSize=10, bold=false, lines=true);
+		log("Start Server Log", color="#fff", fontSize=9, bold=false, lines=true);
 		log(responseText, color="#fff", fontSize=8, bold=true); 
-    log("End Server Log", color="#fff", fontSize=10, bold=false, lines=true);
+    log("End Server Log", color="#fff", fontSize=9, bold=false, lines=true);
 	} 
 }
 
@@ -896,7 +907,7 @@ async function clearServerLog() {
 		} 
 	}
 	else {
-		log("clearServerLog() cancelled");
+		log("clearServerLog() cancelled", color=logInfoColor, fontsize=null, bold=false, lines=false);
 	}
 }
 
@@ -1106,7 +1117,7 @@ function dimChart(chart) {
 // Start a new assay:
 async function startAssay() {
 	log("startAssay() called");
-	log(`Starting assay with ${cardFilename}`, color="#fff", fontSize=10, bold=false, lines=true);
+	log(`Starting assay with ${cardFilename}`, color="#fff", fontSize=9, bold=false, lines=true);
   // Update interface elements appropriately:
   document.getElementById("toggleTTP").innerHTML = "Show All Wells";  // Always start with grouped TTP values
   document.getElementById('stop').style.backgroundImage = `linear-gradient(${stopColor}, ${stopColor})`;
@@ -1142,7 +1153,8 @@ async function startAssay() {
   document.getElementById('filter-slider').dispatchEvent(inputEvent);
   document.getElementById('cut-time-slider').value = 0;
   document.getElementById('cut-time-slider').dispatchEvent(inputEvent);
-  log("Curve analysis parameters reset");
+  log("Curve analysis parameters reset",    color=logInfoColor, fontsize=7, bold=false, lines=true
+);
 
 	// Start the assay:
   isRunning = true;
@@ -1152,7 +1164,7 @@ async function startAssay() {
 
   async function updateChart() {
     if (!isRunning) {
-      log("Assay stopped");
+      log("Assay stopped", color=logInfoColor, fontsize=null, bold=false, lines=false);
       return;
     }
     let now = Date.now();   

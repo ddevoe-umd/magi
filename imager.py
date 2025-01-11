@@ -25,8 +25,6 @@ res = (w,h)
 
 cam = Picamera2() 
 
-data_directory = '/path/to/ramdisk'
-
 # Create a flat list of ROI dicts from 2D well_config array:
 def setup_ROIs():
     print('setup_ROIs() called', flush=True)
@@ -48,26 +46,31 @@ def hex_to_rgb(h):   # convert "#rrggbb" to [R,G,B]
     return [int(h[i:i+2], 16) for i in (1, 3, 5)]
 
 
-def add_ROIs(img):      # Add ROIs to a captured image
-    print('add_ROIs() called', flush=True)
+def annotate_image(img, add_roi=False):      # Add timestamp and ROIs to image
+    print('annotate_image() called', flush=True)
     sys.stdout.flush()
     try:
         img = img.convert('RGBA')   # convert captured image to support an alpha channel
-        img_roi = Image.new('RGBA', img.size, (255, 255, 255, 0))  # create new image with ROIs only
-        draw = ImageDraw.Draw(img_roi)
-        for roi in config.ROIs:
-            roi_lower_right = (roi['x'] + config.roi_width, roi['y'] + config.roi_height)
-            idx = config.target_names.index(roi['target'])      # find index in target_names matching current ROI targe
-            fill_color = hex_to_rgb(config.target_colors[idx])  # convert "#rrggbb" to [R,G,B]
-            fill_color.append(64)                               # Add alpha channel for transparency
-            draw.rectangle([(roi['x'],roi['y']), roi_lower_right], outline='#ffffff', fill=tuple(fill_color))   # Draw ROI
-            font = ImageFont.truetype(font_path + "/" + "OpenSans.ttf", 9)         # Add well target text
-            text_position = (roi['x'] + config.roi_width + 1, roi['y'])
-            draw.text(text_position, roi['target'],'#ffffff',font=font)
+        img_tmp = Image.new('RGBA', img.size, (255, 255, 255, 0))  # create new image with ROIs only
+        draw = ImageDraw.Draw(img_tmp)
+        # add timestamp:
         font_timestamp = ImageFont.truetype(font_path + "/" + "OpenSans.ttf", 12) 
         draw.text((10,10), config.card_filename, font=font_timestamp)  
         draw.text((10,20), time.strftime("%Y%m%d_%Hh%Mm%Ss"), font=font_timestamp)
-        img_new = Image.alpha_composite(img, img_roi)  # composite captured & ROI images
+        # add ROIs:
+        if add_roi:
+            for roi in config.ROIs:
+                roi_lower_right = (roi['x'] + config.roi_width, roi['y'] + config.roi_height)
+                idx = config.target_names.index(roi['target'])      # find index in target_names matching current ROI targe
+                fill_color = hex_to_rgb(config.target_colors[idx])  # convert "#rrggbb" to [R,G,B]
+                fill_color.append(64)                               # Add alpha channel for transparency
+                draw.rectangle([(roi['x'],roi['y']), roi_lower_right], outline='#ffffff', fill=tuple(fill_color))   # Draw ROI
+                font = ImageFont.truetype(font_path + "/" + "OpenSans.ttf", 9)         # Add well target text
+                text_position = (roi['x'] + config.roi_width + 1, roi['y'])
+                draw.text(text_position, roi['target'],'#ffffff',font=font)
+        img_new = Image.alpha_composite(img, img_tmp)  # composite captured & ROI images
+        img = None
+        img_tmp = None
         return(img_new)
     except Exception as e:
         print('Exception in get_image():', flush=True)
@@ -94,11 +97,11 @@ def adjust_settings(exposure_time_ms, analogue_gain, color_gains):
         return('error in adjust_settings()')
 
 def setup_camera(exposure_time_ms=50, analogue_gain=0.5, color_gains=(1.2,1.0)):    # Set up camera
-    config = cam.create_still_configuration(main={"size": res})
-    cam.configure(config)
+    cam_config = cam.create_still_configuration(main={"size": res})
+    cam.configure(cam_config)
     adjust_settings(exposure_time_ms, analogue_gain, color_gains)
     print('Picamera2 setup complete', flush=True)
-    os.makedirs(data_directory, exist_ok=True)
+    os.makedirs(config.data_directory, exist_ok=True)
 
 def roi_avg(image, roi):   # Return average pixel values in ROI
     r,b,g = 0,0,0
@@ -131,44 +134,40 @@ def get_image_data():    # Extract fluorescence measurements from ROIs in image
             roi_avgs.append(roi_avg(image, roi)[1])  # green channel
         # Add timestamp & ROI averages to temp data file:
         timestamp = [int(time.time())]        # 1st entry is the time stamp
-        with open(data_directory + '/temp_data.csv', 'a') as f:
+        with open(config.data_directory + '/temp_data.csv', 'a') as f:
             writer = csv.writer(f, delimiter=',', lineterminator='\n')
             writer.writerow(timestamp + roi_avgs)
+        image = None
         return(roi_avgs)
     except Exception as e:
         print(f'Exception in get_image_data(): {e}', flush=True)
         return(f'Exception in get_image_data(): {e}')
 
-def get_image():       # Return a PIL image with colored ROI boxes for display
+# Return a PIL image with time stamp (add colored ROI boxes if add_ROIs true):
+def get_image(add_ROIs):
     try:
         cam.start()
         GPIO.output(config.IMAGER_LED_PIN, GPIO.HIGH)
         image = cam.capture_image("main")   # capture as PIL image
         cam.stop()
         GPIO.output(config.IMAGER_LED_PIN, GPIO.LOW)
-        # Add ROIs to image only if an assay card has been loaded:
-        if len(config.well_config)>0:
-            print(f'calling add_ROIs() for {config.well_config}', flush=True)
-            sys.stdout.flush()
-            image = add_ROIs(image) 
-        buffer = BytesIO()                   # create a buffer to hold the image
-        image.save(buffer, format="PNG") # Convert image to PNG
+        image = annotate_image(image, add_ROIs)
+        buffer = BytesIO()                 # create a buffer to hold the image
+        image.save(buffer, format="PNG")   # Convert image to PNG
         png_image = buffer.getvalue()
         png_base64 = base64.b64encode(png_image).decode('utf-8')  # Encode as base64
+        image = None
+        png_image = None
         return(f"data:image/png;base64,{png_base64}")
+
     except Exception as e:
         print(f'Exception in get_image(): {e}', flush=True)
         return(f'Exception in get_image(): {e}')
 
-# Delete contents of the temp data file:
-def clear_temp_file():
-    with open(data_directory + '/temp_data.csv', 'w') as f:
-        pass     
-
 def end_imaging():
     # move temp data contents to time-stamped file:
     output_filename = time.strftime("%Y%m%d_%Hh%Mm%Ss")
-    os.rename(data_directory + '/temp_data.csv', data_directory + '/' + output_filename + '.csv')
+    os.rename(config.data_directory + '/temp_data.csv', config.data_directory + '/' + output_filename + '.csv')
     clear_temp_file()
     return(output_filename)
 
@@ -179,7 +178,7 @@ def analyze_data(filename, filter_factor, cut_time, threshold):
     #   [ [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 1
     #     [{x: t1, y: val1}, {x: t2, y: val2}, ...]  <- well 2
     #      ... ]                                     <- etc
-    results = filter(data_directory + '/' + filename + '.csv', float(filter_factor), float(cut_time), int(threshold)) 
+    results = filter(config.data_directory + '/' + filename + '.csv', float(filter_factor), float(cut_time), int(threshold)) 
 
     # Save filtered data to csv file:
     data = results[1]
@@ -187,7 +186,7 @@ def analyze_data(filename, filter_factor, cut_time, threshold):
     columns = []
     for well_data in data:
         columns.append([entry["y"] for entry in well_data])
-    with open(data_directory + '/' + filename + '_filt.csv', 'a') as f:
+    with open(config.data_directory + '/' + filename + '_filt.csv', 'a') as f:
         #fieldnames = ["time (min)", "fluorescence"]
         writer = csv.writer(f)
         headers = ["time (min)"] + [f"well {i}" for i in range(len(columns))]

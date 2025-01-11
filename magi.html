@@ -10,6 +10,7 @@
 	<link rel="stylesheet" href="css/slider.css">
 	<link rel="stylesheet" href="css/spinner.css">
 	<link rel="stylesheet" href="css/title-bar.css">
+	<link rel="stylesheet" href="css/toggle.css">
 
 	<!-- "assay running" animation options: -->
 	<link rel="stylesheet" href="css/dots.css"> <!-- not currently used -->
@@ -108,7 +109,16 @@
 		<div class="log-image-row">
 			<div class="side-button-container"> 
 				<button id="getImage" class="button" role="button" onclick="getImage()"> Get Image </button>
-				<button id="adjust" class="button" onclick="adjustImager()">Adjust Imager</button>
+				
+				<div class="toggle-container">
+					<span class="toggle-text">Add ROIs: </span>
+					<div class="toggle-switch">
+						<input type="checkbox" class="toggle-input" id="add-rois" checked="true">
+						<label class="toggle-label" id="add-rois-label" for="add-rois"></label>
+					</div>
+				</div>
+
+			  	<button id="adjust" class="button" onclick="adjustImager()">Adjust Imager</button>
 			  	<button id="getLog" class="button" role="button" onclick="getServerLog()"> Get Log </button>
 			  	<button id="clearLog" class="button" role="button" onclick="clearServerLog()"> Clear Log </button>
 			  	<button id="reboot" class="button" role="button" onclick="reboot()"> Reboot </button>
