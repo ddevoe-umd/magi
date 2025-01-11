@@ -50,19 +50,44 @@ def annotate_image(img, add_roi=False):      # Add timestamp and ROIs to image
     print('annotate_image() called', flush=True)
     sys.stdout.flush()
     try:
-        print('A', flush=True)
+        print('A1', flush=True)
         sys.stdout.flush()
+        
+        print('A2', flush=True)
+        sys.stdout.flush()
+
         img = img.convert('RGBA')   # convert captured image to support an alpha channel
+
+        print('B1', flush=True)
+        sys.stdout.flush()
+
         img_tmp = Image.new('RGBA', img.size, (255, 255, 255, 0))  # create new image with ROIs only
+
+
+        print('B2', flush=True)
+        sys.stdout.flush()
+
         draw = ImageDraw.Draw(img_tmp)
+
+
+        print('B3', flush=True)
+        sys.stdout.flush()
+
         # add timestamp:
         font_timestamp = ImageFont.truetype(font_path + "/" + "OpenSans.ttf", 12) 
+
+
+        print('B4', flush=True)
+        sys.stdout.flush()
+
         draw.text((10,10), config.card_filename, font=font_timestamp)  
+
+
+        print('B5', flush=True)
+        sys.stdout.flush()
+
         draw.text((10,20), time.strftime("%Y%m%d_%Hh%Mm%Ss"), font=font_timestamp)
         # add ROIs:
-
-        print('B', flush=True)
-        sys.stdout.flush()
 
         if add_roi:
 
