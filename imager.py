@@ -52,9 +52,13 @@ def annotate_image(img, add_roi=False):      # Add timestamp and ROIs to image
         img_tmp = Image.new('RGBA', img.size, (255, 255, 255, 0))  # create new image with ROIs only
         draw = ImageDraw.Draw(img_tmp)
         # add timestamp:
-        font_timestamp = ImageFont.truetype(config.font_directory + "/" + "OpenSans.ttf", 12) 
-        draw.text((10,10), config.card_filename, font=font_timestamp)  
-        draw.text((10,20), time.strftime("%Y%m%d_%Hh%Mm%Ss"), font=font_timestamp)
+        font = ImageFont.truetype(config.font_directory + "/" + "OpenSans.ttf", 12) 
+        draw.text((10,10), config.card_filename, font=font)  
+        month = time.strftime('%b')
+        day = time.strftime('%d')
+        year = time.strftime('%Y')
+        draw.text((10,20), f'{month} {day} {year} @ {time.strftime("%H:%M:%S")}', font=font)
+        # draw.text((10,20), time.strftime("%Y%m%d_%H:%M:%S"), font=font)
         # add ROIs:
         if add_roi:
             for roi in config.ROIs:
