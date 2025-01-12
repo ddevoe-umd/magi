@@ -21,8 +21,8 @@ import config   # Cross-module global variables for all Python codes
 
 # import objgraph # temp module for tracking memory leaks
 
-sys.path.append('/usr/local/bin/magi')     # Add application path to the Python search path
-logfile = "/var/log/magi/magi_server.log"  # Log file for stdio + stderr (see setup.sh)
+sys.path.append('/home/pi/magi')  # Add application path to the Python search path
+logfile = "magi_server.log"       # Log file for stdio + stderr (see setup.sh)
 
 # PID:
 GPIO.setmode(GPIO.BCM)
