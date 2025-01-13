@@ -114,7 +114,9 @@ class S(BaseHTTPRequestHandler):
             imager.get_image(True)   # capture a new image showing ROIs
             results = "config.py globals updated from card data"
             self.wfile.write(results.encode('utf-8'))
-
+        if action == 'ping':           
+            results = 'server is ready'
+            self.wfile.write(results.encode('utf-8'))
         if action == 'onLoad':           # Housekeeping on starting application
             results = clear_globals()              # clear all global variables
             self.wfile.write(results.encode('utf-8'))

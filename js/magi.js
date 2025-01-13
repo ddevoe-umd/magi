@@ -214,9 +214,11 @@ window.onload = async function () {
 	disableAllElements();
   var period = document.getElementById('period-slider').value;  // Get sampling period
   document.getElementById('period-slider-text').innerHTML = `Period: ${period}s`;
-  // reset imager parameters in case they were previously changed without Pi restart:
-  await getFirstImage();    // Get initial image w/o ROIs
-  imagerValuesToServer({
+  // await getFirstImage();    // Get initial image
+  await ping()      // Make sure the server is ready
+  // reset imager parameters (in case they were changed without Pi restart)
+  // and get an image:
+  await imagerValuesToServer({
     'exposure-time': exposureTime,
     'analogue-gain': analogueGain,
     'red-gain': redGain,
@@ -227,6 +229,7 @@ window.onload = async function () {
   sliderKeySetup('cut-time-slider','cut-time-slider-text');    
   sliderKeySetup('threshold-slider','threshold-slider-text'); 
 };
+
 
 // Tell the server to do initial housekeeping on application startup:
 async function onLoad() {
@@ -242,6 +245,29 @@ async function onLoad() {
     }
 }
 
+
+// Keep pinging the server until it is ready:
+async function ping() {
+  let win = notification("Searching for MAGI server");
+  while (true) {
+    try {
+      await onLoad();  // Do initial Python server housekeeping
+      win.remove();    // close notification window
+      return;     
+    } catch (e) {  // timed out...
+      log(e)
+      if (e.message=="Load failed") {   // timeout error
+        log("onLoad() / getImage() attempt failed, retrying...");
+      }
+      else {   // some other kind of error, wait before retrying
+        log("onLoad() / getImage() attempt failed, retrying...");
+        await new Promise(resolve => setTimeout(resolve, 10000));
+      }
+    }
+  }
+}
+
+/* getFirstImage() NO LONGER USED
 
 // Wait for initial image from the server at code start to make sure
 // camera is ready before allowing an assay to be run:
@@ -265,7 +291,7 @@ async function getFirstImage() {
 	  }
 	}
 }
-
+*/
 
 // Apply the maximum width to all buttons:
 document.addEventListener("DOMContentLoaded", () => {
@@ -872,9 +898,17 @@ async function reboot() {
 	  let data = '';
 		let response = await queryServer(JSON.stringify([message,data]));
 		if (response.ok) { } // Pi should reboot, so no response
-    // Wait a bit and try reloading after reboot:
-    await new Promise(resolve => setTimeout(resolve, 8000));
-		getFirstImage(); 
+    //Wait a bit and try reloading after reboot:
+    //await new Promise(resolve => setTimeout(resolve, 8000));
+		//getFirstImage(); 
+    // Wait 30 sec:
+    log("Retrying connection in 30 sec, please wait...", 
+      color=logInfoColor, fontsize=null, bold=false, lines=false
+    );
+    await new Promise(resolve => setTimeout(resolve, 30000));
+    // try reloading after reboot
+    await ping();
+    await getImage(); 
 	}
 	else {
 		log("reboot cancelled", color=logInfoColor, fontsize=null, bold=false, lines=false
