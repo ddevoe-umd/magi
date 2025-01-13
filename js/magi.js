@@ -909,6 +909,7 @@ async function reboot() {
     // try reloading after reboot
     await ping();
     await getImage(); 
+    enableElements(["load","adjust","shutdown","reboot","getImage","getLog","clearLog"]);
 	}
 	else {
 		log("reboot cancelled", color=logInfoColor, fontsize=null, bold=false, lines=false
