@@ -365,7 +365,7 @@ document.getElementById('hidden-card-file-input').addEventListener('change', asy
         
         // Contact the server to set up remote assay info (ROIs, well config etc.):
         let message = "setupAssay";
-        let data = [cardFilename, cardJson, targetNames, targetColors];
+        let data = [cardFilename, cardJson, targetNames, targetColors, false];
         console.log(JSON.stringify(data));
         let response = await queryServer(JSON.stringify([message,data]));
         if (response.ok) {
@@ -433,6 +433,7 @@ async function imagerValuesToServer(values) {
     results = await response.text();
     log(results, color=logOkColor, fontsize=7, bold=false, lines=false);
   }
+  getImage()  // update the image with new settings
 }
 
 // Open a modal dialog to allow user to change imager settings:
@@ -530,7 +531,7 @@ function updateCutTimeSlider() {
 function updateThresholdSlider() {
   const slider = document.getElementById('threshold-slider');
   var sliderText = document.getElementById('threshold-slider-text')
-  const html = `Threshold: ${slider.value}`;
+  const html = `I<sub class="sub75">cut</sub>: ${slider.value}`;
   sliderText.innerHTML = html;
 }
 
@@ -539,6 +540,11 @@ document.getElementById("cut-time-slider").addEventListener('input', updateCutTi
 
 // Event listener to update filter threshold from slider:
 document.getElementById("threshold-slider").addEventListener('input', updateThresholdSlider);
+
+// Event listener to update image when add-roi toggle activated:
+document.getElementById("add-rois").addEventListener('change', function () {
+    getImage(); // Update image when add-rois state changes
+});
 
 // Enable sliders to be adjusted using left/right arrow keys:
 function sliderKeySetup(sliderName, sliderTextName) {
@@ -625,6 +631,7 @@ async function endAssay() {
       enableElements(["saveraw","analyze","filter-slider","cut-time-slider","threshold-slider",
                       "shutdown","reboot","getLog","clearLog"]);
 			currentFileName = results;
+      log(`currentFileName: ${currentFileName}`)
 	   	analyzeData();
 		}
 	}
