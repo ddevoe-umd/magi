@@ -125,14 +125,16 @@ class S(BaseHTTPRequestHandler):
             start_pid()
             results = "PID thread started"
             self.wfile.write(results.encode('utf-8'))
-        if action == 'getImage':         # Get an image of the chip with colored ROIs
+        if action == 'getImage':         # Return an image of the chip with colored ROIs
             add_ROIs = data
             results = imager.get_image(add_ROIs)
             self.wfile.write(results.encode('utf-8'))
         if action == 'getImageData':          # Capture & analyze single camera image
             results = imager.get_image_data()
-            results.append(well_temp)
             self.wfile.write(",".join([str(x) for x in results]).encode('utf-8'))
+        if action == 'getTemperature':        # Return chip temperature
+            results = str(well_temp)
+            self.wfile.write(results.encode('utf-8'))
         elif action == 'end':            # Turn off PID loop and rename final data file
             results = imager.end_imaging()
             end_pid()
