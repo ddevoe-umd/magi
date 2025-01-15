@@ -682,11 +682,27 @@ async function getImageData() {
     		return(newData);
     	}
     } catch(e) {
-      log(`Error in getImageData: ${e}`, color=logErrorColor, fontsize=7, bold=false, lines=true
-);
+      log(`Error in getImageData: ${e}`, color=logErrorColor, fontsize=7, bold=false, lines=true);
     }
   }
 }
+
+async function getTemperature() {
+  try {
+    let message = 'getTemperature';
+    let data = '';
+    let response = await queryServer(JSON.stringify([message,data]));
+    if (response.ok) {
+      results = await response.text();
+      T = parseFloat(results);
+      return(T);
+    }
+  } catch(e) {
+    log(`error in getTemperature(): ${e}`)
+  }
+}
+
+
 
 
 // Get an image, optionally with ROIs added (if checkbox selected):
@@ -1204,9 +1220,9 @@ async function startAssay() {
   nullData = await startPID();    // Tell Python to start the PID controller
   toggleTitleBarAnimation();      // turn on title bar animation once PID starts
 
-  async function updateChart() {
+  async function updateAmplificationChart() {
     if (!isRunning) {
-      log("Assay stopped", color=logInfoColor, fontsize=null, bold=false, lines=false);
+      //log("Assay stopped", color=logInfoColor, fontsize=null, bold=false, lines=false);
       return;
     }
     let now = Date.now();   
@@ -1219,22 +1235,36 @@ async function startAssay() {
         y: newData[j]
       });
     }
-    temperature.push({
-        x: minutes,
-        y: newData[wellArray.length]   // T is last element in newData
-      });   
-    // Update the real-time amplification & temperature curves:
+    // Update the real-time amplification curve:
     amplificationChart.render();
-    temperatureChart.render();
     var sampleInterval = document.getElementById('period-slider').value * 1000;
-    setTimeout(updateChart, sampleInterval);   // Execute again in sampleInterval sec
+    setTimeout(updateAmplificationChart, sampleInterval);   // Execute again with given periodicity
   }
-	updateChart();
-  // ^^^ previously used setInterval() but had trouble with timing being
-  //     throttled when browser minimized or not focused:
-  //     var sampleInterval = document.getElementById('period-slider').value * 1000;
-	//     assayTimer = setInterval(function(){updateChart()}, sampleInterval);
+
+  async function updateTemperatureChart() {
+    if (!isRunning) {
+      log("Assay stopped", color=logInfoColor, fontsize=null, bold=false, lines=false);
+      return;
+    }
+    let now = Date.now();   
+    minutes = (now - startTime)/1000/60;
+    T = await getTemperature();      // Get data from Python
+    // extend the temperature curve data:
+    temperature.push({
+      x: minutes,
+      y: T
+    });   
+    // Update the real-time temperature curves:
+    temperatureChart.render();
+    var temperatureInterval = 500;   // time period for temperature chart updates (ms)
+    setTimeout(updateTemperatureChart, temperatureInterval);   // Execute again with given periodicity
+  }
+
+  updateAmplificationChart();
+  updateTemperatureChart();
 }
+
+
 
 
 
