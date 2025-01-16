@@ -213,32 +213,20 @@ def Gp(des_temp):
 def run_pid(stop_event):
     global well_temp
     global const, Tb, Tt
-    #times = []
-    # board, chip, well = [], [], []
-    rd = 50*1e6
+    rd = 50*1e6       # PID update period (ns)
     ptrd = time.time_ns()
     start_time = time.time_ns()
     while not stop_event.is_set():
         try:
-            # Change setpoint based on Pre-Filter
-            pid.setpoint = Gp(set_temp)
-
-            # Establish list that will store values from ADC and read the ADC
-            value_raw = [const.value, Tb.value, Tt.value]
+            pid.setpoint = Gp(set_temp)     # Change setpoint based on Pre-Filter
+            value_raw = [const.value, Tb.value, Tt.value]    # Read ADC values
             values = [x*1023 for x in value_raw]
-                
             # Change the duty cycle based on the ADC reading    
             duty_cycle = pid(b_bias*cali_fun(values[1] - values[0]) + (1-b_bias)*cali_fun(values[2] - values[0]))
             pwm.ChangeDutyCycle(duty_cycle)
-    
-            # Store values every 50ms to use for plotting
-            if time.time_ns() - ptrd >= rd:
+            if time.time_ns() - ptrd >= rd:      # Update values every 50ms
                 ptrd = time.time_ns()
-                #times += [(ptrd - start_time)/60e9]
-                #board += [cali_fun(values[1] -  values[0])]
-                #chip += [cali_fun(values[2] -  values[0])]
                 well_temp = b_bias*cali_fun(values[1] - values[0]) + (1-b_bias)*cali_fun(values[2] - values[0])
-                #well += [well_temp]
         except Exception as e:
             print(f'Exception in run_pid: {e}', flush=True)
 
