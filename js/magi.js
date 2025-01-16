@@ -77,7 +77,7 @@ document.addEventListener('keydown', function(event) {
 });
 
 // Query user before closing window or quitting application:
-document.addEventListener('keydown', (event) => {
+document.addEventListener('keydown', async function(event) {
     const isCtrlOrCmd = event.ctrlKey || event.metaKey; // MetaKey is Mac Command key
     const isCloseKey = event.key === 'w' || event.key === 'q';
     if (isCtrlOrCmd && isCloseKey) {
@@ -85,6 +85,7 @@ document.addEventListener('keydown', (event) => {
         const confirmMessage = 'Are you sure you want to quit?';
         if (confirm(confirmMessage)) {
             if (isCloseKey) {
+                await endAssay();
                 window.close();
             }
         }
@@ -267,31 +268,6 @@ async function ping() {
   }
 }
 
-/* getFirstImage() NO LONGER USED
-
-// Wait for initial image from the server at code start to make sure
-// camera is ready before allowing an assay to be run:
-async function getFirstImage() {
-  let win = notification("Searching for MAGI server");
-  while (true) {
-  	try {
-      await onLoad();  // Do initial Python server housekeeping
-      const awaitResult = await getImage();
-	  	win.remove();    // close notification window
-	  	return;     
-	  } catch (e) {  // timed out...
-      log(e)
-      if (e.message=="Load failed") {   // timeout error
-      	log("onLoad() / getImage() attempt failed, retrying...");
-      }
-      else {   // some other kind of error, wait before retrying
-        log("onLoad() / getImage() attempt failed, retrying...");
-        await new Promise(resolve => setTimeout(resolve, 10000));
-      }
-	  }
-	}
-}
-*/
 
 // Apply the maximum width to all buttons:
 document.addEventListener("DOMContentLoaded", () => {
@@ -644,7 +620,7 @@ async function endAssay() {
     toggleTitleBarAnimation();     // turn off title bar animation
 		// if (assayTimer) clearInterval(assayTimer);
 	  enableElements(["load","start","period-slider"]);
-		let message = 'end';
+		let message = 'endAssay';
 	  let data = '';
 		let response = await queryServer(JSON.stringify([message,data]));
     results = await response.text();
@@ -1263,8 +1239,6 @@ async function startAssay() {
   updateAmplificationChart();
   updateTemperatureChart();
 }
-
-
 
 
 
