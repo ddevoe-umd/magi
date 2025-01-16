@@ -213,7 +213,7 @@ def Gp(des_temp):
 def run_pid(stop_event):
     global well_temp
     global const, Tb, Tt
-    times = []
+    #times = []
     # board, chip, well = [], [], []
     rd = 50*1e6
     ptrd = time.time_ns()
@@ -234,7 +234,7 @@ def run_pid(stop_event):
             # Store values every 50ms to use for plotting
             if time.time_ns() - ptrd >= rd:
                 ptrd = time.time_ns()
-                times += [(ptrd - start_time)/60e9]
+                #times += [(ptrd - start_time)/60e9]
                 #board += [cali_fun(values[1] -  values[0])]
                 #chip += [cali_fun(values[2] -  values[0])]
                 well_temp = b_bias*cali_fun(values[1] - values[0]) + (1-b_bias)*cali_fun(values[2] - values[0])
