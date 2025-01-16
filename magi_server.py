@@ -1,17 +1,22 @@
 # Multiplexed Array Gene Imager (MAGI) server
+#
+# Run at startup via rc.local
+#
+# Start in background, with stdout logged to nohup.out:
+# nohup python3 -u python_server.py &
 
 from simple_pid import PID   # see https://pypi.org/project/simple-pid/
 import json
+import imager                # camera image capture and analysis
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import sys
 import os
-import subprocess
 import time
 import threading
 import RPi.GPIO as GPIO
+import multiprocessing
 from gpiozero import MCP3008
 
-import imager
 import config   # Cross-module global variables for all Python codes
 
 # import objgraph # temp module for tracking memory leaks
@@ -89,6 +94,7 @@ class S(BaseHTTPRequestHandler):
         action = info[0]
         data = info[1]
         #print(f'{action}: {data}', flush=True)
+        
         # objgraph.show_most_common_types()  # check memory use
         # sys.stdout.flush()
 
@@ -111,35 +117,33 @@ class S(BaseHTTPRequestHandler):
         if action == 'ping':           
             results = 'server is ready'
             self.wfile.write(results.encode('utf-8'))
-        if action == 'onLoad':                # Housekeeping on starting application
-            results = clear_globals()         # clear all global variables
+        if action == 'onLoad':           # Housekeeping on starting application
+            results = clear_globals()              # clear all global variables
             self.wfile.write(results.encode('utf-8'))
         if action == 'start':    # Start the PID loop for temp control
             clear_temp_file()    # Clear temp data file (if "end assay" not hit last run)
             start_pid()
             results = "PID thread started"
             self.wfile.write(results.encode('utf-8'))
-        if action == 'getImage':              # Return an image of the chip with colored ROIs
+        if action == 'getImage':         # Get an image of the chip with colored ROIs
             add_ROIs = data
             results = imager.get_image(add_ROIs)
             self.wfile.write(results.encode('utf-8'))
         if action == 'getImageData':          # Capture & analyze single camera image
             results = imager.get_image_data()
+            results.append(well_temp)
             self.wfile.write(",".join([str(x) for x in results]).encode('utf-8'))
-        if action == 'getTemperature':        # Return chip temperature
-            results = str(well_temp)
-            self.wfile.write(results.encode('utf-8'))
-        elif action == 'endAssay':                 # Turn off PID loop and rename final data file
+        elif action == 'end':            # Turn off PID loop and rename final data file
             results = imager.end_imaging()
             end_pid()
             self.wfile.write(results.encode('utf-8'))
-        elif action == 'adjust':              # Turn off PID loop and rename final data file
+        elif action == 'adjust':            # Turn off PID loop and rename final data file
             exposure_time_ms = int(data[0])
             analogue_gain = float(data[1])
             colour_gains = (float(data[2]), float(data[3]))
             results = imager.adjust_settings(exposure_time_ms, analogue_gain, colour_gains)
             self.wfile.write(results.encode('utf-8'))
-        elif action == 'analyze':             # Filter curves & extract TTP values
+        elif action == 'analyze':        # Filter curves & extract TTP values
             filename = data[0]
             filter_factor = data[1]
             cut_time = data[2]
@@ -152,7 +156,8 @@ class S(BaseHTTPRequestHandler):
         elif action == 'reboot':         # Reboot the Pi
             reboot()
         elif action == 'getLog':         # Return the server log file contents
-            if not os.path.isfile(config.logfile):    # Create a blank file if it doesn't exist
+            # Create a blank file if it doesn't exist:
+            if not os.path.isfile(config.logfile):
                 with open(config.logfile, 'w') as f:
                     pass
             with open(config.logfile, 'r') as f:
@@ -211,32 +216,33 @@ def Gp(des_temp):
 def run_pid(stop_event):
     global well_temp
     global const, Tb, Tt
-    time  = []
-    # board, well, chip  = [], [], []
-    rd = 50*1e6            # PID update period (ns)
+    times, board, chip, well  = [], [], [], []
+    rd = 50*1e6
     ptrd = time.time_ns()
     start_time = time.time_ns()
     while not stop_event.is_set():
         try:
-            pid.setpoint = Gp(set_temp)      # Change setpoint based on Pre-Filter
-            value_raw = [const.value, Tb.value, Tt.value]    # ADC values
+            # Change setpoint based on Pre-Filter
+            pid.setpoint = Gp(set_temp)
+
+            # Establish list that will store values from ADC and read the ADC
+            value_raw = [const.value, Tb.value, Tt.value]
             values = [x*1023 for x in value_raw]
-            
+                
             # Change the duty cycle based on the ADC reading    
             duty_cycle = pid(b_bias*cali_fun(values[1] - values[0]) + (1-b_bias)*cali_fun(values[2] - values[0]))
             pwm.ChangeDutyCycle(duty_cycle)
     
-            # Update values every 50ms
+            # Store values every 50ms to use for plotting
             if time.time_ns() - ptrd >= rd:
                 ptrd = time.time_ns()
-                time += [(ptrd - start_time)/60e9]
+                times += [(ptrd - start_time)/60e9]
+                board += [cali_fun(values[1] -  values[0])]
+                chip += [cali_fun(values[2] -  values[0])]
                 well_temp = b_bias*cali_fun(values[1] - values[0]) + (1-b_bias)*cali_fun(values[2] - values[0])
-                # board += [cali_fun(values[1] -  values[0])]
-                # chip += [cali_fun(values[2] -  values[0])]
-                # well += [well_temp]
+                well += [well_temp]
         except Exception as e:
             print(f'Exception in run_pid: {e}', flush=True)
-            sys.stdout.flush()
 
 def start_pid():
     GPIO.output(config.FAN, GPIO.HIGH)   # Turn on system fan
@@ -245,8 +251,6 @@ def start_pid():
     t.start()
 
 def end_pid():
-    print('end_pid() called', flush=True)
-    sys.stdout.flush()
     stop_event.set()
     pwm.ChangeDutyCycle(0)
 
@@ -256,11 +260,9 @@ def run(port):
     httpd = HTTPServer(server_address, handler_class)
     print("MAGI server started", flush=True)
     print("Setting up camera...", flush=True)
-    sys.stdout.flush()
     imager.setup_camera(exposure_time_ms=50, analogue_gain=0.5, color_gains=(1.2,1.0))
     print("Camera setup done", flush=True)
     print("System ready", flush=True)
-    sys.stdout.flush()
     GPIO.output(config.STATUS_LED_PIN, GPIO.HIGH)  # turn LED on to indicate system is ready
     try:
         httpd.serve_forever()     # blocking call
@@ -269,20 +271,20 @@ def run(port):
     httpd.server_close()
     GPIO.cleanup()
     print('\n\nGPIO cleaned up', flush=True)
-    sys.stdout.flush()
 
 def shutdown():
     GPIO.cleanup()
-    subprocess.call("sudo shutdown -h now", shell=True)
+    from subprocess import call
+    call("sudo shutdown -h now", shell=True)
 
 def reboot():
     GPIO.cleanup()
-    subprocess.call("sudo reboot", shell=True)
+    from subprocess import call
+    call("sudo reboot", shell=True)
 
 
 if __name__ == "__main__":
     print("MAGI server starting...", flush=True)
-    sys.stdout.flush()
     run(8080)
 
 
