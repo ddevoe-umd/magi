@@ -213,7 +213,8 @@ def Gp(des_temp):
 def run_pid(stop_event):
     global well_temp
     global const, Tb, Tt
-    times, board, chip, well  = [], [], [], []
+    times = []
+    # board, chip, well = [], [], []
     rd = 50*1e6
     ptrd = time.time_ns()
     start_time = time.time_ns()
@@ -234,10 +235,10 @@ def run_pid(stop_event):
             if time.time_ns() - ptrd >= rd:
                 ptrd = time.time_ns()
                 times += [(ptrd - start_time)/60e9]
-                board += [cali_fun(values[1] -  values[0])]
-                chip += [cali_fun(values[2] -  values[0])]
+                #board += [cali_fun(values[1] -  values[0])]
+                #chip += [cali_fun(values[2] -  values[0])]
                 well_temp = b_bias*cali_fun(values[1] - values[0]) + (1-b_bias)*cali_fun(values[2] - values[0])
-                well += [well_temp]
+                #well += [well_temp]
         except Exception as e:
             print(f'Exception in run_pid: {e}', flush=True)
 
