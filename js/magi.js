@@ -809,6 +809,7 @@ function reportPositives() {
     }
   });
   log(hits.toString());
+  alert(`Positive hits: ${hits.toString()}`);
 }
 
 
