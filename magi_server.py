@@ -26,7 +26,7 @@ GPIO.setup(config.PWM_PIN, GPIO.OUT)
 pwm = GPIO.PWM(config.PWM_PIN,490)
 pid = PID(Kp=12.635, Ki=1.0063, Kd=0, setpoint=0)     # Can add sample_time, output_limits, etc.
 pid.output_limits = (0,100)
-b_bias = 0.82            # value for linear interpolation of temperature
+b_bias = 0.885           # value for linear interpolation of temperature
 well_temp = 0            # current well temperature
 set_temp = 60
 
@@ -101,8 +101,8 @@ class S(BaseHTTPRequestHandler):
             config.roi_spacing_x = int(card_data["roi_spacing_x"])
             config.roi_spacing_y = int(card_data["roi_spacing_y"])
             config.positives = card_data["positives"]
-            config.target_names = data['target_names']
-            config.target_colors = data['target_colors']
+            config.gene_names = data['gene_names']
+            config.gene_colors = data['gene_colors']
             imager.setup_ROIs()      # set up the ROIs from assay card data
             imager.get_image(True)   # capture a new image showing ROIs
             results = "config.py globals updated from card data"
@@ -185,8 +185,8 @@ def clear_globals():
     config.roi_spacing_y = 0        
     config.ROIs = []                # list of upper left corners for all ROIs
     config.card_filename = ''
-    config.target_names = []
-    config.target_colors = []
+    config.gene_names = []
+    config.gene_colors = []
     return('globals cleared')
 
 

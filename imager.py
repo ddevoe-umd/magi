@@ -63,8 +63,8 @@ def annotate_image(img, add_roi=False):      # Add timestamp and ROIs to image
         if add_roi:
             for roi in config.ROIs:
                 roi_lower_right = (roi['x'] + config.roi_width, roi['y'] + config.roi_height)
-                idx = config.target_names.index(roi['target'])      # find index in target_names matching current ROI targe
-                fill_color = hex_to_rgb(config.target_colors[idx])  # convert "#rrggbb" to [R,G,B]
+                idx = config.gene_names.index(roi['target'])      # find index in gene_names matching current ROI targe
+                fill_color = hex_to_rgb(config.gene_colors[idx])  # convert "#rrggbb" to [R,G,B]
                 fill_color.append(64)                               # Add alpha channel for transparency
                 draw.rectangle([(roi['x'],roi['y']), roi_lower_right], outline='#ffffff', fill=tuple(fill_color))   # Draw ROI
                 font = ImageFont.truetype(config.font_directory + "/" + "OpenSans.ttf", 9)         # Add well target text
@@ -126,8 +126,8 @@ def get_image_data():    # Extract fluorescence measurements from ROIs in image
     sys.stdout.flush()
     try:
         cam.start()
-        GPIO.output(config.IMAGER_LED_PIN, GPIO.HIGH)     # Turn on LED
-        image = cam.capture_image("main")   # capture as PIL image
+        GPIO.output(config.IMAGER_LED_PIN, GPIO.HIGH)    # Turn on LED
+        image = cam.capture_image("main")                # capture as PIL image
         cam.stop()
         GPIO.output(config.IMAGER_LED_PIN, GPIO.LOW)     # Turn off LED
         # Get average pixel value for each ROI:
