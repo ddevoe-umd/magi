@@ -25,7 +25,6 @@ GPIO.setup(config.STATUS_LED_PIN, GPIO.OUT)     # System status LED pin
 GPIO.setup(config.FAN, GPIO.OUT) 
 GPIO.setup(config.PWM_PIN, GPIO.OUT) 
 pwm = GPIO.PWM(config.PWM_PIN,490)
-# pid = PID(Kp=12.635, Ki=1.0063, Kd=0, setpoint=0)
 pid = PID(Kp=16.756, Ki=1.327, Kd=0, setpoint=0)
 pid.output_limits = (0,100)
 b_bias = 0.885           # value for linear interpolation of temperature
@@ -33,8 +32,8 @@ well_temp = 0            # current well temperature
 set_temp = 60
 
 # Pre-Filter:
-a_val = 0.999949373
-b_val = 0.0000506268
+a_val = 0.999949658
+b_val = 0.0000503422
 r_F_prev = 23.0
 
 # Start heater PWM:
@@ -195,7 +194,6 @@ def clear_globals():
 
 
 # Calibration function for PWM (temperature control):
-@log_function_call
 def cali_fun(y_data):
     y_adj = (
         0.00000000000225474 * y_data ** 5 -
@@ -208,7 +206,6 @@ def cali_fun(y_data):
     return y_adj
 
 # Function for Pre-Filter Calculation:
-@log_function_call
 def Gp(des_temp):
     global r_F_prev
     r_F = a_val*r_F_prev + b_val*des_temp

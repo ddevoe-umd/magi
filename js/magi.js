@@ -1125,7 +1125,9 @@ function setupTemperatureChart(targetContainer) {
 		axisY:{
 			includeZero: true,
 			title: "Temperature (\u00B0C)",
-			titleFontSize: 13
+			titleFontSize: 13,
+      minmimum: 0,
+      maximum: 100 
 		}, 
 		toolTip: {
 			shared: false,
