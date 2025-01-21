@@ -92,7 +92,7 @@ def adjust_settings(exposure_time_ms, analogue_gain, color_gains):
         return('adjust_settings() done')
     except Exception as e:
         print(f'error in adjust_settings(): {e}', flush=True)
-]
+
 def setup_camera(exposure_time_ms=50, analogue_gain=0.5, color_gains=(1.2,1.0)):    # Set up camera
     cam_config = cam.create_still_configuration(main={"size": res})
     cam.configure(cam_config)
