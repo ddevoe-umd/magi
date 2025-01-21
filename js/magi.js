@@ -797,7 +797,8 @@ function reportPositives() {
     let positive = true;    // assume positive hit at start
     geneList.forEach((gene) => {
       // evaluate if gene amplified:
-      let didAmplify = meanTTP[gene] > 0.1 && meanTTP[gene] < 50 && rsdTTP[gene] < 0.3;
+      // let didAmplify = meanTTP[gene] > 0.1 && meanTTP[gene] < 50 && rsdTTP[gene] < 1.5;
+      let didAmplify = meanTTP[gene] > 0.1 && meanTTP[gene] < 50;
       let amplifyIfPositive = positives[target][gene];
       if(didAmplify != amplifyIfPositive) {   // XOR operation...
         positive = false;

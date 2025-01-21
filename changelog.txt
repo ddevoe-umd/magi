@@ -10,3 +10,4 @@ v.1.0.3:
 v1.0.4:
 * renamed variables from target... to gene...
 * added preliminary positive hit check
+* added decorator for function call logging

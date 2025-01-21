@@ -13,6 +13,7 @@ from gpiozero import MCP3008
 
 import imager
 import config   # Cross-module global variables for all Python codes
+from config import log_function_call
 
 # import objgraph # temp module for tracking memory leaks
 
@@ -24,7 +25,8 @@ GPIO.setup(config.STATUS_LED_PIN, GPIO.OUT)     # System status LED pin
 GPIO.setup(config.FAN, GPIO.OUT) 
 GPIO.setup(config.PWM_PIN, GPIO.OUT) 
 pwm = GPIO.PWM(config.PWM_PIN,490)
-pid = PID(Kp=12.635, Ki=1.0063, Kd=0, setpoint=0)     # Can add sample_time, output_limits, etc.
+# pid = PID(Kp=12.635, Ki=1.0063, Kd=0, setpoint=0)
+pid = PID(Kp=12.635, Ki=1.0063, Kd=0, setpoint=0)
 pid.output_limits = (0,100)
 b_bias = 0.885           # value for linear interpolation of temperature
 well_temp = 0            # current well temperature
@@ -171,11 +173,13 @@ class S(BaseHTTPRequestHandler):
         return
 
 # Delete contents of the temp data file:
+@log_function_call
 def clear_temp_file():
     with open(config.data_directory + '/temp_data.csv', 'w') as f:
         pass     
 
 # Clear globals in config.py:
+@log_function_call
 def clear_globals():
     config.well_config = []
     config.roi_upper_left = (0,0)   # cordinates for upper left corner of upper left ROI
@@ -191,6 +195,7 @@ def clear_globals():
 
 
 # Calibration function for PWM (temperature control):
+@log_function_call
 def cali_fun(y_data):
     y_adj = (
         0.00000000000225474 * y_data ** 5 -
@@ -203,6 +208,7 @@ def cali_fun(y_data):
     return y_adj
 
 # Function for Pre-Filter Calculation:
+@log_function_call
 def Gp(des_temp):
     global r_F_prev
     r_F = a_val*r_F_prev + b_val*des_temp
@@ -210,6 +216,7 @@ def Gp(des_temp):
     return r_F
 
 # Temperature control (run in separate thread):
+@log_function_call
 def run_pid(stop_event):
     global well_temp
     global const, Tb, Tt
@@ -230,18 +237,21 @@ def run_pid(stop_event):
         except Exception as e:
             print(f'Exception in run_pid: {e}', flush=True)
 
+@log_function_call
 def start_pid():
     GPIO.output(config.FAN, GPIO.HIGH)   # Turn on system fan
     t = threading.Thread(target=run_pid, args=(stop_event,))    # Start the PID loop
     t.daemon = True
     t.start()
 
+@log_function_call
 def end_pid():
     print('end_pid() called', flush=True)
     sys.stdout.flush()
     stop_event.set()
     pwm.ChangeDutyCycle(0)
 
+@log_function_call
 def run(port):
     handler_class=S
     server_address = ('', port)
@@ -263,10 +273,12 @@ def run(port):
     print('\n\nGPIO cleaned up', flush=True)
     sys.stdout.flush()
 
+@log_function_call
 def shutdown():
     GPIO.cleanup()
     subprocess.call("sudo shutdown -h now", shell=True)
 
+@log_function_call
 def reboot():
     GPIO.cleanup()
     subprocess.call("sudo reboot", shell=True)
