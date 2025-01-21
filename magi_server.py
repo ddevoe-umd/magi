@@ -26,7 +26,7 @@ GPIO.setup(config.FAN, GPIO.OUT)
 GPIO.setup(config.PWM_PIN, GPIO.OUT) 
 pwm = GPIO.PWM(config.PWM_PIN,490)
 # pid = PID(Kp=12.635, Ki=1.0063, Kd=0, setpoint=0)
-pid = PID(Kp=12.635, Ki=1.0063, Kd=0, setpoint=0)
+pid = PID(Kp=16.756, Ki=1.327, Kd=0, setpoint=0)
 pid.output_limits = (0,100)
 b_bias = 0.885           # value for linear interpolation of temperature
 well_temp = 0            # current well temperature
