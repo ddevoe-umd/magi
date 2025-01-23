@@ -5,7 +5,7 @@
 // Globals:
 
 var cardFilename;       // Assay card file name selected by user
-var positives = {};     // dictionary of positive hit criteria from assay card
+var hitCriteria = {};   // dictionary of positive hit criteria from assay card
 var wellConfig = [];    // Well array configuration. Unlike the Python well_config
                         // global, which is a 2D array, wellConfig is converted to
                         // a 1D array to simplify canvasJS plotting
@@ -340,20 +340,15 @@ document.getElementById('hidden-card-file-input').addEventListener('change', asy
     const reader = new FileReader();
     reader.onload = async function (e) {
       try {
-        const cardDict = JSON.parse(e.target.result);   // All card data as a dictionary
-        
+        const cardDict = JSON.parse(e.target.result);   // All card data as a dictionary        
         // Convert 2D array format of well_config from assay card to a
         // 1D array for ease of plotting with CanvasJS:
         wellConfig = [];
         for (row of cardDict["well_config"]) for (ele of row) wellConfig.push(ele);
-
-        // Extract positive hit dictionary:
-        positives = cardDict["positives"]
-
-        // Extract unique gene target list:
-        const uniqueTargetSet = new Set(wellConfig);
+        // Extract card info:
+        hitCriteria = cardDict["hit_criteria"];
+        const uniqueTargetSet = new Set(wellConfig);   // Create unique gene target list
         geneNames = Array.from(uniqueTargetSet);
-        // Set up plot colors for unique gene targets:
         geneColors = generatePlotColors(geneNames.length);
         
         // Contact the server to set up remote assay info (ROIs, well config etc.):
@@ -789,22 +784,23 @@ img.addEventListener('click', () => {
 // Evaluate & report positive hits based on card file criteria:
 function reportPositives() {
   log("reportPositives() called");
-  let targets = Object.keys(positives);
+  let targets = Object.keys(hitCriteria);
   let hits = []   // empty array to hold positive hits based on TTP values
+  log('target\tgene\tdidAmplify\tamplifyIfPositive');
   targets.forEach((target) => {
     // pull out list of genes corresponding to a positive hit for the given target organism:
-    let geneList = Object.keys(positives[target]);
-    let positive = true;    // assume positive hit at start
+    let geneList = Object.keys(hitCriteria[target]);
+    let hit = true;    // assume positive hit at start
     geneList.forEach((gene) => {
       // evaluate if gene amplified:
-      // let didAmplify = meanTTP[gene] > 0.1 && meanTTP[gene] < 50 && rsdTTP[gene] < 1.5;
       let didAmplify = meanTTP[gene] > 0.1 && meanTTP[gene] < 50;
-      let amplifyIfPositive = positives[target][gene];
+      let amplifyIfPositive = hitCriteria[target][gene];
+      log(`${target}\t${gene}\t${didAmplify}\t${amplifyIfPositive}`);
       if(didAmplify != amplifyIfPositive) {   // XOR operation...
-        positive = false;
+        hit = false;
       }
     });
-    if (positive) {
+    if (hit) {
       // the target survived each gene check so add to positive hits
       hits.push(target);
     }
@@ -1126,7 +1122,7 @@ function setupTemperatureChart(targetContainer) {
 			includeZero: true,
 			title: "Temperature (\u00B0C)",
 			titleFontSize: 13,
-      minmimum: 0,
+      minimum: 20,
       maximum: 100 
 		}, 
 		toolTip: {

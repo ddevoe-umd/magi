@@ -5,12 +5,12 @@
       ["mecA", "nuc", "femB", "POS"],
       ["mecA", "nuc", "femB", "NEG"]
     ],
-  "roi_upper_left": [200,185],
+  "roi_upper_left": [225,170],
   "roi_width": 12,
   "roi_height": 28,
-  "roi_spacing_x": 62,
-  "roi_spacing_y": 62,
-  "positives": 
+  "roi_spacing_x": 68,
+  "roi_spacing_y": 68,
+  "hit_criteria": 
   { "MRSA":
     {
       "mecA": true,

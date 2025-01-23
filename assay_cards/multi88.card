@@ -15,7 +15,7 @@
   "roi_height": 18,
   "roi_spacing_x": 28,
   "roi_spacing_y": 32,
-  "positives": 
+  "hit_criteria": 
   { "MRSA":
     {
       "mecA": true,

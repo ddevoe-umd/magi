@@ -14,6 +14,7 @@ from io import BytesIO
 import config   # Cross-module global variables for all Python codes
 from config import log_function_call
 
+import signal
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(config.IMAGER_LED_PIN, GPIO.OUT) 
@@ -80,6 +81,7 @@ def annotate_image(img, add_roi=False):      # Add timestamp and ROIs to image
 
 @log_function_call
 def adjust_settings(exposure_time_ms, analogue_gain, color_gains):
+    global cam
     try:
         cam.set_controls({
             "AeEnable": False,                 # auto update of gain & exposure settings
@@ -89,11 +91,14 @@ def adjust_settings(exposure_time_ms, analogue_gain, color_gains):
             "ColourGains": color_gains              # (red,blue) gains, range [0,32.0]
         })
         time.sleep(3)   # time to stabilize settings
+        print('adjust_settings() done', flush=True)
         return('adjust_settings() done')
     except Exception as e:
         print(f'error in adjust_settings(): {e}', flush=True)
 
+@log_function_call
 def setup_camera(exposure_time_ms=50, analogue_gain=0.5, color_gains=(1.2,1.0)):    # Set up camera
+    global cam
     cam_config = cam.create_still_configuration(main={"size": res})
     cam.configure(cam_config)
     adjust_settings(exposure_time_ms, analogue_gain, color_gains)
@@ -116,12 +121,58 @@ def roi_avg(image, roi):   # Return average pixel values in ROI
     b = int(100*b/pixels);
     return((r,g,b))
 
+# TimeoutException class, signal handler function, and decorator
+# to capture timeouts during image capture.
+#
+# Implemented to handle apparent hardware error: "Zero sequence expected 
+# for first frame (got 1)" but did not fix this problem since it
+# seems the camera needs to be restarted (i.e. the Pi must be rebooted)
+# after encountering this error.
+#
+# Timeout handling has been left here in case other possible imager
+# errors may also lead to image capture timeouts...
+class TimeoutException(Exception):
+    pass
+# signal handler function:
+def timeout_handler(signum, frame):       
+    raise TimeoutException("Function execution exceeded the timeout limit.")
+# decorator to apply signal handler:
+def add_timeout(func, timeout_sec=30):
+    def wrapper(*args, **kwargs):
+        global cam
+        # Set the signal handler for the timeout
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(timeout_sec)  # Set the timeout
+        try:
+            result = func(*args, **kwargs)
+            return result
+        except TimeoutException:
+            print('timeout exception, re-initializing the camera', flush=True)
+            cam.close()
+            cam = Picamera2() 
+            setup_camera()
+            return(None)
+        finally:
+            signal.alarm(0)  # Cancel the alarm            
+    return wrapper
+
+# Capture a single image with timeout handling: 
+@add_timeout
+def capture_single_image():
+    return(cam.capture_image("main"))       # capture PIL image
+
+# Extract fluorescence measurements from ROIs in image:
 @log_function_call
-def get_image_data():    # Extract fluorescence measurements from ROIs in image
+def get_image_data():
     try:
         cam.start()
         GPIO.output(config.IMAGER_LED_PIN, GPIO.HIGH)    # Turn on LED
-        image = cam.capture_image("main")                # capture as PIL image
+        image = None   # start with None to enter loop
+        while image is None:
+            # If image capture fails, capture_single_image() + add_timeout()
+            # decoration restarts the camera and returns None, forcing
+            # another image to be captured:
+            image = capture_single_image()               # capture PIL image
         cam.stop()
         GPIO.output(config.IMAGER_LED_PIN, GPIO.LOW)     # Turn off LED
         # Get average pixel value for each ROI:
@@ -145,7 +196,7 @@ def get_image(add_ROIs):
     try:
         cam.start()
         GPIO.output(config.IMAGER_LED_PIN, GPIO.HIGH)
-        image = cam.capture_image("main")   # capture as PIL image
+        image = capture_single_image()     # capture PIL image
         cam.stop()
         GPIO.output(config.IMAGER_LED_PIN, GPIO.LOW)
         image = annotate_image(image, add_ROIs)
@@ -156,7 +207,6 @@ def get_image(add_ROIs):
         image = None
         png_image = None
         return(f"data:image/png;base64,{png_base64}")
-
     except Exception as e:
         print(f'Exception in get_image(): {e}', flush=True)
         return(f'Exception in get_image(): {e}')
