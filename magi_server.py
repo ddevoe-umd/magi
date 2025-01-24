@@ -129,7 +129,7 @@ class S(BaseHTTPRequestHandler):
         if action == 'getTemperature':        # Return chip temperature
             # results = str(well_temp)
             # well_temps = []  # reset the list
-            results = get_average_temperature(3)
+            results = str(get_average_temperature(3))
             self.wfile.write(results.encode('utf-8'))
         elif action == 'endAssay':                 # Turn off PID loop and rename final data file
             results = imager.end_imaging()
