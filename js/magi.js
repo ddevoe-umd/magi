@@ -1275,7 +1275,7 @@ async function startAssay() {
     });   
     // Update the real-time temperature curves:
     temperatureChart.render();
-    var temperatureInterval = 500;   // time period for temperature chart updates (ms)
+    var temperatureInterval = 2000;   // time period for temperature chart updates (ms)
     setTimeout(updateTemperatureChart, temperatureInterval);   // Execute again with given periodicity
   }
 

@@ -127,8 +127,9 @@ class S(BaseHTTPRequestHandler):
             results = imager.get_image_data()
             self.wfile.write(",".join([str(x) for x in results]).encode('utf-8'))
         if action == 'getTemperature':        # Return chip temperature
-            results = str(well_temp)
-            well_temps = []  # reset the list
+            # results = str(well_temp)
+            # well_temps = []  # reset the list
+            results = get_average_temperature(3):
             self.wfile.write(results.encode('utf-8'))
         elif action == 'endAssay':                 # Turn off PID loop and rename final data file
             results = imager.end_imaging()
@@ -211,6 +212,15 @@ def Gp(des_temp):
     r_F = a_val*r_F_prev + b_val*des_temp
     r_F_prev = r_F
     return r_F
+
+# Return the average well temperature over n measurements to reduce noise:
+def get_average_temperature(n):
+    temp_sum = 0
+    for idx in range(n):
+        temp_sum += well_temp
+        time.sleep(50e-3)   # sleep for PID update period
+    return(temp_sum/n)
+
 
 # Temperature control (run in separate thread):
 @log_function_call

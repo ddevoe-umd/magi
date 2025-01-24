@@ -147,10 +147,12 @@ def add_timeout(func, timeout_sec=30):
             result = func(*args, **kwargs)
             return result
         except TimeoutException:
+            """
             print('timeout exception, re-initializing the camera', flush=True)
             cam.close()
             cam = Picamera2() 
             setup_camera()
+            """
             return(None)
         finally:
             signal.alarm(0)  # Cancel the alarm            
