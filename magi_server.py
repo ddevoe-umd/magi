@@ -21,9 +21,9 @@ sys.path.append(config.magi_directory)  # Add application path to the Python sea
 
 # PID:
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(config.STATUS_LED_PIN, GPIO.OUT)     # System status LED pin
-GPIO.setup(config.FAN, GPIO.OUT) 
-GPIO.setup(config.PWM_PIN, GPIO.OUT) 
+GPIO.setup(config.STATUS_LED_PIN, GPIO.OUT, inital = GPIO.LOW)     # System status LED pin
+GPIO.setup(config.FAN, GPIO.OUT, inital = GPIO.LOW) 
+GPIO.setup(config.PWM_PIN, GPIO.OUT, inital = GPIO.LOW) 
 pwm = GPIO.PWM(config.PWM_PIN,490)
 pid = PID(Kp=16.756, Ki=1.327, Kd=0, setpoint=0)
 pid.output_limits = (0,100)

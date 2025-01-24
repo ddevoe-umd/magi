@@ -17,7 +17,7 @@ from config import log_function_call
 import signal
 
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(config.IMAGER_LED_PIN, GPIO.OUT) 
+GPIO.setup(config.IMAGER_LED_PIN, GPIO.OUT, inital = GPIO.LOW) 
 
 # Image size:
 w = 640         # min of 64, max of 2592 for 5MP camera
