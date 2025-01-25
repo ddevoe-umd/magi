@@ -113,6 +113,7 @@ class S(BaseHTTPRequestHandler):
             self.wfile.write(results.encode('utf-8'))
         if action == 'onLoad':                # Housekeeping on starting application
             results = clear_globals()         # clear all global variables
+            GPIO.output(config.STATUS_LED_PIN, GPIO.HIGH)  # turn LED on to indicate system is ready
             self.wfile.write(results.encode('utf-8'))
         if action == 'start':    # Start the PID loop for temp control
             clear_temp_file()    # Clear temp data file (if "end assay" not hit last run)
@@ -270,7 +271,6 @@ def run(port):
     print("Camera setup done", flush=True)
     print("System ready", flush=True)
     sys.stdout.flush()
-    GPIO.output(config.STATUS_LED_PIN, GPIO.HIGH)  # turn LED on to indicate system is ready
     try:
         httpd.serve_forever()     # blocking call
     except KeyboardInterrupt:
