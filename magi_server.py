@@ -22,7 +22,7 @@ sys.path.append(config.magi_directory)  # Add application path to the Python sea
 # PID:
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(config.STATUS_LED_PIN, GPIO.OUT, initial=GPIO.LOW)     # System status LED pin
-GPIO.setup(config.FAN, GPIO.OUT, initial=GPIO.LOW) 
+GPIO.setup(config.FAN_PIN, GPIO.OUT, initial=GPIO.LOW) 
 GPIO.setup(config.PWM_PIN, GPIO.OUT, initial=GPIO.LOW) 
 pwm = GPIO.PWM(config.PWM_PIN,490)
 pid = PID(Kp=16.756, Ki=1.327, Kd=0, setpoint=0)
@@ -246,7 +246,7 @@ def run_pid(stop_event):
 
 @log_function_call
 def start_pid():
-    GPIO.output(config.FAN, GPIO.HIGH)   # Turn on system fan
+    GPIO.output(config.FAN_PIN, GPIO.HIGH)   # Turn on system fan
     t = threading.Thread(target=run_pid, args=(stop_event,))    # Start the PID loop
     t.daemon = True
     t.start()
@@ -276,6 +276,9 @@ def run(port):
     except KeyboardInterrupt:
         pass
     httpd.server_close()
+    GPIO.output(config.STATUS_LED_PIN, GPIO.LOW)
+    GPIO.output(config.FAN_PIN, GPIO.LOW)
+    GPIO.output(config.PWM_PIN, GPIO.LOW)
     GPIO.cleanup()
     print('\n\nGPIO cleaned up', flush=True)
     sys.stdout.flush()
@@ -294,6 +297,7 @@ def reboot():
 if __name__ == "__main__":
     print("MAGI server starting...", flush=True)
     sys.stdout.flush()
+    GPIO.output(config.STATUS_LED_PIN, GPIO.LOW)   # start with status light off
     run(8080)
 
 
