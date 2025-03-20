@@ -24,16 +24,13 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(config.STATUS_LED_PIN, GPIO.OUT, initial=GPIO.LOW)     # System status LED pin
 GPIO.setup(config.FAN_PIN, GPIO.OUT, initial=GPIO.LOW) 
 GPIO.setup(config.PWM_PIN, GPIO.OUT, initial=GPIO.LOW) 
-pwm = GPIO.PWM(config.PWM_PIN,490)
-pid = PID(Kp=16.756, Ki=1.327, Kd=0, setpoint=0)
+pwm = GPIO.PWM(config.PWM_PIN,config.PWM_BASE_FREQ)
+pid = PID(Kp=config.Kp, Ki=config.Ki, Kd=config.Kd, setpoint=0)
 pid.output_limits = (0,100)
-b_bias = 0.885           # value for linear interpolation of temperature
 well_temp = 0            # current well temperature
 set_temp = 60
 
 # Pre-Filter:
-a_val = 0.999949658
-b_val = 0.0000503422
 r_F_prev = 23.0
 
 # Start heater PWM:
@@ -210,7 +207,7 @@ def cali_fun(y_data):
 # Function for Pre-Filter Calculation:
 def Gp(des_temp):
     global r_F_prev
-    r_F = a_val*r_F_prev + b_val*des_temp
+    r_F = config.a_val*r_F_prev + config.b_val*des_temp
     r_F_prev = r_F
     return r_F
 
@@ -237,11 +234,11 @@ def run_pid(stop_event):
             value_raw = [const.value, Tb.value, Tt.value]    # Read ADC values
             values = [x*1023 for x in value_raw]
             # Change the duty cycle based on the ADC reading    
-            duty_cycle = pid(b_bias*cali_fun(values[1] - values[0]) + (1-b_bias)*cali_fun(values[2] - values[0]))
+            duty_cycle = pid(config.b_bias*cali_fun(values[1] - values[0]) + (1-config.b_bias)*cali_fun(values[2] - values[0]))
             pwm.ChangeDutyCycle(duty_cycle)
             if time.time_ns() - ptrd >= rd:      # Update values every 50ms
                 ptrd = time.time_ns()
-                well_temp = b_bias*cali_fun(values[1] - values[0]) + (1-b_bias)*cali_fun(values[2] - values[0])
+                well_temp = config.b_bias*cali_fun(values[1] - values[0]) + (1-config.b_bias)*cali_fun(values[2] - values[0])
         except Exception as e:
             print(f'Exception in run_pid: {e}', flush=True)
 

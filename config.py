@@ -29,6 +29,17 @@ FAN_PIN = 26			# Case fan power
 STATUS_LED_PIN = 4		# System status LED
 IMAGER_LED_PIN = 13		# Fluorescence LED
 
+# PID parameters:
+PWM_BASE_FREQ = 5
+Kp = 12.376
+Ki = 0.991
+Kd = 0
+
+# PID setpoint pre-filter parameters:
+a_val = 0.999949127
+b_val = 0.000050873
+
+b_bias = 0.82           # Temperature interpolation paramneter
 
 # -------------------------------------
 # Global Decorators
